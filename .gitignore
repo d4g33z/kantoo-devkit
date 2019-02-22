@@ -1,0 +1,45 @@
+# Compiled source #
+###################
+*.class
+*.o
+*.so
+*.pyc
+__pycache__/
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+*.xz
+
+# Logs and databases #
+######################
+*.log
+*.sqlite
+*.csv
+*.db
+
+# Vim #
+#######
+*.swp
+*.swo
+
+
+# Local #
+#########
+.idea
+*.bak
+.gitignore_*
+*.pkl
+*.html
+__javascript__/
+*.png
+*.ico
