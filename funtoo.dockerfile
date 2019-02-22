@@ -1,12 +1,7 @@
-# This Dockerfile creates a funtoo stage3 container image. By default it
-# creates a stage3 generic 64bit image. It utilizes a multi-stage build and requires
-# docker-17.05.0 or later. It fetches a daily snapshot from the official
+# This Dockerfile creates a funtoo stage3 container image. It fetches a daily snapshot from the official
 # sources and verifies its checksum as well as its gpg signature.
 
-# As gpg keyservers sometimes are unreliable, we use multiple gpg server pools
-# to fetch the signing key.
-
-# we are going to use alpine as our bootstrap container
+# We are going to use alpine as our bootstrap container
 ARG BOOTSTRAP
 FROM ${BOOTSTRAP:-alpine:3.7} as builder
 
