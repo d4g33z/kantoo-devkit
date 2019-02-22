@@ -24,7 +24,7 @@ entropysrv=$(mktemp)
 createrepo=$(mktemp)
 REPOSITORY_NAME="${REPOSITORY_NAME:-testing.kantoo.org}"
 REPOSITORY_DESCRIPTION="${REPOSITORY_DESCRIPTION:-My Sabayon repository}"
-DOCKER_IMAGE="${DOCKER_IMAGE:-funtoo:updated}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-funtoo:pure_stage3}"
 PORTAGE_ARTIFACTS="${PORTAGE_ARTIFACTS:-$SAB_WORKSPACE/portage_artifacts}"
 OUTPUT_DIR="${OUTPUT_DIR:-$SAB_WORKSPACE/entropy_artifacts}"
 DOCKER_OPTS="${DOCKER_OPTS:--ti --rm}"
@@ -43,9 +43,6 @@ docker_volumes=(
             -v "$META_REPO:/var/git"
 )
 
-[ -z "$PUBKEY" ] || docker_volumes+=(-v "$PUBKEY:/etc/entropy/mykeys/key.pub")
-[ -z "$PRIVATEKEY" ] || docker_volumes+=(-v "$PRIVATEKEY:/etc/entropy/mykeys/private.key")
-
 
 if [ $# -eq 0 ]
 then
@@ -55,14 +52,13 @@ then
  docker_volumes+=(-v "${args[0]}:/root/packages" )
 fi
 
-check_docker_requirements
 
 echo "Repository: $REPOSITORY_NAME"
 echo "Repository Description: $REPOSITORY_DESCRIPTION"
 
 
-#https://github.com/Sabayon/sbi-tasks/blob/master/next/arm/core/core-task.yml#L22
 # Creating the building script on-the-fly
+# Runs inside the container
 cat >$createrepo <<EOF
 #!/bin/bash
 set -e
@@ -86,9 +82,6 @@ else
   echo "Yes" | eit init --quick \$repo
   eit push --quick --force
 fi
-
-[ -f "/etc/entropy/mykeys/key.pub" ] && [ -f "/etc/entropy/mykeys/private.key" ] && { ! eit key status \$repo; } && \
-eit key import \$repo /etc/entropy/mykeys/private.key /etc/entropy/mykeys/key.pub && { eit key sign \$repo || true; } && { echo "=== Repository key imported successfully ==="; }
 
 echo "=== Injecting packages ==="
 eit inject \${built_pkgs} || { echo "ouch unable to inject" && exit 3; }
