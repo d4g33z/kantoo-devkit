@@ -1,3 +1,5 @@
+# License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
+
 # Copyright 2016-2018 See AUTHORS file
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#utility functions
+from kantoo import *
+
 import pathlib
 import tempfile
 import sys
@@ -21,7 +26,7 @@ import os
 SAB_WORKSPACE="/root/sab_workspace"
 META_REPO="/var/git"
 
-#take only the returned path of mkstemp
+# take only the returned path of mkstemp and make a Path object
 entropysrv=pathlib.Path(tempfile.mkstemp()[1])
 createrepo=pathlib.Path(tempfile.mkstemp()[1])
 
@@ -42,20 +47,20 @@ DOCKER_OPTS="--ti --rm"
 EDITOR="cat"
 LC_ALL="en_US.UTF-8"
 
-#all prefixed with -e on docker cmd line
+# all prefixed with -e on docker cmd line
 docker_env=(
     f"EDITOR={EDITOR}",
     f"REPOSITORY={REPOSITORY_NAME}",
     f"LC_ALL={LC_ALL}")
 
-#all prefixed with -v on docker cmd line
+# all prefixed with -v on docker cmd line
 docker_volumes=[
     f"{OUTPUT_DIR}:/sabayon/artifacts",
     f"{createrepo}:/sabayon/bin/create_repo.sh",
     f"{entropysrv}:/etc/entropy/server.conf",
     f"{META_REPO}:/var/git"]
 
-#only scriptname with no args
+# only scriptname with no args
 if len(sys.argv) == 1:
     docker_volumes.append(f"{PORTAGE_ARTIFACTS}:/root/packages")
 else:
@@ -69,9 +74,16 @@ print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
 # Creating the building script on-the-fly
 # Runs inside the container
 
+import fnmatch
 def make_built_pkgs():
     #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
-    return ''
+    built_pks = ""
+
+    for dirpath, dirnames, filenames in os.walk(PORTAGE_ARTIFACTS):
+        for filename in filenames:
+            if fnmatch.fnmatch(filename, "*.tbz2"): # Match search string
+                built_pks += (os.path.join(dirpath, filename) + " ")
+    return built_pks
 
 createrepo1 =f"""
 #!/bin/bash
@@ -145,42 +157,8 @@ docker_cmd = f"docker {DOCKER_OPTS} { ' -e ' + ' -e '.join(docker_env)} {' -v ' 
 
 print(docker_cmd)
 
-import subprocess
-import signal
-def restore_signals():
-        signals = ('SIGPIPE', 'SIGXFZ', 'SIGXFSZ')
-        for sig in signals:
-            if hasattr(signal, sig):
-                signal.signal(getattr(signal, sig), signal.SIG_DFL)
 
-def run_cmd(cmd):
-    process = subprocess.Popen(cmd, shell=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               preexec_fn=restore_signals)
-
-    stdout, stderr = process.communicate()
-    returncode = process.returncode
-    return stdout, stderr, returncode
-
-
-def run_term_on_error(cmd):
-    o, e, rc = run_cmd(cmd)
-    if e:
-        sys.exit('\nCommand:\n{}\n\nterminated with error:\n{}'.format(cmd, e.strip()))
-    return o, e, rc
-
-
-def run_print_output_error(cmd):
-    o, e, rc = run_cmd(cmd)
-    if o or e:
-        print '\ncommand: {}'.format(cmd)
-    if o:
-        print 'output:\n{}'.format(o.strip())
-    if e:
-        print '\nerror:\n{}'.format(e.strip())
-    return o, e, rc
-
-run_print_output_error(docker_cmd)
+#run_print_output_error(docker_cmd)
 #
 repo_conf = f"""
 [{REPOSITORY_NAME}]
@@ -190,7 +168,7 @@ enabled = true
 pkg = file://{OUTPUT_DIR}
 """
 
-if os.exists("$OUTPUT_DIR/standard"):
+if os.path.exists("$OUTPUT_DIR/standard"):
     print("The Sabayon repository files are in $OUTPUT_DIR")
     print("Now you can upload its content where you want")
     print("")
@@ -199,7 +177,4 @@ if os.exists("$OUTPUT_DIR/standard"):
     print(repo_conf)
 else:
   print("Something failed :(")
-#
-# rm -rf $createrepo
-# rm -rf $entropysrv
 
