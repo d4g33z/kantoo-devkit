@@ -25,13 +25,14 @@ import sys
 import os
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-
-SAB_WORKSPACE="/root/sab_workspace"
+SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
 META_REPO="/var/git"
+#LIB_MODULES="/lib/modules/4.19.9-docker"
 
 # take only the returned path of mkstemp and make a Path object
 entropysrv=pathlib.Path(tempfile.mkstemp()[1])
 createrepo=pathlib.Path(tempfile.mkstemp()[1])
+makeconf=pathlib.Path(tempfile.mkstemp()[1])
 
 REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
@@ -39,47 +40,47 @@ REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 #this has to match the funtoo.dockerfile
 # ARCH="arm-32bit"
 # SUBARCH="rpi3"
+OS="funtoo"
 ARCH="x86-64bit"
 SUBARCH="amd64-k10"
 
-DOCKER_IMAGE=f"{ARCH}/{SUBARCH}:stage3"
+
+DOCKER_IMAGE=f"{OS}/{ARCH}/{SUBARCH}:stage3"
+DOCKER_FILE='funtoo.dockerfile'
+
 # see https://docker-py.readthedocs.io/en/stable/containers.html
 client = docker.from_env()
 if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
     print(f"Found docker image {DOCKER_IMAGE}")
 else:
     print(f"Did not find docker image {DOCKER_IMAGE}. Must be built.")
-    client.images.build(path=DIR_PATH,dockerfile='funtoo.dockerfile',tag=DOCKER_IMAGE)
+    client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False)
 
 
 PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
-ENTROPY_ARTIFACTS=f"{SAB_WORKSPACE}/sabayon/artifacts"
 OUTPUT_DIR=f"{SAB_WORKSPACE}/entropy_artifacts"
 
-DOCKER_OPTS="--ti --rm"
 
-EDITOR="cat"
-LC_ALL="en_US.UTF-8"
+docker_env=[
+    f"EDITOR=cat",
+    f"LC_ALL=en_US.UTF-8",
+#    f"REPOSITORY={REPOSITORY_NAME}",
+]
 
-# all prefixed with -e on docker cmd line
-docker_env=(
-    f"EDITOR={EDITOR}",
-    f"REPOSITORY={REPOSITORY_NAME}",
-    f"LC_ALL={LC_ALL}")
+docker_volumes ={
+    META_REPO:{'bind':"/var/git",'mode':'ro'},
+    OUTPUT_DIR:{'bind':"/entropy/artifacts",'mode':"rw"},
+    createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
+    entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
+    makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
 
-# all prefixed with -v on docker cmd line
-docker_volumes=[
-    f"{OUTPUT_DIR}:/sabayon/artifacts",
-    f"{createrepo}:/sabayon/bin/create_repo.sh",
-    f"{entropysrv}:/etc/entropy/server.conf",
-    f"{META_REPO}:/var/git"]
-
+}
 # only scriptname with no args
 if len(sys.argv) == 1:
-    docker_volumes.append(f"{PORTAGE_ARTIFACTS}:/root/packages")
+    docker_volumes.update({PORTAGE_ARTIFACTS:{'bind':"/root/packages",'mode':"rw"}})
 else:
     print(f"Packages directory set to : {sys.argv[1]}")
-    docker_volumes.append(f"{sys.argv[1]}:/root/packages")
+    docker_volumes.update({sys.argv[1]:"/root/packages"})
 
 
 print(f"Repository: {REPOSITORY_NAME}")
@@ -99,49 +100,48 @@ def make_built_pkgs():
                 built_pks += (os.path.join(dirpath, filename) + " ")
     return built_pks
 
-createrepo1 =f"""
-#!/bin/bash
+createrepo_script =f"""#!/bin/bash
 set -e
-built_pkgs={make_built_pkgs()}
 repo="{REPOSITORY_NAME}"
-mkdir -p /sabayon/artifacts"""
+#mkdir -p /sabayon/artifacts
 
-createrepo2 = """
-[[ -z "\${built_pkgs}" ]] && echo "ERROR: no tbz2s found" && exit 2
+emerge equo entropy-server
 
 equo rescue generate
+equo rescue spmsync
+
+#built_pkgs={make_built_pkgs()}
+
+built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
 
 sed -e 's:python2.7:python:g' -i /usr/bin/eit
 
-if [ -d "/sabayon/artifacts/standard" ]; then
+if [ -d "/entropy/artifacts/standard" ]; then
   echo "=== Repository already exists, syncronizing ==="
-  eit unlock \$repo || true
-  eit pull --quick \$repo || true
-  #eit sync \$repo
+  eit unlock ${{repo}} || true
+  eit pull --quick ${{repo}} || true
+  #eit sync ${{repo}}
 else
   echo "=== Repository is empty, intializing ==="
-  echo "Yes" | eit init --quick \$repo
+  echo "Yes" | eit init --quick ${{repo}}
   eit push --quick --force
 fi
 
 echo "=== Injecting packages ==="
-eit inject \${built_pkgs} || { echo "ouch unable to inject" && exit 3; }
+eit inject ${{built_pkgs}} || {{ echo "ouch unable to inject"; }}
 eit commit --quick
 
 echo "=== Pushing built packages locally ==="
 eit push --quick --force
 """
-createrepo_script = createrepo1 + createrepo2
-print(createrepo_script)
-
 
 #now write it in createrepo tempfile
-print(f"writing to {createrepo}")
 createrepo.write_text(createrepo_script)
 createrepo.chmod(0o744)
 
+
 # Creating the entropy repository configuration on-the-fly
-entropysrv = f"""
+entropysrv_conf = f"""
 # expiration-days = <internal value>
 community-mode = enable
 weak-package-files = disable
@@ -162,18 +162,38 @@ rss-light-name = updates.rss
 managing-editor =
 broken-reverse-deps = disable
 default-repository = {REPOSITORY_NAME}
-repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file://{ENTROPY_ARTIFACTS}
+repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file://{OUTPUT_DIR}
 """
 
-print(entropysrv)
-
-docker_cmd = f"docker {DOCKER_OPTS} { ' -e ' + ' -e '.join(docker_env)} {' -v ' + ' -v '.join(docker_volumes)} {DOCKER_IMAGE} /sabayon/bin/create_repo.sh"
-
-print(docker_cmd)
+print(entropysrv_conf)
+entropysrv.write_text(entropysrv_conf)
 
 
-#run_print_output_error(docker_cmd)
-#
+make_conf = f"""
+FEATURES="buildpkg userfetch getbinpkg"
+
+PKGDIR=/root/packages
+PORTAGE_BINHOST="/root/packages"
+
+"""
+print(make_conf)
+makeconf.write_text(make_conf)
+
+DOCKER_OPTS={
+    'tty':True,
+    'init':True,
+    'remove':True,
+    'volumes':docker_volumes,
+    'environment':docker_env,
+    'entrypoint':"/bin/bash",
+    'detach':True,
+}
+
+# client.containers.run(DOCKER_IMAGE,'/entropy/bin/create_repo.sh',**DOCKER_OPTS)
+container = client.containers.run(DOCKER_IMAGE,**DOCKER_OPTS)
+
+#now use docker exec to run cmds in it
+
 repo_conf = f"""
 [{REPOSITORY_NAME}]
 desc = {REPOSITORY_DESCRIPTION}
@@ -182,8 +202,8 @@ enabled = true
 pkg = file://{OUTPUT_DIR}
 """
 
-if os.path.exists("$OUTPUT_DIR/standard"):
-    print("The Sabayon repository files are in $OUTPUT_DIR")
+if os.path.exists(f"{OUTPUT_DIR}/standard"):
+    print(f"The Sabayon repository files are in {OUTPUT_DIR}")
     print("Now you can upload its content where you want")
     print("")
     print("Here it is the repository file how will look like ")
