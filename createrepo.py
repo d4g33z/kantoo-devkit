@@ -18,10 +18,13 @@
 #utility functions
 from kantoo import *
 
+import docker
 import pathlib
 import tempfile
 import sys
 import os
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 SAB_WORKSPACE="/root/sab_workspace"
 META_REPO="/var/git"
@@ -33,10 +36,21 @@ createrepo=pathlib.Path(tempfile.mkstemp()[1])
 REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
-ARCH="arm-32bit"
-SUBARCH="rpi3"
+#this has to match the funtoo.dockerfile
+# ARCH="arm-32bit"
+# SUBARCH="rpi3"
+ARCH="x86-64bit"
+SUBARCH="amd64-k10"
 
-DOCKER_IMAGE=f"funtoo/{ARCH}/{SUBARCH}"
+DOCKER_IMAGE=f"{ARCH}/{SUBARCH}:stage3"
+# see https://docker-py.readthedocs.io/en/stable/containers.html
+client = docker.from_env()
+if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
+    print(f"Found docker image {DOCKER_IMAGE}")
+else:
+    print(f"Did not find docker image {DOCKER_IMAGE}. Must be built.")
+    client.images.build(path=DIR_PATH,dockerfile='funtoo.dockerfile',tag=DOCKER_IMAGE)
+
 
 PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
 ENTROPY_ARTIFACTS=f"{SAB_WORKSPACE}/sabayon/artifacts"
