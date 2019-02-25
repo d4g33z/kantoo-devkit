@@ -49,6 +49,15 @@ PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
 ENTROPY_ARTIFACTS= f"{SAB_WORKSPACE}/entropy_artifacts"
 
 
+class FilePlugin:
+    def __init__(self,name,mode='ro'):
+        self.path = pathlib.Path(tempfile.mkstemp()[1])
+        self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
+    def bash(self,script):
+        self.path.write_text(script)
+    @property
+    def DOCKER_SCRIPT(self):
+        return self.volume.get('bind')
 
 
 #file plugins
@@ -58,7 +67,8 @@ createrepo=pathlib.Path(tempfile.mkstemp()[1])
 makeconf=pathlib.Path(tempfile.mkstemp()[1])
 
 #a generic file to plug into the container
-fileplugin=pathlib.Path(tempfile.mkstemp()[1])
+#fileplugin=pathlib.Path(tempfile.mkstemp()[1])
+fileplugin = FilePlugin('hello_world')
 
 #env plugins
 docker_env=[
@@ -73,7 +83,8 @@ docker_volumes ={
     createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
     entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
     makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
-    fileplugin:{'bind':"/entropy/plugins/fileplugin.sh",'mode':"ro"},
+    # fileplugin:{'bind':"/entropy/plugins/fileplugin.sh",'mode':"ro"},
+    fileplugin.path:fileplugin.volume,
 
 }
 
@@ -189,15 +200,17 @@ DOCKER_OPTS={
     'detach':True,
 }
 
-fileplugin_script= """#!/bin/bash
+fileplugin.bash(
+"""#!/bin/bash
 echo hello world
-"""
-fileplugin.write_text(fileplugin_script)
+""")
+
+#fileplugin.path.write_text(fileplugin.bash)
 
 #DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
-DOCKER_SCRIPT='/entropy/plugins/fileplugin.sh'
+#DOCKER_SCRIPT='/entropy/plugins/fileplugin.sh'
 # DOCKER_SCRIPT=None
-container = client.containers.run(DOCKER_IMAGE,DOCKER_SCRIPT,**DOCKER_OPTS)
+container = client.containers.run(DOCKER_IMAGE,fileplugin.DOCKER_SCRIPT,**DOCKER_OPTS)
 if container:
     print(f"{container.name} created")
     print(f"\tmake.conf: {makeconf}")
@@ -206,7 +219,7 @@ if container:
 #for l in container.logs(stream=True):
 #    print(l)
 
-container.wait() if DOCKER_SCRIPT else None
+container.wait()
 
 if pathlib.Path(f"{DIR_PATH}/logs").exists():
     open(f"{DIR_PATH}/last_logs.txt",'wb').write(container.logs())
