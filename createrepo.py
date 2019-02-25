@@ -163,7 +163,7 @@ repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file:///entropy/artifacts
 
 entropysrv.write_text(entropysrv_conf)
 
-#configure a local binhost for portage
+#configure portage
 make_conf = f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """
