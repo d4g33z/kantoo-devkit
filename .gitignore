@@ -46,3 +46,5 @@ __javascript__/
 stage3s/
 log-*
 sab_workspace/
+logs/
+last_logs.txt
