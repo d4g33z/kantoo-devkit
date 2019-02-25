@@ -25,18 +25,6 @@ import sys
 import os
 from datetime import datetime
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
-META_REPO="/var/git"
-
-# take only the returned path of mkstemp and make a Path object
-entropysrv=pathlib.Path(tempfile.mkstemp()[1])
-createrepo=pathlib.Path(tempfile.mkstemp()[1])
-makeconf=pathlib.Path(tempfile.mkstemp()[1])
-
-REPOSITORY_NAME="testing.kantoo.org"
-REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
-
 #these are supplied to the dockerfile via build-args
 OS="funtoo"
 #ARCH="arm-32bit"
@@ -46,13 +34,49 @@ ARCH="x86-64bit"
 SUBARCH="amd64-k10"
 ENTROPY_ARCH="amd64"
 
-
 DOCKER_IMAGE=f"{OS}/{ARCH}/{SUBARCH}:stage3"
 DOCKER_FILE='funtoo.dockerfile'
 DOCKER_BUILDARGS = {
     'ARCH':ARCH,
     'SUBARCH':SUBARCH,
 }
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
+META_REPO="/var/git"
+REPOSITORY_NAME="testing.kantoo.org"
+REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
+PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
+ENTROPY_ARTIFACTS= f"{SAB_WORKSPACE}/entropy_artifacts"
+
+
+
+
+#file plugins
+# take only the returned path of mkstemp and make a Path object
+entropysrv=pathlib.Path(tempfile.mkstemp()[1])
+createrepo=pathlib.Path(tempfile.mkstemp()[1])
+makeconf=pathlib.Path(tempfile.mkstemp()[1])
+
+#a generic file to plug into the container
+fileplugin=pathlib.Path(tempfile.mkstemp()[1])
+
+#env plugins
+docker_env=[
+    f"EDITOR=cat",
+    f"LC_ALL=en_US.UTF-8",
+]
+
+#volume plugins
+docker_volumes ={
+    META_REPO:{'bind':"/var/git",'mode':'ro'},
+    ENTROPY_ARTIFACTS:{'bind': "/entropy/artifacts", 'mode': "rw"},
+    createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
+    entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
+    makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
+    fileplugin:{'bind':"/entropy/plugins/fileplugin.sh",'mode':"ro"},
+
+}
+
 # see https://docker-py.readthedocs.io/en/stable/containers.html
 client = docker.from_env()
 if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
@@ -62,23 +86,8 @@ else:
     client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False,buildargs=DOCKER_BUILDARGS)
 
 
-PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
-ENTROPY_ARTIFACTS= f"{SAB_WORKSPACE}/entropy_artifacts"
 
 
-docker_env=[
-    f"EDITOR=cat",
-    f"LC_ALL=en_US.UTF-8",
-]
-
-docker_volumes ={
-    META_REPO:{'bind':"/var/git",'mode':'ro'},
-    ENTROPY_ARTIFACTS:{'bind': "/entropy/artifacts", 'mode': "rw"},
-    createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
-    entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
-    makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
-
-}
 # only scriptname with no args
 if len(sys.argv) == 1:
     docker_volumes.update({PORTAGE_ARTIFACTS:{'bind':"/root/packages",'mode':"rw"}})
@@ -180,16 +189,30 @@ DOCKER_OPTS={
     'detach':True,
 }
 
+fileplugin_script= """#!/bin/bash
+echo hello world
+"""
+fileplugin.write_text(fileplugin_script)
+
 #DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
-DOCKER_SCRIPT=None
+DOCKER_SCRIPT='/entropy/plugins/fileplugin.sh'
+# DOCKER_SCRIPT=None
 container = client.containers.run(DOCKER_IMAGE,DOCKER_SCRIPT,**DOCKER_OPTS)
 if container:
     print(f"{container.name} created")
     print(f"\tmake.conf: {makeconf}")
     print(f"\tcreate_repo.sh: {createrepo}")
 
+#for l in container.logs(stream=True):
+#    print(l)
+
 container.wait() if DOCKER_SCRIPT else None
-open(f"log-{ARCH}-{SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb').write(container.logs())
+
+if pathlib.Path(f"{DIR_PATH}/logs").exists():
+    open(f"{DIR_PATH}/last_logs.txt",'wb').write(container.logs())
+    open(f"{DIR_PATH}/logs/{ARCH}-{SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb').write(container.logs())
+else:
+    print("create a logs/ directory to save as a timestamped file")
 
 repo_conf = f"""
 [{REPOSITORY_NAME}]
@@ -213,4 +236,5 @@ else:
 
 
 container.stop()
+container.remove()
 
