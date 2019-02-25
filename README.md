@@ -10,9 +10,13 @@ packages to build with portage and package with entropy.
 
 ## How To Use it ##
 
-It's a python script. Run it to get some uninformative output.
+Clone this repo Run the script it to get some uninformative output. Use `virtualenv` to isolate everything nicely. 
 
 ```commandline
+# cd kantoo-devkit
+# virtualenv -p /usr/bin/python3.6 env3.6
+# source env3.6/bin/activate
+# pip install -r requirements.txt
 # python createrepo.py
 Found docker image funtoo/x86-64bit/amd64-k10:stage3
 Repository: testing.kantoo.org
@@ -35,3 +39,5 @@ pkg = file:///home/jeff/Workspace/kantoo-devkit.git/sab_workspace/entropy_artifa
 ```
 
 If everything worked, you have a directory containing the Entropy artifacts: everything needed to run a repository of Entropy packaged binaries that will install on Funtoo-1.3.
+
+
