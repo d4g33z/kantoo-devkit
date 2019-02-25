@@ -3,6 +3,9 @@
 import subprocess
 import signal
 import sys
+import fnmatch
+import os
+
 def restore_signals():
         signals = ('SIGPIPE', 'SIGXFZ', 'SIGXFSZ')
         for sig in signals:
@@ -25,6 +28,15 @@ def run_term_on_error(cmd):
         sys.exit('\nCommand:\n{}\n\nterminated with error:\n{}'.format(cmd, e.strip()))
     return o, e, rc
 
+def run_and_watch(cmd):
+    process = subprocess.Popen(cmd, shell=True,
+                               stdout=sys.stdout, stderr=subprocess.PIPE,
+                               preexec_fn=restore_signals)
+
+    stderr = process.communicate()
+    returncode = process.returncode
+    return stderr, returncode
+
 
 def run_print_output_error(cmd):
     o, e, rc = run_cmd(cmd)
@@ -36,4 +48,13 @@ def run_print_output_error(cmd):
         print('\nerror:\n{}'.format(e.strip()))
     return o, e, rc
 
+def make_built_pkgs(dir_to_walk):
+    #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
+    built_pks = ""
+
+    for dirpath, dirnames, filenames in os.walk(dir_to_walk):
+        for filename in filenames:
+            if fnmatch.fnmatch(filename, "*.tbz2"): # Match search string
+                built_pks += (os.path.join(dirpath, filename) + " ")
+    return built_pks
 
