@@ -8,4 +8,8 @@ installation of binary packages via the Entropy package manager.
 Docker containers are used to create images of each choosen subarch, profile and mixins, with a predefined list of 
 packages to build with portage and package with entropy. 
 
+## How To Use it ##
 
+```commandline
+# python createrepo.py
+```
