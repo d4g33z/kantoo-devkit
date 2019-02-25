@@ -61,10 +61,13 @@ class BashPlugin:
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = {**self.env,**env}
+        return self
+    def chmod(self,mode):
+        self.path.chmod(mode)
+        return self
     @property
     def docker_env(self):
         return [f"{env_var}={value}" for env_var,value in self.env.items()]
-
     @property
     def DOCKER_SCRIPT(self):
         return self.volume.get('bind')
@@ -77,51 +80,30 @@ class FilePlugin:
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = {**self.env,**env}
+        return self
+    def chmod(self,mode):
+        self.path.chmod(mode)
+        return self
     @property
     def docker_env(self):
         return [f"{env_var}={value}" for env_var,value in self.env.items()]
 
-helloworldplugin = BashPlugin('hello_world')
-helloworldplugin.write(
+helloworldplugin = BashPlugin('hello_world').write(
 """#!/bin/bash
 echo hello world
 """)
 
 #the main script to create the repo
-createrepo = BashPlugin('create_repo')
-createrepo.write(open(f"{DIR_PATH}/plugins/bash/create_repo",'r').read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)
-createrepo.path.chmod(0o744)
+createrepo = BashPlugin('create_repo')\
+    .write(open(f"{DIR_PATH}/plugins/bash/create_repo",'r').read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)\
+    .chmod(0o744)
 
 #conifiguring local entropy server
-entropysrv = FilePlugin('/etc/entropy/server.conf')
-entropysrv.write(
-"""
-# expiration-days = <internal value>
-community-mode = disable
-weak-package-files = disable
-database-format = bz2
-# sync-speed-limit =
-# server-basic-languages = en_US C
-# disabled-eapis = 1,2
-# expiration-based-scope = disable
-# nonfree-packages-directory-support = disable
-rss-feed = enable
-changelog = enable
-rss-name = packages.rss
-rss-base-url = http://packages.sabayon.org/?quicksearch=
-rss-website-url = http://www.sabayon.org/
-max-rss-entries = 10000
-# max-rss-light-entries = 100
-rss-light-name = updates.rss
-managing-editor =
-broken-reverse-deps = disable
-default-repository = {REPOSITORY_NAME}
-repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file:///entropy/artifacts
-""")
+entropysrv = FilePlugin('/etc/entropy/server.conf')\
+    .write(open(f"{DIR_PATH}/plugins/file/server.conf","r").read().format(REPOSITORY_NAME=REPOSITORY_NAME,REPOSITORY_DESCRIPTION=REPOSITORY_DESCRIPTION))
 
 #configure portage
-makeconf = FilePlugin('/etc/portage/make.conf')
-makeconf.write(
+makeconf = FilePlugin('/etc/portage/make.conf').write(
 f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """)
