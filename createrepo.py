@@ -37,14 +37,14 @@ makeconf=pathlib.Path(tempfile.mkstemp()[1])
 REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
-#this has to match the funtoo.dockerfile
+#these are supplied to the dockerfile via build-args
 OS="funtoo"
-ARCH="arm-32bit"
-SUBARCH="rpi3"
-ENTROPY_ARCH="armv7l"
-# ARCH="x86-64bit"
-# SUBARCH="amd64-k10"
-# ENTROPY_ARCH="amd64"
+#ARCH="arm-32bit"
+#SUBARCH="rpi3"
+#ENTROPY_ARCH="armv7l"
+ARCH="x86-64bit"
+SUBARCH="amd64-k10"
+ENTROPY_ARCH="amd64"
 
 
 DOCKER_IMAGE=f"{OS}/{ARCH}/{SUBARCH}:stage3"
@@ -161,14 +161,13 @@ default-repository = {REPOSITORY_NAME}
 repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file:///entropy/artifacts
 """
 
-print(entropysrv_conf)
 entropysrv.write_text(entropysrv_conf)
 
 #configure a local binhost for portage
 make_conf = f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """
-print(make_conf)
+
 makeconf.write_text(make_conf)
 
 DOCKER_OPTS={
@@ -181,14 +180,15 @@ DOCKER_OPTS={
     'detach':True,
 }
 
-DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
+#DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
+DOCKER_SCRIPT=None
 container = client.containers.run(DOCKER_IMAGE,DOCKER_SCRIPT,**DOCKER_OPTS)
 if container:
     print(f"{container.name} created")
     print(f"\tmake.conf: {makeconf}")
     print(f"\tcreate_repo.sh: {createrepo}")
 
-container.wait()
+container.wait() if DOCKER_SCRIPT else None
 open(f"log-{ARCH}-{SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb').write(container.logs())
 
 repo_conf = f"""
