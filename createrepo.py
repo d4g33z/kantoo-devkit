@@ -23,11 +23,11 @@ import pathlib
 import tempfile
 import sys
 import os
+from datetime import datetime
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
 META_REPO="/var/git"
-#LIB_MODULES="/lib/modules/4.19.9-docker"
 
 # take only the returned path of mkstemp and make a Path object
 entropysrv=pathlib.Path(tempfile.mkstemp()[1])
@@ -38,23 +38,28 @@ REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
 #this has to match the funtoo.dockerfile
-# ARCH="arm-32bit"
-# SUBARCH="rpi3"
 OS="funtoo"
-ARCH="x86-64bit"
-SUBARCH="amd64-k10"
+ARCH="arm-32bit"
+SUBARCH="rpi3"
+ENTROPY_ARCH="armv7l"
+# ARCH="x86-64bit"
+# SUBARCH="amd64-k10"
+# ENTROPY_ARCH="amd64"
 
 
 DOCKER_IMAGE=f"{OS}/{ARCH}/{SUBARCH}:stage3"
 DOCKER_FILE='funtoo.dockerfile'
-
+DOCKER_BUILDARGS = {
+    'ARCH':ARCH,
+    'SUBARCH':SUBARCH,
+}
 # see https://docker-py.readthedocs.io/en/stable/containers.html
 client = docker.from_env()
 if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
     print(f"Found docker image {DOCKER_IMAGE}")
 else:
     print(f"Did not find docker image {DOCKER_IMAGE}. Must be built.")
-    client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False)
+    client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False,buildargs=DOCKER_BUILDARGS)
 
 
 PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
@@ -64,7 +69,6 @@ OUTPUT_DIR=f"{SAB_WORKSPACE}/entropy_artifacts"
 docker_env=[
     f"EDITOR=cat",
     f"LC_ALL=en_US.UTF-8",
-#    f"REPOSITORY={REPOSITORY_NAME}",
 ]
 
 docker_volumes ={
@@ -88,29 +92,19 @@ print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
 
 # Creating the building script on-the-fly
 # Runs inside the container
-
-import fnmatch
-def make_built_pkgs():
-    #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
-    built_pks = ""
-
-    for dirpath, dirnames, filenames in os.walk(PORTAGE_ARTIFACTS):
-        for filename in filenames:
-            if fnmatch.fnmatch(filename, "*.tbz2"): # Match search string
-                built_pks += (os.path.join(dirpath, filename) + " ")
-    return built_pks
-
 createrepo_script =f"""#!/bin/bash
 set -e
 repo="{REPOSITORY_NAME}"
-#mkdir -p /sabayon/artifacts
 
-emerge equo entropy-server
+export DONT_MOUNT_BOOT=1
+emerge -C debian-sources-lts
+emerge equo entropy-server bsdiff
 
-equo rescue generate
+if [ ! -f /var/lib/entropy/client/database/{ENTROPY_ARCH}/equo.db ]; then
+    echo "yes\nyes\nyes\n" | equo rescue generate
+fi
+
 equo rescue spmsync
-
-#built_pkgs={make_built_pkgs()}
 
 built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
 
@@ -128,11 +122,13 @@ else
 fi
 
 echo "=== Injecting packages ==="
-eit inject ${{built_pkgs}} || {{ echo "ouch unable to inject"; }}
+#eit inject ${{built_pkgs}} || {{ echo "ouch unable to inject"; }}
 eit commit --quick
 
 echo "=== Pushing built packages locally ==="
 eit push --quick --force
+
+echo "=== Finished ==="
 """
 
 #now write it in createrepo tempfile
@@ -143,7 +139,7 @@ createrepo.chmod(0o744)
 # Creating the entropy repository configuration on-the-fly
 entropysrv_conf = f"""
 # expiration-days = <internal value>
-community-mode = enable
+community-mode = disable
 weak-package-files = disable
 database-format = bz2
 # sync-speed-limit =
@@ -162,19 +158,15 @@ rss-light-name = updates.rss
 managing-editor =
 broken-reverse-deps = disable
 default-repository = {REPOSITORY_NAME}
-repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file://{OUTPUT_DIR}
+repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file:///entropy/artifacts
 """
 
 print(entropysrv_conf)
 entropysrv.write_text(entropysrv_conf)
 
-
+#configure a local binhost for portage
 make_conf = f"""
-FEATURES="buildpkg userfetch getbinpkg"
-
-PKGDIR=/root/packages
-PORTAGE_BINHOST="/root/packages"
-
+EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """
 print(make_conf)
 makeconf.write_text(make_conf)
@@ -182,17 +174,22 @@ makeconf.write_text(make_conf)
 DOCKER_OPTS={
     'tty':True,
     'init':True,
-    'remove':True,
+    'remove':False,
     'volumes':docker_volumes,
     'environment':docker_env,
     'entrypoint':"/bin/bash",
     'detach':True,
 }
 
-# client.containers.run(DOCKER_IMAGE,'/entropy/bin/create_repo.sh',**DOCKER_OPTS)
-container = client.containers.run(DOCKER_IMAGE,**DOCKER_OPTS)
+DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
+container = client.containers.run(DOCKER_IMAGE,DOCKER_SCRIPT,**DOCKER_OPTS)
+if container:
+    print(f"{container.name} created")
+    print(f"\tmake.conf: {makeconf}")
+    print(f"\tcreate_repo.sh: {createrepo}")
 
-#now use docker exec to run cmds in it
+container.wait()
+open(f"log-{ARCH}-{SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb').write(container.logs())
 
 repo_conf = f"""
 [{REPOSITORY_NAME}]
@@ -210,5 +207,9 @@ if os.path.exists(f"{OUTPUT_DIR}/standard"):
     print("(if you plan to upload it to a webserver, modify the URI accordingly)")
     print(repo_conf)
 else:
-  print("Something failed :(")
+    print("Something failed :(")
+    print("check the log")
+
+
+container.stop()
 
