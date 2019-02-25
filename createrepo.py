@@ -63,7 +63,7 @@ else:
 
 
 PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
-OUTPUT_DIR=f"{SAB_WORKSPACE}/entropy_artifacts"
+ENTROPY_ARTIFACTS= f"{SAB_WORKSPACE}/entropy_artifacts"
 
 
 docker_env=[
@@ -73,7 +73,7 @@ docker_env=[
 
 docker_volumes ={
     META_REPO:{'bind':"/var/git",'mode':'ro'},
-    OUTPUT_DIR:{'bind':"/entropy/artifacts",'mode':"rw"},
+    ENTROPY_ARTIFACTS:{'bind': "/entropy/artifacts", 'mode': "rw"},
     createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
     entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
     makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
@@ -194,17 +194,18 @@ open(f"log-{ARCH}-{SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
 repo_conf = f"""
 [{REPOSITORY_NAME}]
 desc = {REPOSITORY_DESCRIPTION}
-repo=file://{OUTPUT_DIR}#bz2
+repo=file://{ENTROPY_ARTIFACTS}#bz2
 enabled = true
-pkg = file://{OUTPUT_DIR}
+pkg = file://{ENTROPY_ARTIFACTS}
 """
 
-if os.path.exists(f"{OUTPUT_DIR}/standard"):
-    print(f"The Sabayon repository files are in {OUTPUT_DIR}")
+if os.path.exists(f"{ENTROPY_ARTIFACTS}/standard"):
+    print(f"The kantoo repository files are in {ENTROPY_ARTIFACTS}")
     print("Now you can upload its content where you want")
     print("")
     print("Here it is the repository file how will look like ")
     print("(if you plan to upload it to a webserver, modify the URI accordingly)")
+    print("This is an example of repo configuration in Entropy")
     print(repo_conf)
 else:
     print("Something failed :(")
