@@ -10,7 +10,7 @@ packages to build with portage and package with entropy.
 
 ## How To Use it ##
 
-It's a python script. Run it to get some uninformative output.
+It's a python script. Run it to get some uninformative output. Please note that the`DOCKERFILE` variable comes set to `None.` Set it to `/entropy/bin/create_repo.sh` to run the process.
 
 ```commandline
 # python createrepo.py
