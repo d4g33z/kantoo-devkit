@@ -84,7 +84,7 @@ if len(sys.argv) == 1:
     docker_volumes.update({PORTAGE_ARTIFACTS:{'bind':"/root/packages",'mode':"rw"}})
 else:
     print(f"Packages directory set to : {sys.argv[1]}")
-    docker_volumes.update({sys.argv[1]:"/root/packages"})
+    docker_volumes.update({sys.argv[1]:{'bind':"/root/packages",'mode':"rw"}})
 
 
 print(f"Repository: {REPOSITORY_NAME}")
