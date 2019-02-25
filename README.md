@@ -24,7 +24,7 @@ Repository Description: Funtoo on RPI3!
 quirky_roentgen created
 	make.conf: /tmp/tmpmvombigl
 	create_repo.sh: /tmp/tmpgjw9lfsl
-The Sabayon repository files are in /home/jeff/Workspace/kantoo-devkit.git/sab_workspace/entropy_artifacts
+The kantoo repository files are in /home/jeff/Workspace/kantoo-devkit.git/sab_workspace/entropy_artifacts
 Now you can upload its content where you want
 
 Here it is the repository file how will look like 
