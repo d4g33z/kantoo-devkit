@@ -49,14 +49,22 @@ class DirPlugin:
     def __init__(self,bind,mode='ro'):
         self.path = pathlib.Path(bind)
         self.volume = {'bind': bind, 'mode':mode}
+    @property
+    def docker_env(self):
+        return []
 
 class BashPlugin:
     def __init__(self,name,mode='ro'):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
-    def write(self,txt):
+        self.env = {}
+    def write(self,txt,**env):
         self.path.write_text(txt)
-        return self
+        self.env = {**self.env,**env}
+    @property
+    def docker_env(self):
+        return [f"{env_var}={value}" for env_var,value in self.env.items()]
+
     @property
     def DOCKER_SCRIPT(self):
         return self.volume.get('bind')
@@ -65,124 +73,27 @@ class FilePlugin:
     def __init__(self,bind,mode='ro'):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':bind,'mode':mode}
-    def write(self,txt):
+        self.env = {}
+    def write(self,txt,**env):
         self.path.write_text(txt)
-        return self #fluent
-#file plugins
-# take only the returned path of mkstemp and make a Path object
-#entropysrv=pathlib.Path(tempfile.mkstemp()[1])
-# createrepo=pathlib.Path(tempfile.mkstemp()[1])
-# makeconf=pathlib.Path(tempfile.mkstemp()[1])
+        self.env = {**self.env,**env}
+    @property
+    def docker_env(self):
+        return [f"{env_var}={value}" for env_var,value in self.env.items()]
 
-#a generic file to plug into the container
-#fileplugin=pathlib.Path(tempfile.mkstemp()[1])
 helloworldplugin = BashPlugin('hello_world')
+helloworldplugin.write(
+"""#!/bin/bash
+echo hello world
+""")
+
+#the main script to create the repo
 createrepo = BashPlugin('create_repo')
+createrepo.write(open(f"{DIR_PATH}/plugins/bash/create_repo",'r').read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)
+createrepo.path.chmod(0o744)
+
+#conifiguring local entropy server
 entropysrv = FilePlugin('/etc/entropy/server.conf')
-makeconf = FilePlugin('/etc/portage/make.conf')
-
-# PORTAGE_ARTIFACTS=f"{SAB_WORKSPACE}/portage_artifacts"
-PORTAGE_ARTIFACTS= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts")
-# ENTROPY_ARTIFACTS= f"{SAB_WORKSPACE}/entropy_artifacts"
-ENTROPY_ARTIFACTS = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'rw')
-
-# META_REPO="/var/git"
-META_REPO=DirPlugin("/var/git")
-
-#env plugins
-docker_env=[
-    f"EDITOR=cat",
-    f"LC_ALL=en_US.UTF-8",
-]
-
-#volume plugins
-docker_volumes ={
-    # META_REPO:{'bind':"/var/git",'mode':'ro'},
-    META_REPO.path:META_REPO.volume,
-    # ENTROPY_ARTIFACTS:{'bind': "/entropy/artifacts", 'mode': "rw"},
-    ENTROPY_ARTIFACTS.path:ENTROPY_ARTIFACTS.volume,
-    # PORTAGE_ARTIFACTS:{'bind':"/root/packages",'mode':"rw"},
-    PORTAGE_ARTIFACTS.path:PORTAGE_ARTIFACTS.volume,
-    createrepo.path:createrepo.volume,
-    # createrepo:{'bind':"/entropy/bin/create_repo.sh",'mode':"ro"},
-    entropysrv.path:entropysrv.volume,
-    #entropysrv:{'bind':"/etc/entropy/server.conf",'mode':"ro"},
-    makeconf.path:makeconf.volume,
-    # makeconf:{'bind':"/etc/portage/make.conf",'mode':"ro"},
-    # fileplugin:{'bind':"/entropy/plugins/fileplugin.sh",'mode':"ro"},
-    helloworldplugin.path:helloworldplugin.volume,
-
-}
-
-# see https://docker-py.readthedocs.io/en/stable/containers.html
-client = docker.from_env()
-if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
-    print(f"Found docker image {DOCKER_IMAGE}")
-else:
-    print(f"Did not find docker image {DOCKER_IMAGE}. Must be built.")
-    client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False,buildargs=DOCKER_BUILDARGS)
-
-
-
-
-# only scriptname with no args
-# if len(sys.argv) == 1:
-#     docker_volumes.update({PORTAGE_ARTIFACTS:{'bind':"/root/packages",'mode':"rw"}})
-# else:
-#     print(f"Packages directory set to : {sys.argv[1]}")
-#     docker_volumes.update({sys.argv[1]:{'bind':"/root/packages",'mode':"rw"}})
-
-
-print(f"Repository: {REPOSITORY_NAME}")
-print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
-
-# Creating the building script on-the-fly
-# Runs inside the container
-createrepo.write(
-f"""#!/bin/bash
-set -e
-repo="{REPOSITORY_NAME}"
-
-export DONT_MOUNT_BOOT=1
-emerge -C debian-sources-lts
-emerge equo entropy-server bsdiff
-
-if [ ! -f /var/lib/entropy/client/database/{ENTROPY_ARCH}/equo.db ]; then
-    echo "yes\nyes\nyes\n" | equo rescue generate
-fi
-
-equo rescue spmsync
-
-built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
-
-sed -e 's:python2.7:python:g' -i /usr/bin/eit
-
-if [ -d "/entropy/artifacts/standard" ]; then
-  echo "=== Repository already exists, syncronizing ==="
-  eit unlock ${{repo}} || true
-  eit pull --quick ${{repo}} || true
-  #eit sync ${{repo}}
-else
-  echo "=== Repository is empty, intializing ==="
-  echo "Yes" | eit init --quick ${{repo}}
-  eit push --quick --force
-fi
-
-echo "=== Injecting packages ==="
-#eit inject ${{built_pkgs}} || {{ echo "ouch unable to inject"; }}
-eit commit --quick
-
-echo "=== Pushing built packages locally ==="
-eit push --quick --force
-
-echo "=== Finished ==="
-""").path.chmod(0o744)
-
-#now write it in createrepo tempfile
-# createrepo.path.chmod(0o744)
-
-
-# Creating the entropy repository configuration on-the-fly
 entropysrv.write(
 """
 # expiration-days = <internal value>
@@ -209,31 +120,50 @@ repository={REPOSITORY_NAME}|{REPOSITORY_DESCRIPTION}|file:///entropy/artifacts
 """)
 
 #configure portage
+makeconf = FilePlugin('/etc/portage/make.conf')
 makeconf.write(
 f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """)
 
+PORTAGE_ARTIFACTS= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts")
+ENTROPY_ARTIFACTS = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'rw')
+META_REPO=DirPlugin("/var/git")
+
+#env plugins
+docker_env=[
+    f"EDITOR=cat",
+    f"LC_ALL=en_US.UTF-8",
+]
+all_plugins = [helloworldplugin,createrepo,entropysrv,makeconf,PORTAGE_ARTIFACTS,ENTROPY_ARTIFACTS,META_REPO]
+
+# see https://docker-py.readthedocs.io/en/stable/containers.html
+client = docker.from_env()
+if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
+    print(f"Found docker image {DOCKER_IMAGE}")
+else:
+    print(f"Did not find docker image {DOCKER_IMAGE}. Must be built.")
+    client.images.build(path=DIR_PATH,dockerfile=DOCKER_FILE,tag=DOCKER_IMAGE,quiet=False,buildargs=DOCKER_BUILDARGS)
+
+
+print(f"Repository: {REPOSITORY_NAME}")
+print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
+
+
+
+
+from functools import reduce
 DOCKER_OPTS={
     'tty':True,
     'init':True,
     'remove':False,
-    'volumes':docker_volumes,
-    'environment':docker_env,
+    'volumes':{x.path:x.volume for x in all_plugins},
+    'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in all_plugins])),
     'entrypoint':"/bin/bash",
     'detach':True,
 }
 
-helloworldplugin.write(
-"""#!/bin/bash
-echo hello world
-""")
 
-#fileplugin.path.write_text(fileplugin.bash)
-
-#DOCKER_SCRIPT='/entropy/bin/create_repo.sh'
-#DOCKER_SCRIPT='/entropy/plugins/fileplugin.sh'
-# DOCKER_SCRIPT=None
 container = client.containers.run(DOCKER_IMAGE, helloworldplugin.DOCKER_SCRIPT, **DOCKER_OPTS)
 #container = client.containers.run(DOCKER_IMAGE, createrepo.DOCKER_SCRIPT, **DOCKER_OPTS)
 if container:
