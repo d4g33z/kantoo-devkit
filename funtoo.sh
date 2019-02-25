@@ -8,11 +8,11 @@ GRE='\e[32m'
 MAG='\e[35m'
 YEL='\e[33m'
 
-apline_install() {
+alpine_install() {
     apk --no-cache add gnupg tar xz
 }
 
-}stage3_install() {
+stage3_install() {
     ################################################################################
     echo -e $UL$MAG"Install the Stage 3 Tarball"
     echo -e $XX
@@ -61,9 +61,9 @@ install_distcc() {
     cd usr/lib/distcc/bin
     rm c++ g++ gcc cc
     cat > ${CHOST}-wrapper << EOF2
-    #!/bin/bash
-    exec /usr/lib/distcc/bin/${CHOST}-g\${0:$[-2]} "\$@"
-    EOF2
+#!/bin/bash
+exec /usr/lib/distcc/bin/${CHOST}-g\${0:$[-2]} "\$@"
+EOF2
     ln -s ${CHOST}-wrapper cc
     ln -s ${CHOST}-wrapper gcc
     ln -s ${CHOST}-wrapper g++
