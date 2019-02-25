@@ -10,7 +10,7 @@ packages to build with portage and package with entropy.
 
 ## How To Use it ##
 
-Clone this repo Run the script it to get some uninformative output. Use `virtualenv` to isolate everything nicely. 
+Clone this repo. Run the script to get some uninformative output. Use `virtualenv` to isolate everything nicely. 
 
 ```commandline
 # cd kantoo-devkit
