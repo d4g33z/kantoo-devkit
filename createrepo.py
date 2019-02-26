@@ -81,9 +81,9 @@ with open(f"{DIR_PATH}/plugins/file/server.conf","r") as f:
         .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,REPOSITORY_DESCRIPTION=REPOSITORY_DESCRIPTION)
 
 
-portage_artifacts= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts")
-entropy_artifacts = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts", 'rw')
-meta_repo=DirPlugin("/var/git")
+portage_artifacts= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts",'/root/packages','rw')
+entropy_artifacts = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'/entropy/artifacts','rw')
+meta_repo= DirPlugin("/var/git")
 
 editor = EnvPlugin('EDITOR','cat')
 lc_all = EnvPlugin('LC_ALL','en_US.UTF-8')
