@@ -31,9 +31,9 @@ class EnvPlugin(Plugin):
         raise NotImplementedError
 
 class DirPlugin(Plugin):
-    def __init__(self,bind,mode='ro'):
-        self.path = pathlib.Path(bind)
-        self.volume = {'bind': bind, 'mode':mode}
+    def __init__(self, path, bind=None, mode='ro'):
+        self.path = pathlib.Path(path)
+        self.volume = {'bind': bind if bind is not None else path, 'mode':mode}
 
 class BashPlugin(Plugin):
     def __init__(self,name,mode='ro'):
