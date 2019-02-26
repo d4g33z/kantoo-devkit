@@ -5,7 +5,62 @@ import signal
 import sys
 import fnmatch
 import os
+import pathlib
+import tempfile
 
+#Docker plugins
+class Plugin:
+    @property
+    def docker_env(self):
+        return []
+    def write(self,txt,**env):
+        self.path.write_text(txt)
+        self.env = {**self.env,**env}
+        return self
+    def chmod(self,mode):
+        self.path.chmod(mode)
+        return self
+
+class DirPlugin(Plugin):
+    def __init__(self,bind,mode='ro'):
+        self.path = pathlib.Path(bind)
+        self.volume = {'bind': bind, 'mode':mode}
+    def write(self,txt,**env):
+        raise NotImplementedError
+
+class BashPlugin(Plugin):
+    def __init__(self,name,mode='ro'):
+        self.path = pathlib.Path(tempfile.mkstemp()[1])
+        self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
+        self.env = {}
+    @property
+    def docker_env(self):
+        return [f"{env_var}={value}" for env_var,value in self.env.items()]
+    @property
+    def DOCKER_SCRIPT(self):
+        return self.volume.get('bind')
+
+class FilePlugin(Plugin):
+    def __init__(self,bind,mode='ro'):
+        self.path = pathlib.Path(tempfile.mkstemp()[1])
+        self.volume = {'bind':bind,'mode':mode}
+        self.env = {}
+    @property
+    def docker_env(self):
+        return [f"{env_var}={value}" for env_var,value in self.env.items()]
+
+#os utilities
+def make_built_pkgs(dir_to_walk):
+    #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
+    built_pks = ""
+
+    for dirpath, dirnames, filenames in os.walk(dir_to_walk):
+        for filename in filenames:
+            if fnmatch.fnmatch(filename, "*.tbz2"): # Match search string
+                built_pks += (os.path.join(dirpath, filename) + " ")
+    return built_pks
+
+#os utilities borrowed from kano
 def restore_signals():
         signals = ('SIGPIPE', 'SIGXFZ', 'SIGXFSZ')
         for sig in signals:
@@ -48,13 +103,4 @@ def run_print_output_error(cmd):
         print('\nerror:\n{}'.format(e.strip()))
     return o, e, rc
 
-def make_built_pkgs(dir_to_walk):
-    #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
-    built_pks = ""
-
-    for dirpath, dirnames, filenames in os.walk(dir_to_walk):
-        for filename in filenames:
-            if fnmatch.fnmatch(filename, "*.tbz2"): # Match search string
-                built_pks += (os.path.join(dirpath, filename) + " ")
-    return built_pks
 
