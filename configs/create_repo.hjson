@@ -1,0 +1,94 @@
+bashplugins:
+{
+    hello_world:
+    {
+        text:
+        '''
+        #!/bin/bash
+        echo hello world
+        '''
+    },
+
+
+    create_repo:
+    {
+        #this is decoder to python as a string; use .split(',')
+        env: ENTROPY_ARCH, REPOSITORY_NAME
+        path: plugins/bash/create_repo.sh
+        #bash plugins are bound automatically to the container
+    },
+
+}
+
+fileplugins:
+{
+    hello_file:
+    {
+        bind: /tmp/hello_file
+        text:
+        '''
+        hello, file world!!!
+        '''
+    },
+
+    #configure portage
+    makeconf:
+    {
+        bind: /etc/portage/make.conf
+        text:
+        '''
+        EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
+        '''
+    },
+
+    #conifiguring local entropy server
+    entropysrv:
+    {
+        plugin: file
+        path: plugins/file/server.conf
+        bind: /etc/entropy/server.conf
+        env: REPOSITORY_NAME,REPOSITORY_DESCRIPTION
+    },
+
+}
+
+
+dirplugins:
+{
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /root/packages
+        mode: rw
+    },
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /entropy/artifacts
+        mode: rw
+    },
+
+    meta_repo:
+    {
+        path: /var/git #same as bind
+    },
+
+}
+
+envplugins:
+{
+    editor:
+    {
+        var: EDITOR
+        value: cat
+    },
+
+    lc_all:
+    {
+        var: LC_ALL
+        value: en_US.UTF-8
+    },
+
+}
+
