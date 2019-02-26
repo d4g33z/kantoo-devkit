@@ -14,7 +14,12 @@ to images.
 
 ## How To Use it ##
 
-Clone this repo. Run the script to get some uninformative output. Use `virtualenv` to isolate everything nicely. 
+Everything can be done by writing an [hjson](hjson.org) configuration file, and the necessary bash and python scripts it
+references and runs as the `command` argument to the `container.run` method in the python docker sdk. The driver sets 
+up the container (building the image if necessary from a fresh Funtoo stage3), and runs the configured scripts in 
+the container.
+
+Use `virtualenv` to isolate everything nicely. You must have a worker docker install on your development machine.
 
 ```commandline
 # cd kantoo-devkit
