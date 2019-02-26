@@ -24,6 +24,7 @@ import tempfile
 import sys
 import os
 from datetime import datetime
+from functools import reduce
 
 #these are supplied to the dockerfile via build-args
 OS="funtoo"
@@ -40,53 +41,19 @@ DOCKER_BUILDARGS = {
     'ARCH':ARCH,
     'SUBARCH':SUBARCH,
 }
+DOCKER_OPTS={
+    'tty':True,
+    'init':True,
+    'remove':False,
+    'entrypoint':"/bin/bash",
+    'detach':True,
+}
+
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
 REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
-class DirPlugin:
-    def __init__(self,bind,mode='ro'):
-        self.path = pathlib.Path(bind)
-        self.volume = {'bind': bind, 'mode':mode}
-    @property
-    def docker_env(self):
-        return []
-
-class BashPlugin:
-    def __init__(self,name,mode='ro'):
-        self.path = pathlib.Path(tempfile.mkstemp()[1])
-        self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
-        self.env = {}
-    def write(self,txt,**env):
-        self.path.write_text(txt)
-        self.env = {**self.env,**env}
-        return self
-    def chmod(self,mode):
-        self.path.chmod(mode)
-        return self
-    @property
-    def docker_env(self):
-        return [f"{env_var}={value}" for env_var,value in self.env.items()]
-    @property
-    def DOCKER_SCRIPT(self):
-        return self.volume.get('bind')
-
-class FilePlugin:
-    def __init__(self,bind,mode='ro'):
-        self.path = pathlib.Path(tempfile.mkstemp()[1])
-        self.volume = {'bind':bind,'mode':mode}
-        self.env = {}
-    def write(self,txt,**env):
-        self.path.write_text(txt)
-        self.env = {**self.env,**env}
-        return self
-    def chmod(self,mode):
-        self.path.chmod(mode)
-        return self
-    @property
-    def docker_env(self):
-        return [f"{env_var}={value}" for env_var,value in self.env.items()]
 
 helloworldplugin = BashPlugin('hello_world').write(
 """#!/bin/bash
@@ -121,6 +88,7 @@ all_plugins = [helloworldplugin,createrepo,entropysrv,makeconf,PORTAGE_ARTIFACTS
 
 # see https://docker-py.readthedocs.io/en/stable/containers.html
 client = docker.from_env()
+#there's a filter for this on the images list
 if DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
     print(f"Found docker image {DOCKER_IMAGE}")
 else:
@@ -133,18 +101,8 @@ print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
 
 
 
-
-from functools import reduce
-DOCKER_OPTS={
-    'tty':True,
-    'init':True,
-    'remove':False,
-    'volumes':{x.path:x.volume for x in all_plugins},
-    'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in all_plugins])),
-    'entrypoint':"/bin/bash",
-    'detach':True,
-}
-
+DOCKER_OPTS.update({'volumes':{x.path:x.volume for x in all_plugins}})
+DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in all_plugins]))})
 
 container = client.containers.run(DOCKER_IMAGE, helloworldplugin.DOCKER_SCRIPT, **DOCKER_OPTS)
 #container = client.containers.run(DOCKER_IMAGE, createrepo.DOCKER_SCRIPT, **DOCKER_OPTS)
