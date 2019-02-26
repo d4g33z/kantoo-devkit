@@ -24,6 +24,8 @@ Clone this repo. Run the script to get some uninformative output. Use `virtualen
 # vim configs/create_repo.hjson
 # python dockerdriver.py
 # cat last_logs.txt
+hello world
+hello, file world!!!
 ```
 
 Hello, world!
