@@ -24,36 +24,19 @@ DOCKER_OPTS:
 
 bashplugins:
 {
-    hello_world:
+
+    create_repo:
     {
-        text:
-        '''
-        #!/bin/bash
-        echo hello world
-        '''
+        #this is decoded to python as a string; use .split(',')
+        env: ENTROPY_ARCH, REPOSITORY_NAME
+        path: plugins/bash/create_repo.sh
+        #bash plugins are bound automatically to the container
     },
-
-
-#    create_repo:
-#    {
-#        #this is decoded to python as a string; use .split(',')
-#        env: ENTROPY_ARCH, REPOSITORY_NAME
-#        path: plugins/bash/create_repo.sh
-#        #bash plugins are bound automatically to the container
-#    },
 
 }
 
 fileplugins:
 {
-    hello_file:
-    {
-        bind: /tmp/hello_file
-        text:
-        '''
-        hello, file world!!!
-        '''
-    },
 
     #configure portage
     makeconf:

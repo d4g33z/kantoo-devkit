@@ -24,7 +24,8 @@ import os
 from datetime import datetime
 
 
-c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/create_repo.hjson')
+#c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/create_repo.hjson')
+c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_world.hjson')
 
 
 # see https://docker-py.readthedocs.io/en/stable/containers.html
@@ -35,11 +36,6 @@ if c.DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lam
 else:
     print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
     client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
-
-
-print(f"Repository: {c.REPOSITORY_NAME}")
-print(f"Repository Description: {c.REPOSITORY_DESCRIPTION}")
-
 
 
 for bash_plugin in c.bash_plugins:
