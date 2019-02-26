@@ -54,20 +54,14 @@ SAB_WORKSPACE=f"{DIR_PATH}/sab_workspace"
 REPOSITORY_NAME="testing.kantoo.org"
 REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
+#-------------------------------------------------------------------------------------------------------------
+#define plugins
 
+#plugin example
 helloworldplugin = BashPlugin('hello_world').write(
 """#!/bin/bash
 echo hello world
 """)
-
-#the main script to create the repo
-createrepo = BashPlugin('create_repo')\
-    .write(open(f"{DIR_PATH}/plugins/bash/create_repo",'r').read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)\
-    .chmod(0o744)
-
-#conifiguring local entropy server
-entropysrv = FilePlugin('/etc/entropy/server.conf')\
-    .write(open(f"{DIR_PATH}/plugins/file/server.conf","r").read().format(REPOSITORY_NAME=REPOSITORY_NAME,REPOSITORY_DESCRIPTION=REPOSITORY_DESCRIPTION))
 
 #configure portage
 makeconf = FilePlugin('/etc/portage/make.conf').write(
@@ -75,16 +69,31 @@ f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """)
 
-PORTAGE_ARTIFACTS= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts")
-ENTROPY_ARTIFACTS = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'rw')
-META_REPO=DirPlugin("/var/git")
+#the main script to create the repo
+with open(f"{DIR_PATH}/plugins/bash/create_repo",'r') as f:
+    createrepo = BashPlugin('create_repo')\
+        .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)\
+        .chmod(0o744)
 
-#env plugins
-docker_env=[
-    f"EDITOR=cat",
-    f"LC_ALL=en_US.UTF-8",
-]
-all_plugins = [helloworldplugin,createrepo,entropysrv,makeconf,PORTAGE_ARTIFACTS,ENTROPY_ARTIFACTS,META_REPO]
+#conifiguring local entropy server
+with open(f"{DIR_PATH}/plugins/file/server.conf","r") as f:
+    entropysrv = FilePlugin('/etc/entropy/server.conf')\
+        .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,REPOSITORY_DESCRIPTION=REPOSITORY_DESCRIPTION)
+
+
+portage_artifacts= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts")
+entropy_artifacts = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts", 'rw')
+meta_repo=DirPlugin("/var/git")
+
+editor = EnvPlugin('EDITOR','cat')
+lc_all = EnvPlugin('LC_ALL','en_US.UTF-8')
+
+all_plugins = [helloworldplugin, createrepo, entropysrv, makeconf, portage_artifacts, entropy_artifacts, meta_repo, editor, lc_all]
+#-------------------------------------------------------------------------------------------------------------
+DOCKER_OPTS.update({'volumes':{x.path:x.volume for x in all_plugins if x.path is not None}})
+DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in all_plugins]))})
+
+
 
 # see https://docker-py.readthedocs.io/en/stable/containers.html
 client = docker.from_env()
@@ -101,8 +110,6 @@ print(f"Repository Description: {REPOSITORY_DESCRIPTION}")
 
 
 
-DOCKER_OPTS.update({'volumes':{x.path:x.volume for x in all_plugins}})
-DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in all_plugins]))})
 
 container = client.containers.run(DOCKER_IMAGE, helloworldplugin.DOCKER_SCRIPT, **DOCKER_OPTS)
 #container = client.containers.run(DOCKER_IMAGE, createrepo.DOCKER_SCRIPT, **DOCKER_OPTS)
@@ -125,13 +132,13 @@ else:
 repo_conf = f"""
 [{REPOSITORY_NAME}]
 desc = {REPOSITORY_DESCRIPTION}
-repo=file://{ENTROPY_ARTIFACTS}#bz2
+repo=file://{entropy_artifacts}#bz2
 enabled = true
-pkg = file://{ENTROPY_ARTIFACTS}
+pkg = file://{entropy_artifacts}
 """
 
-if os.path.exists(f"{ENTROPY_ARTIFACTS}/standard"):
-    print(f"The kantoo repository files are in {ENTROPY_ARTIFACTS}")
+if os.path.exists(f"{entropy_artifacts}/standard"):
+    print(f"The kantoo repository files are in {entropy_artifacts}")
     print("Now you can upload its content where you want")
     print("")
     print("Here it is the repository file how will look like ")
