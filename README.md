@@ -26,4 +26,5 @@ Clone this repo. Run the script to get some uninformative output. Use `virtualen
 # cat last_logs.txt
 ```
 
+Hello, world!
 
