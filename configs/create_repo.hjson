@@ -7,18 +7,20 @@ SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
 DOCKER_FILE: funtoo.dockerfile
-
-DOCKER_OPTS:
-{
-    tty:True,
-    init:True,
-    remove:False,
-    entrypoint:"/bin/bash",
-    detach:True,
-}
+DOCKER_IMAGE_TAG:stage3
 
 REPOSITORY_NAME: testing.kantoo.org
 REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:false,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
 
 bashplugins:
 {
@@ -32,13 +34,13 @@ bashplugins:
     },
 
 
-    create_repo:
-    {
-        #this is decoded to python as a string; use .split(',')
-        env: ENTROPY_ARCH, REPOSITORY_NAME
-        path: plugins/bash/create_repo.sh
-        #bash plugins are bound automatically to the container
-    },
+#    create_repo:
+#    {
+#        #this is decoded to python as a string; use .split(',')
+#        env: ENTROPY_ARCH, REPOSITORY_NAME
+#        path: plugins/bash/create_repo.sh
+#        #bash plugins are bound automatically to the container
+#    },
 
 }
 
@@ -85,14 +87,15 @@ dirplugins:
 
     entropy_artifacts:
     {
-        path: sab_workspace/portage_artifacts
+        path: sab_workspace/entropy_artifacts
         bind: /entropy/artifacts
         mode: rw
     },
 
     meta_repo:
     {
-        path: /var/git #same as bind
+        #same as bind
+        path: /var/git
     },
 
 }
