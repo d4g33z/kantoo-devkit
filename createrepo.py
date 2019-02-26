@@ -56,7 +56,6 @@ REPOSITORY_DESCRIPTION="Funtoo on RPI3!"
 
 #-------------------------------------------------------------------------------------------------------------
 #define plugins
-
 #plugin example
 helloworldplugin = BashPlugin('hello_world').write(
 """#!/bin/bash
@@ -69,24 +68,23 @@ f"""
 EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
 """)
 
-#the main script to create the repo
-with open(f"{DIR_PATH}/plugins/bash/create_repo",'r') as f:
-    createrepo = BashPlugin('create_repo')\
-        .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)\
-        .chmod(0o744)
-
 #conifiguring local entropy server
 with open(f"{DIR_PATH}/plugins/file/server.conf","r") as f:
     entropysrv = FilePlugin('/etc/entropy/server.conf')\
         .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,REPOSITORY_DESCRIPTION=REPOSITORY_DESCRIPTION)
 
-
-portage_artifacts= DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts",'/root/packages','rw')
-entropy_artifacts = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'/entropy/artifacts','rw')
-meta_repo= DirPlugin("/var/git")
+portage_artifacts   = DirPlugin(f"{SAB_WORKSPACE}/portage_artifacts",'/root/packages','rw')
+entropy_artifacts   = DirPlugin(f"{SAB_WORKSPACE}/entropy_artifacts",'/entropy/artifacts','rw')
+meta_repo           = DirPlugin("/var/git")
 
 editor = EnvPlugin('EDITOR','cat')
 lc_all = EnvPlugin('LC_ALL','en_US.UTF-8')
+
+#the main script to create the repo
+with open(f"{DIR_PATH}/plugins/bash/create_repo",'r') as f:
+    createrepo = BashPlugin('create_repo')\
+        .write(f.read(),REPOSITORY_NAME=REPOSITORY_NAME,ENTROPY_ARCH=ENTROPY_ARCH)\
+        .chmod(0o744)
 
 all_plugins = [helloworldplugin, createrepo, entropysrv, makeconf, portage_artifacts, entropy_artifacts, meta_repo, editor, lc_all]
 #-------------------------------------------------------------------------------------------------------------
