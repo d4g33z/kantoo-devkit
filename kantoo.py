@@ -39,9 +39,13 @@ class Config:
     def info(self):
         print('a configed container')
 
+
+    @property
+    def DOCKER_REPO(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}"
     @property
     def DOCKER_IMAGE(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}:{self.DOCKER_IMAGE_TAG}"
+        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
 #Docker plugins
 class Plugin:
