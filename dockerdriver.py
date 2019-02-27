@@ -62,10 +62,10 @@ def dockerdriver(config,commit):
             else:
                 print("create a logs/ directory to save as a timestamped file")
 
-                #commit the image with a new tag
-                container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
-                #update the config to use the new image
-                c.DOCKER_TAG= f"{bash_plugin.name}"
+            #commit the image with a new tag
+            container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
+            #update the config to use the new image
+            c.DOCKER_TAG= f"{bash_plugin.name}"
 
             container.stop()
             container.remove()
