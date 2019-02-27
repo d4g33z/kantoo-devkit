@@ -33,12 +33,9 @@ class Config:
     def _bash_or_file_plugins(self,type):
         fps = self.config.get(type)
         return list(map(lambda x,y,z:x.write(y,**z),
-            [FilePlugin(**fps.get(x)) if type == 'fileplugins' else BashPlugin(x,**fps.get(x)) for x in fps.keys()],
+            [FilePlugin(**fps.get(x)) if type == 'fileplugins' else BashPlugin(x,**fps.get(x)).chmod(0o744) for x in fps.keys()],
             [x.get('text',open(x.get('path','/dev/null'),'r').read()) for x in fps.values()],
             [{y.strip():getattr(self,y.strip(),0) for y in x.get('env','DUMMY').split(',') } for x in fps.values()]))
-    def info(self):
-        print('a configed container')
-
 
     @property
     def DOCKER_REPO(self):
@@ -78,6 +75,7 @@ class BashPlugin(Plugin):
         #dummy init args needed in Config contructor
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
+        self.name = name
         self.env={}
     def write(self,txt,**env):
         self.path.write_text(txt)
