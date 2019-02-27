@@ -19,7 +19,7 @@ references and runs as the `command` argument to the `container.run` method in t
 up the container (building the image if necessary from a fresh Funtoo stage3), and runs the configured scripts in 
 the container.
 
-Use `virtualenv` to isolate everything nicely. You must have a worker docker install on your development machine.
+Use `virtualenv` to isolate everything nicely. You must have a workering docker install on your development machine.
 
 ```commandline
 # cd kantoo-devkit

@@ -25,7 +25,8 @@ from datetime import datetime
 
 
 #c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/create_repo.hjson')
-c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_world.hjson')
+#c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_world.hjson')
+c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_goodbye_world.hjson')
 
 
 # see https://docker-py.readthedocs.io/en/stable/containers.html
@@ -38,12 +39,15 @@ else:
     client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
 i = 0
+prompt = ">>>"
 for bash_plugin in c.bash_plugins:
     container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
+    print(f"{prompt}"*10)
+    print(f"{prompt}BashPlugin: {bash_plugin}")
     if container:
-        print(c.file_plugins)
-        print(c.dir_plugins)
-        print(c.env_plugins)
+        print(f"{prompt}FilePlugins: {c.file_plugins}")
+        print(f"{prompt}DirPlugins: {c.dir_plugins}")
+        print(f"{prompt}EnvPlugins: {c.env_plugins}")
 
     container.wait()
 
