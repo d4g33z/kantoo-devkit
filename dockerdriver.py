@@ -37,7 +37,7 @@ else:
     print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
     client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
-
+i = 0
 for bash_plugin in c.bash_plugins:
     container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
     if container:
@@ -53,9 +53,12 @@ for bash_plugin in c.bash_plugins:
     else:
         print("create a logs/ directory to save as a timestamped file")
 
+    container.commit(c.DOCKER_REPO,f"test-commit-{i}")
+    c.DOCKER_TAG= f"test-commit-{i}"
+
     container.stop()
     container.remove()
-
+    i += 1
 # repo_conf = f"""
 # [{REPOSITORY_NAME}]
 # desc = {REPOSITORY_DESCRIPTION}
