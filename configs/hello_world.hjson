@@ -7,7 +7,7 @@ SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
 DOCKER_FILE: funtoo.dockerfile
-DOCKER_IMAGE_TAG:stage3
+DOCKER_TAG:stage3
 
 DOCKER_OPTS:
 {
@@ -32,6 +32,17 @@ bashplugins:
     },
 
 
+    goodbye_world:
+    {
+        text:
+        '''
+        #!/bin/bash
+        echo goodbye world
+        cat /tmp/goodbye_file
+        '''
+    },
+
+
 }
 
 fileplugins:
@@ -43,6 +54,16 @@ fileplugins:
         '''
         hello, file world!!!
         
+        '''
+    },
+
+    goodbye_file:
+    {
+        bind: /tmp/goodbye_file
+        text:
+        '''
+        goodbye, file world!!!
+
         '''
     },
 

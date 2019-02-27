@@ -7,7 +7,7 @@ SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
 DOCKER_FILE: funtoo.dockerfile
-DOCKER_IMAGE_TAG:stage3
+DOCKER_TAG:stage3
 
 REPOSITORY_NAME: testing.kantoo.org
 REPOSITORY_DESCRIPTION: Funtoo on RPI3!
