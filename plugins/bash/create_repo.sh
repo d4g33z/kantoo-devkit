@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # notice the python f-string variables and the
 set -e
 repo="${REPOSITORY_NAME}"
