@@ -21,67 +21,52 @@ from kantoo import *
 import docker
 import pathlib
 import os
+import click
 from datetime import datetime
 
 
-#c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/create_repo.hjson')
-#c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_world.hjson')
-c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_goodbye_world.hjson')
+@click.command()
+@click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
+def dockerdriver(config):
+
+    # c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_goodbye_world.hjson')
+    c = Config(os.path.dirname(os.path.realpath(__file__)), config)
 
 
-# see https://docker-py.readthedocs.io/en/stable/containers.html
-client = docker.from_env()
-#there's a filter for this on the images list
-if c.DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
-    print(f"Found docker image {c.DOCKER_IMAGE}")
-else:
-    print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
-    client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
-
-i = 0
-prompt = ">>>"
-for bash_plugin in c.bash_plugins:
-    container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
-    print(f"{prompt}"*10)
-    print(f"{prompt}BashPlugin: {bash_plugin}")
-    if container:
-        print(f"{prompt}FilePlugins: {c.file_plugins}")
-        print(f"{prompt}DirPlugins: {c.dir_plugins}")
-        print(f"{prompt}EnvPlugins: {c.env_plugins}")
-
-    container.wait()
-
-    if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-        open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(container.logs())
-        open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(container.logs())
+    # see https://docker-py.readthedocs.io/en/stable/containers.html
+    client = docker.from_env()
+    #there's a filter for this on the images list
+    if c.DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
+        print(f"Found docker image {c.DOCKER_IMAGE}")
     else:
-        print("create a logs/ directory to save as a timestamped file")
+        print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
+        client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
-    container.commit(c.DOCKER_REPO,f"test-commit-{i}")
-    c.DOCKER_TAG= f"test-commit-{i}"
+    i = 0
+    prompt = ">>>"
+    for bash_plugin in c.bash_plugins:
+        container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
+        print(f"{prompt}"*10)
+        print(f"{prompt}BashPlugin: {bash_plugin}")
+        if container:
+            print(f"{prompt}FilePlugins: {c.file_plugins}")
+            print(f"{prompt}DirPlugins: {c.dir_plugins}")
+            print(f"{prompt}EnvPlugins: {c.env_plugins}")
 
-    container.stop()
-    container.remove()
-    i += 1
-# repo_conf = f"""
-# [{REPOSITORY_NAME}]
-# desc = {REPOSITORY_DESCRIPTION}
-# repo=file://{entropy_artifacts}#bz2
-# enabled = true
-# pkg = file://{entropy_artifacts}
-# """
-#
-# if os.path.exists(f"{entropy_artifacts}/standard"):
-#     print(f"The kantoo repository files are in {entropy_artifacts}")
-#     print("Now you can upload its content where you want")
-#     print("")
-#     print("Here it is the repository file how will look like ")
-#     print("(if you plan to upload it to a webserver, modify the URI accordingly)")
-#     print("This is an example of repo configuration in Entropy")
-#     print(repo_conf)
-# else:
-#     print("Something failed :(")
-#     print("check the log")
-#
+        container.wait()
 
+        if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
+            open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(container.logs())
+            open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(container.logs())
+        else:
+            print("create a logs/ directory to save as a timestamped file")
 
+        container.commit(c.DOCKER_REPO,f"test-commit-{i}")
+        c.DOCKER_TAG= f"test-commit-{i}"
+
+        container.stop()
+        container.remove()
+        i += 1
+
+if __name__ == '__main__':
+    dockerdriver()
