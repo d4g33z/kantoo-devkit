@@ -26,7 +26,7 @@ Use `virtualenv` to isolate everything nicely. You must have a worker docker ins
 # virtualenv -p /usr/bin/python3.6 env3.6
 # source env3.6/bin/activate
 # pip install -r requirements.txt
-# vim configs/create_repo.hjson
+# vim configs/hello_world.hjson
 # python dockerdriver.py
 # cat last_logs.txt
 hello world
