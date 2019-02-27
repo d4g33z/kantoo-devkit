@@ -57,3 +57,5 @@ goodbye, file world!!!
 
 Hello, world!
 
+**NOTE: The sequence of plugin operations is not cummulative yet on a single container or image. `container.exec_run` is not working correctly**
+
