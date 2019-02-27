@@ -31,6 +31,18 @@ bashplugins:
         '''
     },
 
+
+    goodbye_world:
+    {
+        text:
+        '''
+        #!/bin/bash
+        echo goodbye world
+        cat /tmp/goodbye_file
+        '''
+    },
+
+
 }
 
 fileplugins:
@@ -45,6 +57,15 @@ fileplugins:
         '''
     },
 
+    goodbye_file:
+    {
+        bind: /tmp/goodbye_file
+        text:
+        '''
+        goodbye, file world!!!
+
+        '''
+    },
 
 }
 
