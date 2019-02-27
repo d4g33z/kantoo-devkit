@@ -25,7 +25,7 @@ bashplugins:
     {
         text:
         '''
-        #!/bin/bash
+        #!/bin/sh
         echo hello world
         cat /tmp/hello_file
         '''
@@ -36,7 +36,7 @@ bashplugins:
     {
         text:
         '''
-        #!/bin/bash
+        #!/bin/sh
         echo goodbye world
         cat /tmp/goodbye_file
         '''
