@@ -28,9 +28,31 @@ Use `virtualenv` to isolate everything nicely. You must have a worker docker ins
 # pip install -r requirements.txt
 # vim configs/hello_world.hjson
 # python dockerdriver.py
+Found docker image funtoo/x86-64bit/amd64-k10:stage3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>BashPlugin: /entropy/plugins/hello_world.sh
+>>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
+>>>DirPlugins: [/var/git : /var/git]
+>>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
 # cat last_logs.txt
 hello world
 hello, file world!!!
+# vim configs/hello_goodbye_world.hjson
+# python dockerdriver.py
+Found docker image funtoo/x86-64bit/amd64-k10:stage3
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>BashPlugin: /entropy/plugins/hello_world.sh
+>>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
+>>>DirPlugins: [/var/git : /var/git]
+>>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>BashPlugin: /entropy/plugins/goodbye_world.sh
+>>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
+>>>DirPlugins: [/var/git : /var/git]
+>>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
+# cat last_logs.txt
+goodbye world
+goodbye, file world!!!
 ```
 
 Hello, world!
