@@ -27,7 +27,8 @@ from datetime import datetime
 
 @click.command()
 @click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
-def dockerdriver(config):
+@click.option('--commit',default=True,type=bool,help='Preserve the result of each script plugin as an image')
+def dockerdriver(config,commit):
 
     # c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_goodbye_world.hjson')
     c = Config(os.path.dirname(os.path.realpath(__file__)), config)
@@ -42,7 +43,6 @@ def dockerdriver(config):
         print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
         client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
-    i = 0
     prompt = ">>>"
     for bash_plugin in c.bash_plugins:
         container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
@@ -55,18 +55,38 @@ def dockerdriver(config):
 
         container.wait()
 
+        open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(container.logs())
         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-            open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(container.logs())
             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(container.logs())
         else:
             print("create a logs/ directory to save as a timestamped file")
 
-        container.commit(c.DOCKER_REPO,f"test-commit-{i}")
-        c.DOCKER_TAG= f"test-commit-{i}"
+        if commit:
+            container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
+            c.DOCKER_TAG= f"{bash_plugin.name}"
 
         container.stop()
         container.remove()
-        i += 1
-
+    # else:
+    #     print('no commit')
+    #     container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
+    #     for bash_plugin in c.bash_plugins:
+    #         exec_result = container.exec_run(bash_plugin.DOCKER_SCRIPT, environment=bash_plugin.docker_env)
+    #         print(f"{prompt}"*10)
+    #         print(f"{prompt}BashPlugin: {bash_plugin}")
+    #         if container:
+    #             print(f"{prompt}FilePlugins: {c.file_plugins}")
+    #             print(f"{prompt}DirPlugins: {c.dir_plugins}")
+    #             print(f"{prompt}EnvPlugins: {c.env_plugins}")
+    #
+    #
+    #         open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
+    #         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
+    #             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
+    #         else:
+    #             print("create a logs/ directory to save as a timestamped file")
+    #
+    #     container.stop()
+    #     container.remove()
 if __name__ == '__main__':
     dockerdriver()
