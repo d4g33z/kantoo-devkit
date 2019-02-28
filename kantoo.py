@@ -105,7 +105,9 @@ class FilePlugin(Plugin):
         return self
     def __repr__(self):
         return f"{self.volume.get('bind')}"
-#os utilities
+
+
+#os utilities from the kano.me kano-debber utilities.py
 def make_built_pkgs(dir_to_walk):
     #built_pkgs=\$(find /root/packages -name "*.tbz2" | xargs)
     built_pks = ""

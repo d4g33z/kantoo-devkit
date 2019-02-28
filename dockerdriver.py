@@ -30,7 +30,6 @@ from datetime import datetime
 @click.option('--commit',default=True,type=bool,help='Preserve the result of each script plugin as an image')
 def dockerdriver(config,commit):
 
-    # c = Config(os.path.dirname(os.path.realpath(__file__)), 'configs/hello_goodbye_world.hjson')
     c = Config(os.path.dirname(os.path.realpath(__file__)), config)
 
 
@@ -49,8 +48,6 @@ def dockerdriver(config,commit):
     prompt = ">>>"
     for bash_plugin in c.bash_plugins:
         if commit:
-            #this detaches
-            #container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
         elif not commit and not bash_plugins_started:
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
@@ -84,6 +81,6 @@ def dockerdriver(config,commit):
         container.remove()
     except:
         print('no container to remove. running --commit? it is ok')
-        
+
 if __name__ == '__main__':
     dockerdriver()
