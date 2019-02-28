@@ -9,8 +9,8 @@ WORKDIR /funtoo
 
 # here are all the arguments about arch/subarch ... defined
 # set from createrepo.py
-#ARG ARCH=x86-64bit
-#ARG SUBARCH=amd64-k10
+ARG ARCH
+ARG SUBARCH
 ARG DIST="https://build.funtoo.org/1.3-release-std"
 ARG FILENAME="stage3-latest.tar.xz"
 
@@ -22,7 +22,7 @@ ENV LC_ALL en_US.UTF-8
 
 #copy if exists
 #https://forums.docker.com/t/copy-only-if-file-exist/3781/2
-COPY stage3-*.tar.xz stage3-latest.tar.xz
+#COPY stage3-*.tar.xz stage3-latest.tar.xz
 
 COPY funtoo.sh root/funtoo.sh
 
