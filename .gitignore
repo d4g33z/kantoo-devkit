@@ -48,3 +48,4 @@ log-*
 sab_workspace/
 logs/
 last_logs.txt
+env3.6/
