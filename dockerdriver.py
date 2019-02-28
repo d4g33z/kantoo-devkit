@@ -84,50 +84,6 @@ def dockerdriver(config,commit):
         container.remove()
     except:
         print('no container to remove. running --commit? it is ok')
-    #-----------------------------------------------------------------------------------------------------------------
-    # if commit:
-    #     for bash_plugin in c.bash_plugins:
-    #         container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
-    #         print(f"{prompt}"*10)
-    #         print(f"{prompt}BashPlugin: {bash_plugin}")
-    #         if container:
-    #             print(f"{prompt}FilePlugins: {c.file_plugins}")
-    #             print(f"{prompt}DirPlugins: {c.dir_plugins}")
-    #             print(f"{prompt}EnvPlugins: {c.env_plugins}")
-    #
-    #         container.wait()
-    #
-    #         open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(container.logs())
-    #         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-    #             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(container.logs())
-    #         else:
-    #             print("create a logs/ directory to save as a timestamped file")
-    #
-    #         #commit the image with a new tag
-    #         container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
-    #         #update the config to use the new image
-    #         c.DOCKER_TAG= f"{bash_plugin.name}"
-    #
-    #         container.stop()
-    #         container.remove()
-    # else:
-    #     container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS,read_only=False)
-    #     for bash_plugin in c.bash_plugins:
-    #         exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
-    #         print(f"{prompt}"*10)
-    #         print(f"{prompt}BashPlugin: {bash_plugin}")
-    #         if container:
-    #             print(f"{prompt}FilePlugins: {c.file_plugins}")
-    #             print(f"{prompt}DirPlugins: {c.dir_plugins}")
-    #             print(f"{prompt}EnvPlugins: {c.env_plugins}")
-    #
-    #         open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
-    #         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-    #             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
-    #         else:
-    #             print("create a logs/ directory to save as a timestamped file")
-    #
-    #     container.stop()
-    #     container.remove()
+        
 if __name__ == '__main__':
     dockerdriver()
