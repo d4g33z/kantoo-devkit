@@ -1,4 +1,5 @@
 OS: funtoo
+<<<<<<< Updated upstream
 #ARCH="arm-32bit"
 #SUBARCH="rpi3"
 #ENTROPY_ARCH="armv7l"

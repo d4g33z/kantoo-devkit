@@ -34,16 +34,36 @@ def dockerdriver(config,commit):
     c = Config(os.path.dirname(os.path.realpath(__file__)), config)
 
 
-    # see https://docker-py.readthedocs.io/en/stable/containers.html
     client = docker.from_env()
-    #there's a filter for this on the images list
+
+    #https://docs.docker.com/engine/api/v1.29/#tag/Image
+    #there's a filter for this on the images list, probably. can't figure out the api
     if c.DOCKER_IMAGE in list(map(lambda x:x.pop(),(filter(lambda x:x != [],(map(lambda x:x.tags,client.images.list())))))):
         print(f"Found docker image {c.DOCKER_IMAGE}")
     else:
         print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
+        #USE DOCKER_BUILDKIT=1 for the new build tools
         client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
+    bash_plugins_started = False
     prompt = ">>>"
+    for bash_plugin in c.bash_plugins:
+        if not bash_plugins_started:
+            container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
+            bash_plugins_started = True
+
+        print(f"{prompt}"*10)
+        print(f"{prompt}BashPlugin: {bash_plugin}")
+        if container:
+            print(f"{prompt}FilePlugins: {c.file_plugins}")
+            print(f"{prompt}DirPlugins: {c.dir_plugins}")
+            print(f"{prompt}EnvPlugins: {c.env_plugins}")
+
+        if not commit:
+            exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
+
+
+    #-----------------------------------------------------------------------------------------------------------------
     if commit:
         for bash_plugin in c.bash_plugins:
             container = client.containers.run(c.DOCKER_IMAGE, bash_plugin.DOCKER_SCRIPT, **c.DOCKER_OPTS)
