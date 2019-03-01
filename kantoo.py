@@ -42,7 +42,7 @@ class Config:
             [FilePlugin(**pluginblock.get(x)) if type == 'fileplugins' else BashPlugin(x,**pluginblock.get(x)).chmod(0o744) for x in pluginblock.keys()],
             #get the text from the hjson file or a file on disk
             [x.get('text',open(x.get('path','/dev/null'),'r').read()) for x in pluginblock.values()],
-            #get the env or f-string vars
+            #get the env or f-string vars using value on Config obj or those set in the block itself
             [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in pluginblock.values()] ))
 
     @property
