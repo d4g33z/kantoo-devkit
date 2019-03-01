@@ -49,8 +49,12 @@ def dockerdriver(config,commit):
     for bash_plugin in c.bash_plugins:
         if commit:
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS,detach=True)
-        elif not commit and not bash_plugins_started:
-            container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS,detach=True)
+        else:
+            if bash_plugins_started:
+                pass
+            else:
+                container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS,detach=True)
+        container.start()
 
         print(f"{prompt}"*10)
         print(f"{prompt}BashPlugin: {bash_plugin}")
@@ -67,14 +71,15 @@ def dockerdriver(config,commit):
         else:
             print("create a logs/ directory to save as a timestamped file")
 
+        container.stop()
         if commit:
             #commit the image with a new tag
             container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
             #update the config to use the new image
             c.DOCKER_TAG= f"{bash_plugin.name}"
-
-            container.stop()
             container.remove()
+
+
     try:
         container.stop()
         container.remove()
