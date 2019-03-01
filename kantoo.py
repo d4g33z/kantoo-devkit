@@ -11,6 +11,7 @@ import hjson
 from functools import reduce
 
 class Config:
+
     def __init__(self,script_pwd,config_rel_path):
         self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
         self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
@@ -82,10 +83,12 @@ class DirPlugin(Plugin):
         return f"{self.path} : {self.volume.get('bind')}"
 
 class BashPlugin(Plugin):
-    def __init__(self, name, mode='ro', text=None, path=None, **kwargs):
+    #allowing skipping of steps in hjson file or programmatically
+    def __init__(self, name, mode='ro', text=None, path=None, skip=False,**kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
         self.name = name
+        self.skip = skip
 
     def write(self,txt,**env):
         self.path.write_text(txt)

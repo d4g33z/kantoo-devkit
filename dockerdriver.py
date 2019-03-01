@@ -48,11 +48,9 @@ def dockerdriver(config,commit):
     prompt = ">>>"
     for bash_plugin in c.bash_plugins:
         if commit:
+            container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
             if not bash_plugins_started:
                 bash_plugins_started = True
-            container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-            bash_plugins_started = True
-
         else:
             if bash_plugins_started:
                 pass
@@ -67,13 +65,16 @@ def dockerdriver(config,commit):
             print(f"{prompt}DirPlugins: {c.dir_plugins}")
             print(f"{prompt}EnvPlugins: {c.env_plugins}")
 
-        exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
+        if not bash_plugin.skip:
+            exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
 
-        open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
-        if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-            open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
+            open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
+            if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
+                open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
+            else:
+                print("create a logs/ directory to save as a timestamped file")
         else:
-            print("create a logs/ directory to save as a timestamped file")
+            print(f"{bash_plugin.name} skipped" )
 
         if commit:
             #update the config to use the new image

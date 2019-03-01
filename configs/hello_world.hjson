@@ -48,6 +48,17 @@ bashplugins:
         #bash plugins are bound automatically to the container
     },
 
+    skipped_hello_world:
+    {
+        #demo of skip parameter
+        skip: true
+        text:
+        '''
+        #!/bin/sh
+        echo I don\'t get to say hello due to skip=true
+        '''
+    },
+
 }
 
 fileplugins:
