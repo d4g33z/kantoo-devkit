@@ -43,7 +43,6 @@ def dockerdriver(config,commit,skip):
         print(f"Found docker image {c.DOCKER_IMAGE}")
     else:
         print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
-        #USE DOCKER_BUILDKIT=1 for the new build tools
         client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
     bash_plugins_started = False

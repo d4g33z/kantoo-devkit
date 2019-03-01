@@ -11,7 +11,6 @@ import hjson
 from functools import reduce
 
 class Config:
-
     def __init__(self,script_pwd,config_rel_path):
         self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
         self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))

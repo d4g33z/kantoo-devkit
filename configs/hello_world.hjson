@@ -11,6 +11,9 @@ ENTROPY_ARCH: amd64
 DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG: stage3
 
+#this doesn't work yet but it should
+DOCKER_BUILDKIT:1
+
 DOCKER_OPTS:
 {
     tty:true,
@@ -50,7 +53,7 @@ bashplugins:
 
     skipped_hello_world:
     {
-        #demo of skip parameter
+        #demo of skip parameter; can be set on cmdline via --skip
         skip: true
         text:
         '''
