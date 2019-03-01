@@ -1,10 +1,10 @@
 OS: funtoo
-ARCH: "arm-32bit"
-SUBARCH: "raspi3"
-ENTROPY_ARCH: "armv7l"
-#ARCH: x86-64bit
-#SUBARCH: amd64-k10
-#ENTROPY_ARCH: amd64
+#ARCH: "arm-32bit"
+#SUBARCH: "raspi3"
+#ENTROPY_ARCH: "armv7l"
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
 
 DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG: stage3
