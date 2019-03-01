@@ -1,0 +1,35 @@
+#-----------------------------------
+# Must haves
+OS: funtoo
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+DOCKER_TAG: stage3
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:false,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+ENV_A1: a global value
+#-----------------------------------
+
+bashplugins:
+{
+    test_plugin_a:
+    {
+        ENV_A0:     env_a0
+        ENV_A1:     ''
+        path:       plugins/bash/test_plugin/test_plugin_a.sh
+    },
+}
+
+#env for all plugins
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}

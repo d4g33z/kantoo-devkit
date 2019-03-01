@@ -1,3 +1,5 @@
+#-----------------------------------------------------------------------------------------------------------------------
+# variables set on the Config obj; must be upper case a la shell
 OS: funtoo
 #ARCH: "arm-32bit"
 #SUBARCH: "raspi3"
@@ -18,11 +20,24 @@ DOCKER_OPTS:
     detach:true,
 }
 
+#avaiable to all plugins
 GLOBAL_VAR:hello globally
+
+#-----------------------------------------------------------------------------------------------------------------------
+#environment variables for every call of container.exec_run
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
 bashplugins:
 {
     hello_world:
     {
+        #environment variable for just this plugin called with exec_run with given initial value
+        #an empty string means use the value set on the Config object above
+        #if set here they override values set in the root block
         GLOBAL_VAR:''
         text:
         '''
@@ -38,7 +53,9 @@ fileplugins:
 {
     hello_file:
     {
+        #these are variables that are used in python f-string subsitutions
         LOCAL_VAR: hello locally
+        #note the override
         GLOBAL_VAR: hello via override
         bind: /tmp/hello_file
         text:
@@ -64,8 +81,3 @@ dirplugins:
 
 }
 
-envplugins:
-{
-    EDITOR: cat
-    LC_ALL: en_US.UTF-8
-}
