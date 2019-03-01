@@ -18,15 +18,16 @@ DOCKER_OPTS:
     detach:true,
 }
 
-
+GLOBAL_VAR:hello globally
 bashplugins:
 {
     hello_world:
     {
+        GLOBAL_VAR:''
         text:
         '''
         #!/bin/sh
-        echo hello world
+        echo ${GLOBAL_VAR}
         cat /tmp/hello_file
         '''
     },
@@ -37,11 +38,14 @@ fileplugins:
 {
     hello_file:
     {
+        LOCAL_VAR: hello locally
+        GLOBAL_VAR: hello via override
         bind: /tmp/hello_file
         text:
         '''
-        hello, file world!!!
-        
+        {LOCAL_VAR}
+        {GLOBAL_VAR}
+
         '''
     },
 
