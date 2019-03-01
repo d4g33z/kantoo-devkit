@@ -45,6 +45,7 @@ bashplugins:
         echo ${GLOBAL_VAR}
         cat /tmp/hello_file
         '''
+        #bash plugins are bound automatically to the container
     },
 
 }
