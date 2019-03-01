@@ -49,8 +49,10 @@ def dockerdriver(config,commit):
     for bash_plugin in c.bash_plugins:
         if commit:
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
+            bash_plugins_started = True
         elif not commit and not bash_plugins_started:
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
+            bash_plugins_started = True
 
 
         print(f"{prompt}"*10)
