@@ -30,9 +30,13 @@ from datetime import datetime
 @click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
 @click.option('--commit',default=True,type=bool,help='Preserve the result of each script plugin as an image')
 @click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
-def dockerdriver(config,commit,skip):
+@click.option('--pretend',is_flag=True,help="skip all bash plugins")
+def dockerdriver(config,commit,skip,pretend):
 
     c = Config(os.path.dirname(os.path.realpath(__file__)), config)
+    if pretend:
+        [setattr(bp,'skip',True) for bp in c.bash_plugins]
+
     #use cli --skip to set certain bash plugins to skip=True
     [setattr(bp,'skip',True) for bp in filter(lambda x:getattr(x,'name') in skip,c.bash_plugins)]
 
