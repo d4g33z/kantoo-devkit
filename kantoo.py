@@ -12,7 +12,7 @@ from functools import reduce
 
 class Config:
     def __init__(self,script_pwd,config_rel_path):
-        self.SCRIPT_PWD = script_pwd
+        self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
         self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
         #all-caps root level keys become attributes
         [ setattr(self,y,self.config.get(y)) for y in filter(lambda x:x == x.upper(),self.config.keys()) ]
@@ -22,7 +22,7 @@ class Config:
         self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
         self.all_plugins = self.file_plugins + self.dir_plugins + self.bash_plugins + self.env_plugins
 
-        self.DOCKER_OPTS = {}
+        # DOCKER_OPTS is define in the hjson config file
         self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
         # self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.all_plugins],[]))})
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
