@@ -1,9 +1,5 @@
 
 # License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
-import subprocess
-import signal
-import sys
-import fnmatch
 import os
 import pathlib
 import tempfile
