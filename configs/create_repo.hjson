@@ -9,8 +9,6 @@ ENTROPY_ARCH: amd64
 DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG:stage3
 
-REPOSITORY_NAME: testing.kantoo.org
-REPOSITORY_DESCRIPTION: Funtoo on RPI3!
 
 DOCKER_OPTS:
 {
@@ -21,14 +19,21 @@ DOCKER_OPTS:
     detach:true,
 }
 
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+    REPOSITORY_NAME: testing.kantoo.org
+    REPOSITORY_DESCRIPTION: Funtoo on RPI3!
 
+}
 bashplugins:
 {
 
     create_repo:
     {
-        #this is decoded to python as a string; use .split(',')
-        env: ENTROPY_ARCH, REPOSITORY_NAME
+        ENTROPY_ARCH: ''
+        REPOSITORY_NAME: ''
         path: plugins/bash/create_repo.sh
         #bash plugins are bound automatically to the container
     },
@@ -83,8 +88,4 @@ dirplugins:
 
 }
 
-envplugins:
-{
-    EDITOR: cat
-    LC_ALL: en_US.UTF-8
-}
+
