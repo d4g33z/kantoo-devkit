@@ -52,6 +52,7 @@ class Config:
     def DOCKER_IMAGE(self):
         return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
+
 #Docker plugins
 class Plugin:
     @property
@@ -80,15 +81,13 @@ class DirPlugin(Plugin):
 
 class BashPlugin(Plugin):
     def __init__(self, name, mode='ro', text=None, path=None, **kwargs):
-        #dummy init args needed in Config contructor
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
         self.name = name
-        self.env = kwargs
 
     def write(self,txt,**env):
         self.path.write_text(txt)
-        self.env = {**self.env,**env}
+        self.env = env
         return self
     def chmod(self,mode):
         self.path.chmod(mode)
