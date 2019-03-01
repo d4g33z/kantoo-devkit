@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
 
 # Copyright 2016-2018 See AUTHORS file
