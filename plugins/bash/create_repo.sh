@@ -13,8 +13,8 @@ fi
 
 equo rescue spmsync
 
-built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
 
+built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
 sed -e 's:python2.7:python:g' -i /usr/bin/eit
 
 if [ -d "/entropy/artifacts/standard" ]; then

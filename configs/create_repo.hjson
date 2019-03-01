@@ -32,6 +32,8 @@ bashplugins:
 
     remove_portage_pkgs:
     {
+
+        DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
@@ -52,6 +54,26 @@ bashplugins:
         path: plugins/bash/create_repo/rebuild_entropy_database.sh
     },
 
+    patch_eit:
+    {
+        path: plugins/bash/create_repo/patch_eit.sh
+    },
+
+    sync_or_create_local_repo:
+    {
+        REPOSITORY_NAME:''
+        path: plugins/bash/create_repo/sync_or_create_local_repo.sh
+    },
+
+    inject_portage_pkgs:
+    {
+        path:plugins/bash/create_repo/inject_portage_pkgs.sh
+    },
+
+    commit_all_and_push:
+    {
+        path:plugins/bash/create_repo/commit_all_and_push.sh
+    },
 
 }
 
