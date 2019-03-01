@@ -76,10 +76,10 @@ def dockerdriver(config,commit):
             print("create a logs/ directory to save as a timestamped file")
 
         if commit:
-            #commit the image with a new tag
-            container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
             #update the config to use the new image
-            c.DOCKER_TAG= f"{bash_plugin.name}"
+            c.update(DOCKER_TAG=f"{bash_plugin.name}")
+            #commit the image with a new tag
+            container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
             container.stop()
             container.remove()
 
@@ -87,8 +87,8 @@ def dockerdriver(config,commit):
     try:
         container.stop()
         container.remove()
-    except:
-        print('no container to remove. running --commit? it is ok')
+    except docker.errors.NotFound:
+        pass
 
 if __name__ == '__main__':
     dockerdriver()

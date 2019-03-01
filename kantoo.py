@@ -52,6 +52,8 @@ class Config:
     def DOCKER_IMAGE(self):
         return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
+    def update(self,**kwargs):
+        [setattr(self,k,v) for k,v in kwargs.items()]
 
 #Docker plugins
 class Plugin:
