@@ -48,12 +48,17 @@ def dockerdriver(config,commit):
     prompt = ">>>"
     for bash_plugin in c.bash_plugins:
         if commit:
-            container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-            bash_plugins_started = True
-        elif not commit and not bash_plugins_started:
+            if not bash_plugins_started:
+                bash_plugins_started = True
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
             bash_plugins_started = True
 
+        else:
+            if bash_plugins_started:
+                pass
+            else:
+                container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
+                bash_plugins_started = True
 
         print(f"{prompt}"*10)
         print(f"{prompt}BashPlugin: {bash_plugin}")
@@ -75,9 +80,10 @@ def dockerdriver(config,commit):
             container.commit(c.DOCKER_REPO,f"{bash_plugin.name}")
             #update the config to use the new image
             c.DOCKER_TAG= f"{bash_plugin.name}"
-
             container.stop()
             container.remove()
+
+
     try:
         container.stop()
         container.remove()
