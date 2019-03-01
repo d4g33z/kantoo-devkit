@@ -1,3 +1,6 @@
+
+#-----------------------------------------------------------------------------------------------------------------------
+# variables set on the Config obj; must be upper case a la shell
 OS: funtoo
 #ARCH="arm-32bit"
 #SUBARCH="rpi3"
@@ -9,9 +12,9 @@ ENTROPY_ARCH: amd64
 DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG:stage3
 
-
 DOCKER_OPTS:
 {
+    #docker.run kwargs
     tty:true,
     init:true,
     remove:false,
@@ -19,19 +22,26 @@ DOCKER_OPTS:
     detach:true,
 }
 
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
+#-----------------------------------------------------------------------------------------------------------------------
+#environment variables for every call of container.exec_run
 envplugins:
 {
     EDITOR: cat
     LC_ALL: en_US.UTF-8
-    REPOSITORY_NAME: testing.kantoo.org
-    REPOSITORY_DESCRIPTION: Funtoo on RPI3!
-
 }
+
 bashplugins:
 {
 
     create_repo:
     {
+        #environment variable for just this plugin called with exec_run with given initial value
+        #an empty string means use the value set on the Config object above
+        #if set here they override values set in the root block
+        #these vars are referenced in the bash script
         ENTROPY_ARCH: ''
         REPOSITORY_NAME: ''
         path: plugins/bash/create_repo.sh
@@ -56,9 +66,12 @@ fileplugins:
     #conifiguring local entropy server
     entropysrv:
     {
+        #these are variables that are used in python f-string subsitutions
+
+        REPOSITORY_NAME:''
+        REPOSITORY_DESCRIPTION:''
         path: plugins/file/server.conf
         bind: /etc/entropy/server.conf
-        env: REPOSITORY_NAME,REPOSITORY_DESCRIPTION
     },
 
 }
