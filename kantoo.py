@@ -18,12 +18,14 @@ class Config:
         [ setattr(self,y,self.config.get(y)) for y in filter(lambda x:x == x.upper(),self.config.keys()) ]
         self.file_plugins = self._bash_or_file_plugins('fileplugins')
         self.bash_plugins = self._bash_or_file_plugins('bashplugins')
-        self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins').items()]
-        self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins').values()]
+        self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
+        self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
         self.all_plugins = self.file_plugins + self.dir_plugins + self.bash_plugins + self.env_plugins
 
+        self.DOCKER_OPTS = {}
         self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
-        self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.all_plugins]))})
+        # self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.all_plugins],[]))})
+        self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':self.SCRIPT_PWD})
 
         self.DOCKER_BUILDARGS = {
@@ -32,6 +34,7 @@ class Config:
 
     def _bash_or_file_plugins(self,type):
         fps = self.config.get(type)
+        if fps is None: return []
         return list(map(lambda x,y,z:x.write(y,**z),
             [FilePlugin(**fps.get(x)) if type == 'fileplugins' else BashPlugin(x,**fps.get(x)).chmod(0o744) for x in fps.keys()],
             [x.get('text',open(x.get('path','/dev/null'),'r').read()) for x in fps.values()],
@@ -71,12 +74,13 @@ class DirPlugin(Plugin):
         return f"{self.path} : {self.volume.get('bind')}"
 
 class BashPlugin(Plugin):
-    def __init__(self, name, mode='ro', text=None, path=None, env=None):
+    def __init__(self, name, mode='ro', text=None, path=None, **kwargs):
         #dummy init args needed in Config contructor
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
         self.name = name
-        self.env={}
+        self.env = kwargs
+
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = {**self.env,**env}
