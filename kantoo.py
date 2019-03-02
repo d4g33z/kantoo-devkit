@@ -59,6 +59,12 @@ class Config:
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_IMAGE}"
+    
+    def iteract(self):
+        #only works in ipython shell
+        ip = get_ipython()
+        ip.system(self.interactive_run_cmd)
+
 
 #Docker plugins
 class Plugin:
