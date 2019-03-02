@@ -53,7 +53,8 @@ class Config:
 
     def update(self,**kwargs):
         [setattr(self,k,v) for k,v in kwargs.items()]
-
+        
+    @property
     def interactive_run_cmd(self):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
