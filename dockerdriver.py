@@ -50,26 +50,20 @@ def dockerdriver(config,commit,skip,pretend):
         print(f"Did not find docker image {c.DOCKER_IMAGE}. Must be built.")
         client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
-    bash_plugins_started = False
+    container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
     prompt = ">>>"
+    started =False
     for bash_plugin in c.bash_plugins:
-        if commit:
+        if commit and started:
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-            if not bash_plugins_started:
-                bash_plugins_started = True
-        else:
-            if bash_plugins_started:
-                pass
-            else:
-                container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-                bash_plugins_started = True
+        started = True
 
         print(f"{prompt}"*10)
-        print(f"{prompt}BashPlugin: {bash_plugin}")
+        print(f"{prompt} BashPlugin: {bash_plugin}")
         if container:
-            print(f"{prompt}FilePlugins: {c.file_plugins}")
-            print(f"{prompt}DirPlugins: {c.dir_plugins}")
-            print(f"{prompt}EnvPlugins: {c.env_plugins}")
+            print(f"{prompt} FilePlugins: {c.file_plugins}")
+            print(f"{prompt} DirPlugins: {c.dir_plugins}")
+            print(f"{prompt} EnvPlugins: {c.env_plugins}")
 
         if not bash_plugin.skip:
             exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
@@ -79,21 +73,18 @@ def dockerdriver(config,commit,skip,pretend):
                 open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
             else:
                 print("create a logs/ directory to save as a timestamped file")
-
-            if commit:
-                #are these saved to the image somehow?
-                #update the config to use the new image
-                c.update(DOCKER_TAG=f"{bash_plugin.name}")
-                #commit the image with a new tag
-                image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
-                print(f"{container.name} : {image.id} committed")
-                container.stop()
-                container.remove()
-
         else:
             print(f"{bash_plugin.name} skipped" )
 
+        c.update(DOCKER_TAG=f"{bash_plugin.name}")
+        if commit:
+            #commit the image with a new tag if plugin ran or it doesn't exist
+            if not bash_plugin.skip or not client.images.list(c.DOCKER_TAG):
+                image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
+                print(f"{container.name} : {image.id} committed")
 
+            container.stop()
+            container.remove()
 
     try:
         container.stop()
