@@ -6,6 +6,9 @@ import tempfile
 import hjson
 from functools import reduce
 
+def image_cleanup(client):
+    bad_images = list(filter(lambda x: x not in client.images.list('funtoo/x86-64bit/amd64-k10')+client.images.list('alpine'),client.images.list()))
+
 class Config:
     def __init__(self,script_pwd,config_rel_path):
         self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
@@ -50,6 +53,11 @@ class Config:
 
     def update(self,**kwargs):
         [setattr(self,k,v) for k,v in kwargs.items()]
+
+    def interactive_run_cmd(self):
+        volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
+        envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
+        return f"docker run {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_IMAGE}"
 
 #Docker plugins
 class Plugin:
@@ -113,6 +121,5 @@ class FilePlugin(Plugin):
         return self
     def __repr__(self):
         return f"{self.volume.get('bind')}"
-
 
 
