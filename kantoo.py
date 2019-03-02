@@ -26,7 +26,7 @@ class Config:
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
-        self.DOCKER_OPTS.update({'working_dir':self.SCRIPT_PWD})
+        self.DOCKER_OPTS.update({'working_dir':'/'})
 
         self.DOCKER_BUILDARGS = {
             'ARCH':self.ARCH,
