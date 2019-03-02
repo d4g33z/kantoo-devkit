@@ -63,6 +63,7 @@ goodbye, file world!!!
 ## IPython Magic ##
 Use `ipython` to work with images interactively in a simple way using `hjson` files that are turned into a `kantoo.config` object.
 
+**Remember. This all in a python virtualenv**
 ```commandline
 
 # pip install ipython
