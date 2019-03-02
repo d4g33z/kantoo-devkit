@@ -23,6 +23,8 @@ the configured scripts in the container.
 
 Use `virtualenv` to isolate everything nicely. You must have a working docker install on your development machine.
 
+Hello, world!
+
 ```commandline
 # cd kantoo-devkit
 # virtualenv -p /usr/bin/python3.6 env3.6
@@ -58,5 +60,52 @@ goodbye world
 goodbye, file world!!!
 ```
 
-Hello, world!
+## IPython Magic ##
+Use `ipython` to work with images interactively in a simple way using `hjson` files that are turned into a `kantoo.config` object.
 
+```commandline
+
+# pip install ipython
+# configs/stage3.hjson << EOF
+OS: funtoo
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+DOCKER_FILE: funtoo.dockerfile
+DOCKER_TAG: stage3
+
+#this doesn't work yet but it should
+DOCKER_BUILDKIT:1
+
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:true,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+EOF
+# ipython
+Python 3.6.6 (default, Dec  8 2018, 03:41:35) 
+Type 'copyright', 'credits' or 'license' for more information
+IPython 7.3.0 -- An enhanced Interactive Python. Type '?' for help.
+
+In [1]: from kantoo import Config
+In [2]: c = Config('.','configs/stage3.hjson')
+In [3]: ! {c.interactive_run_cmd}
+24d9f7f71407 / # cat etc/os-release
+ID="funtoo"
+NAME="Funtoo GNU/Linux"
+PRETTY_NAME="Linux"
+VERSION="2019-02-05"
+VERSION_ID="amd64-k10-2019-02-05"
+ANSI_COLOR="0;34"
+HOME_URL="www.funtoo.org"
+BUG_REPORT_URL="bugs.funtoo.org"
+24d9f7f71407 / # exit
+exit
+In [4]:
+
+````
