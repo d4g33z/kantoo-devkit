@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-echo "=== removing portage packages ==="
-emerge -C RM_PORT_PKS
+echo "=== removing portage packages ${RM_PORT_PKGS} ==="
+emerge -C ${RM_PORT_PKGS}
 

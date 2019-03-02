@@ -42,7 +42,8 @@ bashplugins:
 
     install_portage_pkgs:
     {
-        IN_PORT_PKS:
+        skip:true
+        IN_PORT_PKGS:
             app-admin/equo sys-apps/entropy-server dev-util/bsdiff
 
         path: plugins/bash/create_repo/install_portage_pkgs.sh
@@ -50,28 +51,33 @@ bashplugins:
 
     rebuild_entropy_database:
     {
+        skip:true
         ENTROPY_ARCH:''
         path: plugins/bash/create_repo/rebuild_entropy_database.sh
     },
 
     patch_eit:
     {
+        skip:true
         path: plugins/bash/create_repo/patch_eit.sh
     },
 
     sync_or_create_local_repo:
     {
+        skip:true
         REPOSITORY_NAME:''
         path: plugins/bash/create_repo/sync_or_create_local_repo.sh
     },
 
     inject_portage_pkgs:
     {
+        skip:true
         path:plugins/bash/create_repo/inject_portage_pkgs.sh
     },
 
     commit_all_and_push:
     {
+        skip:true
         path:plugins/bash/create_repo/commit_all_and_push.sh
     },
 
