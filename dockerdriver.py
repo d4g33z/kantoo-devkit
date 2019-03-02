@@ -79,16 +79,20 @@ def dockerdriver(config,commit,skip,pretend):
                 open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
             else:
                 print("create a logs/ directory to save as a timestamped file")
+
+            if commit:
+                #are these saved to the image somehow?
+                #update the config to use the new image
+                c.update(DOCKER_TAG=f"{bash_plugin.name}")
+                #commit the image with a new tag
+                image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
+                print(f"{container.name} : {image.id} committed")
+                container.stop()
+                container.remove()
+
         else:
             print(f"{bash_plugin.name} skipped" )
 
-        if commit:
-            #update the config to use the new image
-            c.update(DOCKER_TAG=f"{bash_plugin.name}")
-            #commit the image with a new tag
-            container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
-            container.stop()
-            container.remove()
 
 
     try:
