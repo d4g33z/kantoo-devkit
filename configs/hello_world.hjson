@@ -42,10 +42,12 @@ bashplugins:
         #an empty string means use the value set on the Config object above
         #if set here they override values set in the root block
         GLOBAL_VAR:''
+        LOCAL_VAR: hello locally from bash
         text:
         '''
         #!/bin/sh
         echo ${GLOBAL_VAR}
+        echo ${LOCAL_VAR}
         cat /tmp/hello_file
         '''
         #bash plugins are bound automatically to the container
