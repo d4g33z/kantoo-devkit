@@ -72,9 +72,29 @@ class Config:
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
         os.system(self.interactive_run_cmd)
 
+    def images(self,client):
+        return list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
+
     def image_cleanup(self,client):
-        all_images = list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
-        [client.images.remove(im.id) for im in list(map(lambda a:a.pop(),(filter(lambda y:y.pop() in map(lambda z:z.name,self.bash_plugins),[ [x,x.tags.pop().split(':').pop()] for x in all_images]))))]
+       class RemovalFinished(Exception):
+            pass
+
+       def _image_cleanup(image):
+            print(f"about to remove image {image.tags.pop()}")
+            if input('remove image? [y/N]') == 'y':
+                try:
+                    client.images.remove(image.id)
+                except:
+                    print(f"images can only be removed in the reverse order they were created")
+                    raise RemovalFinished
+                print('image removed')
+            else:
+                print('image not removed and can only be removed in the reverse order to creation. you are done')
+                raise RemovalFinished
+       try:
+            [_image_cleanup(im) for im in list(map(lambda a:a.pop(),(filter(lambda y:y.pop() in map(lambda z:z.name,self.bash_plugins),[ [x,x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
+       except RemovalFinished:
+            return
 
 #Docker plugins
 class Plugin:
