@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
 
 # Copyright 2016-2018 See AUTHORS file
@@ -17,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #utility functions
-from kantoo import *
+from .kantoo import *
 
 import docker
 import pathlib
@@ -26,14 +25,14 @@ import click
 from datetime import datetime
 
 
-@click.command()
-@click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
-@click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
-@click.option('--pretend',is_flag=True,help="skip all bash plugins")
-@click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
-def dockerdriver(config,skip,pretend,interactive):
+# @click.command()
+# @click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
+# # @click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
+# @click.option('--config',type=click.Path(exists=True), help='A relative path to an hjson file')
+# @click.option('--pretend',is_flag=True,help="skip all bash plugins")
+# @click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
+def dockerdriver(c,skip,pretend,interactive):
 
-    c = Config(os.path.dirname(os.path.realpath(__file__)), config)
     if pretend:
         [setattr(bp,'skip',True) for bp in c.bash_plugins]
 
@@ -92,5 +91,4 @@ def dockerdriver(config,skip,pretend,interactive):
 
 
 
-if __name__ == '__main__':
-    dockerdriver()
+
