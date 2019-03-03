@@ -83,3 +83,7 @@ armaggedon() {
     docker volume rm $(docker volume ls --filter dangling=true -q)
     docker rmi -f $(docker images -qa)
 }
+
+removeimages() {
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+}
