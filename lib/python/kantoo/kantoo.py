@@ -17,7 +17,7 @@ class Config:
         [ setattr(self,y,self.config.get(y)) for y in filter(lambda x:x == x.upper(),self.config.keys()) ]
 
         #a default value
-        if not hasattr(self,'DOCKER_FILE'): set(self,'DOCKER_FILE','Dockerfile')
+        if not hasattr(self,'DOCKER_FILE'): setattr(self,'DOCKER_FILE','Dockerfile')
 
         self.file_plugins = self._bash_or_file_plugins('fileplugins')
         self.bash_plugins = self._bash_or_file_plugins('bashplugins')

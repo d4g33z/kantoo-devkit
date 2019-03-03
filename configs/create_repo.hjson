@@ -34,7 +34,6 @@ bashplugins:
     {
 
         skip:true
-        DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
@@ -72,7 +71,6 @@ bashplugins:
 
     inject_portage_pkgs:
     {
-        skip:true
         path:plugins/bash/create_repo/inject_portage_pkgs.sh
     },
 
@@ -93,6 +91,7 @@ fileplugins:
         text:
         '''
         EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
+        DONT_MOUNT_BOOT=1
         '''
     },
 
