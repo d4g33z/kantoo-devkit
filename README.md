@@ -31,7 +31,7 @@ Hello, world!
 # source env3.6/bin/activate
 # pip install -r requirements.txt
 # vim configs/hello_world.hjson
-# ./dockerdriver.py --config configs/hello_world.hjson
+# ./dockerdriver --config configs/hello_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>BashPlugin: /entropy/plugins/hello_world.sh
@@ -43,7 +43,7 @@ hello globally
 hello locally
 hello via override
 # vim configs/hello_goodbye_world.hjson
-# ./dockerdriver.py --config configs/hello_goodbye_world.hjson
+# ./dockerdriver --config configs/hello_goodbye_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>BashPlugin: /entropy/plugins/hello_world.sh
