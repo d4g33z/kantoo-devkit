@@ -11,7 +11,7 @@ Docker containers are used to create images of each choosen subarch, profile and
 packages to build with portage and package with entropy.
 
 The `dockerdriver.py` is used to create a container(s) and Funtoo stage3 image if required, attaching volumes and environment variables as needed, and 
-execute a series of bash or python scripts to modify it. The steps can be atomized by commit intermediate containers 
+execute a series of bash or python scripts to modify it. The steps are atomized by committing intermediate containers 
 to images.
 
 ## How To Use it ##
@@ -31,7 +31,7 @@ Hello, world!
 # source env3.6/bin/activate
 # pip install -r requirements.txt
 # vim configs/hello_world.hjson
-# ./dockerdriver.py --config configs/hello_world.hjson --commit false
+# ./dockerdriver.py --config configs/hello_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>BashPlugin: /entropy/plugins/hello_world.sh
@@ -43,7 +43,7 @@ hello globally
 hello locally
 hello via override
 # vim configs/hello_goodbye_world.hjson
-# ./dockerdriver.py --config configs/hello_goodbye_world.hjson --commit true
+# ./dockerdriver.py --config configs/hello_goodbye_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 >>>BashPlugin: /entropy/plugins/hello_world.sh
@@ -95,7 +95,7 @@ IPython 7.3.0 -- An enhanced Interactive Python. Type '?' for help.
 
 In [1]: from kantoo import Config
 In [2]: c = Config('.','configs/stage3.hjson')
-In [3]: c.interact() 
+In [3]: c.ip_interact() 
 24d9f7f71407 / # cat etc/os-release
 ID="funtoo"
 NAME="Funtoo GNU/Linux"
