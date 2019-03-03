@@ -10,6 +10,7 @@ def image_cleanup(client):
     bad_images = list(filter(lambda x: x not in client.images.list('funtoo/x86-64bit/amd64-k10')+client.images.list('alpine'),client.images.list()))
 
 class Config:
+    'A configuration object for container containers'
     def __init__(self,script_pwd,config_rel_path):
         self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
         self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
@@ -59,11 +60,19 @@ class Config:
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_IMAGE}"
-    
-    def iteract(self):
-        #only works in ipython shell
-        ip = get_ipython()
+
+    def ip_interact(self):
+        'drop to an interactive shell of a container of self.DOCKER_IMAGE in an ipython console'
+        try:
+            ip = get_ipython()
+        except NameError:
+            print('only for use in an ipython console')
+            return
         ip.system(self.interactive_run_cmd)
+
+    def interact(self):
+        "drop to an interactive shell of a container of self.DOCKER_IMAGE"
+        os.system(self.interactive_run_cmd)
 
 
 #Docker plugins
