@@ -59,21 +59,19 @@ Found docker image funtoo/x86-64bit/amd64-k10:stage3
 goodbye world
 goodbye, file world!!!
 ```
-
-## IPython Magic ##
-Use `ipython` to work with images interactively in a simple way using `hjson` files that are turned into a `kantoo.config` object.
+## Quickly Interactive with a Funtoo Stage3 ##
+Use the bash shell or `ipython` to work with images interactively in a simple way using `hjson` files that are turned into a `kantoo.config` object.
 
 **Remember. This all in a python virtualenv**
-```commandline
 
-# pip install ipython
+### Create a Config ###
+```commandline
 # configs/stage3.hjson << EOF
 OS: funtoo
 ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG: stage3
 
 #this doesn't work yet but it should
@@ -88,13 +86,22 @@ DOCKER_OPTS:
     detach:true,
 }
 EOF
+# ./dockerdriver --config configs/stage3.hjson --interactive
+24d9f7f71407 / # exit
+exit
+```
+
+### IPython Magic ###
+
+```commandline
+# cd lib/python
 # ipython
 Python 3.6.6 (default, Dec  8 2018, 03:41:35) 
 Type 'copyright', 'credits' or 'license' for more information
 IPython 7.3.0 -- An enhanced Interactive Python. Type '?' for help.
 
 In [1]: from kantoo import Config
-In [2]: c = Config('.','configs/stage3.hjson')
+In [2]: c = Config('.','../../configs/stage3.hjson')
 In [3]: c.ip_interact() 
 24d9f7f71407 / # cat etc/os-release
 ID="funtoo"
