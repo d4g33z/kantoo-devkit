@@ -82,13 +82,13 @@ def dockerdriver(c,skip,pretend,interactive):
         else:
             print("create a logs/ directory to save as a timestamped file")
 
-        if interactive:
-            c.interact()
 
 
         image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
         print(f"{container.name} : {image.id} committed")
 
+    if interactive:
+        c.interact()
 
 
 
