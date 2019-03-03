@@ -87,7 +87,16 @@ DOCKER_OPTS:
 }
 EOF
 # ./dockerdriver --config configs/stage3.hjson --interactive
-24d9f7f71407 / # exit
+c02bccc99f27 / # cat /etc/os-release 
+ID="funtoo"
+NAME="Funtoo GNU/Linux"
+PRETTY_NAME="Linux"
+VERSION="2019-02-05"
+VERSION_ID="amd64-k10-2019-02-05"
+ANSI_COLOR="0;34"
+HOME_URL="www.funtoo.org"
+BUG_REPORT_URL="bugs.funtoo.org"
+c02bccc99f27 / # exit
 exit
 ```
 
