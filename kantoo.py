@@ -6,8 +6,6 @@ import tempfile
 import hjson
 from functools import reduce
 
-def image_cleanup(client):
-    bad_images = list(filter(lambda x: x not in client.images.list('funtoo/x86-64bit/amd64-k10')+client.images.list('alpine'),client.images.list()))
 
 class Config:
     'A configuration object for container containers'
@@ -74,6 +72,9 @@ class Config:
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
         os.system(self.interactive_run_cmd)
 
+    def image_cleanup(self,client):
+        all_images = list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
+        [client.images.remove(im.id) for im in list(map(lambda a:a.pop(),(filter(lambda y:y.pop() in map(lambda z:z.name,self.bash_plugins),[ [x,x.tags.pop().split(':').pop()] for x in all_images]))))]
 
 #Docker plugins
 class Plugin:
