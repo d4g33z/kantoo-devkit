@@ -77,7 +77,7 @@ def dockerdriver(config,skip,pretend,interactive):
         # not bash_plugin.skip has to be true
         exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
 
-        open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
+        open(f"{c.SCRIPT_PWD}/logs/last_logs.txt", 'wb').write(exec_result.output)
         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
         else:
