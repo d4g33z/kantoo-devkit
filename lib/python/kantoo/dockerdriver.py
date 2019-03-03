@@ -15,22 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-#utility functions
-from .kantoo import *
-
 import docker
 import pathlib
-import os
-import click
 from datetime import datetime
 
-
-# @click.command()
-# @click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
-# # @click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
-# @click.option('--config',type=click.Path(exists=True), help='A relative path to an hjson file')
-# @click.option('--pretend',is_flag=True,help="skip all bash plugins")
-# @click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
 def dockerdriver(c,skip,pretend,interactive):
 
     if pretend:
