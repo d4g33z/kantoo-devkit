@@ -52,36 +52,41 @@ def dockerdriver(config,skip,pretend,interactive):
 
     prompt = ">>>"
     for bash_plugin in c.bash_plugins:
+        print(f"{prompt}"*20)
+        if not client.images.list(f"{c.DOCKER_REPO}:{bash_plugin.name}") and  bash_plugin.skip:
+            print(f"this step will commit an image of {bash_plugin.name} identical to {c.DOCKER_TAG}")
+            if input('ok [y|N]') != 'y':
+                print('exiting')
+                return
 
-        if not client.images.list(f"{c.DOCKER_REPO}:{bash_plugin.name}"):
+        if not (client.images.list(f"{c.DOCKER_REPO}:{bash_plugin.name}") and bash_plugin.skip):
+            print(f"creating container of {c.DOCKER_TAG} to run plugin on")
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-        else:
-            container = client.containers.run(f"{c.DOCKER_REPO}:{bash_plugin.name}", None, **c.DOCKER_OPTS)
-
-        print(f"{prompt}"*10)
-        print(f"{prompt} BashPlugin: {bash_plugin}")
-        if container:
-            print(f"{prompt} FilePlugins: {c.file_plugins}")
-            print(f"{prompt} DirPlugins: {c.dir_plugins}")
-            print(f"{prompt} EnvPlugins: {c.env_plugins}")
-
-        if not bash_plugin.skip:
-            exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
-
-            open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
-            if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
-                open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
-            else:
-                print("create a logs/ directory to save as a timestamped file")
-
-            if interactive:
-                c.interact()
-
-        else:
+            c.update(DOCKER_TAG=f"{bash_plugin.name}")
+        else :
+            print(f"not creating container of existing image {c.DOCKER_REPO}:{bash_plugin.name} to run plugin on")
             print(f"{bash_plugin.name} skipped" )
+            c.update(DOCKER_TAG=f"{bash_plugin.name}")
+            continue
+
+        print(f"{prompt} BashPlugin: {bash_plugin}")
+        print(f"{prompt} FilePlugins: {c.file_plugins}")
+        print(f"{prompt} DirPlugins: {c.dir_plugins}")
+        print(f"{prompt} EnvPlugins: {c.env_plugins}")
+
+        # not bash_plugin.skip has to be true
+        exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
+
+        open(f"{c.SCRIPT_PWD}/last_logs.txt", 'wb').write(exec_result.output)
+        if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
+            open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
+        else:
+            print("create a logs/ directory to save as a timestamped file")
+
+        if interactive:
+            c.interact()
 
 
-        c.update(DOCKER_TAG=f"{bash_plugin.name}")
         image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
         print(f"{container.name} : {image.id} committed")
 
