@@ -14,7 +14,7 @@ DOCKER_OPTS:
     #docker.run kwargs
     tty:true,
     init:true,
-    remove:,true
+    remove:true
     entrypoint:"/bin/bash",
     detach:true,
 }
@@ -33,7 +33,6 @@ bashplugins:
     remove_portage_pkgs:
     {
 
-        skip:true
         DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
@@ -52,6 +51,7 @@ bashplugins:
 
     rebuild_entropy_database:
     {
+        skip:true
         ENTROPY_ARCH:''
         path: plugins/bash/create_repo/rebuild_entropy_database.sh
     },
