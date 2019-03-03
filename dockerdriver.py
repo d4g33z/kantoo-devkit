@@ -27,11 +27,12 @@ from datetime import datetime
 
 
 @click.command()
-@click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
-@click.option('--commit',default=True,type=bool,help='Preserve the result of each script plugin as an image')
 @click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
+@click.option('--config',default='configs/hello_world.hjson', help='A relative path to an hjson file')
+@click.option('--commit',is_flag=True,default=False,help='Preserve the result of each script plugin as an image')
 @click.option('--pretend',is_flag=True,help="skip all bash plugins")
-def dockerdriver(config,commit,skip,pretend):
+@click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
+def dockerdriver(config,commit,skip,pretend,interactive):
 
     c = Config(os.path.dirname(os.path.realpath(__file__)), config)
     if pretend:
@@ -73,20 +74,26 @@ def dockerdriver(config,commit,skip,pretend):
                 open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
             else:
                 print("create a logs/ directory to save as a timestamped file")
+
+            if interactive:
+                c.interact()
+
         else:
             print(f"{bash_plugin.name} skipped" )
 
+
         c.update(DOCKER_TAG=f"{bash_plugin.name}")
+
         if commit:
             #commit the image with a new tag if plugin ran or it doesn't exist
-            if not bash_plugin.skip or not client.images.list(c.DOCKER_TAG):
+            if not bash_plugin.skip or not client.images.list(c.DOCKER_IMAGE):
                 image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
                 print(f"{container.name} : {image.id} committed")
 
             container.stop()
             container.remove()
 
-    try:
+    try :
         container.stop()
         container.remove()
     except docker.errors.NotFound:
