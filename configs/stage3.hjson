@@ -6,7 +6,6 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-DOCKER_FILE: funtoo.dockerfile
 DOCKER_TAG: stage3
 
 #this doesn't work yet but it should
