@@ -82,14 +82,9 @@ def dockerdriver(config,skip,pretend,interactive):
 
 
         c.update(DOCKER_TAG=f"{bash_plugin.name}")
-        #commit the image with a new tag if plugin ran or it doesn't exist
-        #if not bash_plugin.skip or not client.images.list(c.DOCKER_IMAGE):
         image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
         print(f"{container.name} : {image.id} committed")
 
-        # c.DOCKEr_OPTS.get('remvove') == True
-        # container.stop()
-        # container.remove()
 
 
 if __name__ == '__main__':
