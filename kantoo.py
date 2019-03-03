@@ -92,14 +92,17 @@ class DirPlugin(Plugin):
     def __repr__(self):
         return f"{self.path} : {self.volume.get('bind')}"
 
+#force isolation of scripts on the image
 class BashPlugin(Plugin):
     #allowing skipping of steps in hjson file or programmatically
     def __init__(self, name, mode='ro', text=None, path=None, skip=False,**kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
-        self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
+        # self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
+        self.volume = { 'bind': self._volume_template(name), 'mode':mode}
         self.name = name
         self.skip = skip
-
+    def _volume_template(self,name):
+        return f"/entropy/plugins/{name}.sh"
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = env
@@ -116,6 +119,11 @@ class BashPlugin(Plugin):
     def __repr__(self):
         return f"{self.volume.get('bind')}"
 
+#use os.envion to have variables like Bash plugins
+class PythonPlugin(BashPlugin):
+    def _volume_template(self,name):
+        return f"/entropy/plugins/{name}.py"
+
 class FilePlugin(Plugin):
     def __init__(self, bind, mode='ro', text=None, path=None, **kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
@@ -128,5 +136,7 @@ class FilePlugin(Plugin):
         return self
     def __repr__(self):
         return f"{self.volume.get('bind')}"
+
+
 
 
