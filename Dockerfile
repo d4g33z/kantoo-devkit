@@ -24,7 +24,7 @@ ENV LC_ALL en_US.UTF-8
 #https://forums.docker.com/t/copy-only-if-file-exist/3781/2
 COPY stage3s/${ARCH}/${SUBARCH}/stage3-*.tar.xz stage3-latest.tar.xz
 
-COPY funtoo.sh root/funtoo.sh
+COPY lib/bash/funtoo.sh root/funtoo.sh
 
 RUN echo -e $UL$MAG"Building a Funtoo container image for ${ARCH} ${SUBARCH} fetching from ${DIST}"
 
