@@ -12,8 +12,7 @@ import os
 @click.option('--pretend',is_flag=True,help="skip all bash plugins")
 @click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
 def _dockerdriver(skip,config,pretend,interactive):
-    c = Config(os.path.dirname(os.path.realpath(__file__)), config)
-    dockerdriver(c,skip,pretend,interactive)
+    dockerdriver(Config(os.path.dirname(os.path.realpath(__file__)), config),skip,pretend,interactive)
 
 if __name__ == '__main__':
     _dockerdriver()
