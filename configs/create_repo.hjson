@@ -71,11 +71,13 @@ bashplugins:
 
     inject_portage_pkgs:
     {
+        skip:true
         path:plugins/bash/create_repo/inject_portage_pkgs.sh
     },
 
     commit_all_and_push:
     {
+        skip:true
         path:plugins/bash/create_repo/commit_all_and_push.sh
     },
 
