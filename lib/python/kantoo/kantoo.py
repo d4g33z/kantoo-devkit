@@ -131,10 +131,14 @@ class DirPlugin(Plugin):
 class ExecPlugin(Plugin):
     #allowing skipping of steps in hjson file or programmatically
     def __init__(self, name, mode='ro', text=None, path=None, skip=False,**kwargs):
+        #the actual code
         self.path = pathlib.Path(tempfile.mkstemp()[1])
+        #the executable wrapper to call the code
+        self.exec_path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}",'mode':mode}
         self.name = name
         self.skip = skip
+
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = env
