@@ -28,7 +28,6 @@ class Config:
         # DOCKER_OPTS is created in the hjson config file
         #paths are always relative to script_pwd
         self.DOCKER_OPTS.update({'volumes':{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
-        # self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
 
@@ -40,13 +39,14 @@ class Config:
         pluginblock = self.config.get(type)
         if pluginblock is None: return []
 
-        return list(map(lambda x,y,z:x.write(y,**z),
+        return list(map(lambda x,y,z,a:x.write(y,a,**z),
                         #create the objs
                         [FilePlugin(**pluginblock.get(x)) if type == 'fileplugins' else ExecPlugin(x, **pluginblock.get(x)).chmod(0o744) for x in pluginblock.keys()],
                         #get the text from the hjson file or a file on disk
                         [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) for x in pluginblock.values()],
                         #get the env or f-string vars using value on Config obj or those set in the block itself
-                        [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in pluginblock.values()]))
+                        [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in pluginblock.values()],
+                        [os.path.basename(x.get('path')).split('.').pop() if x.get('path') is not None else x.get('text').split('\n')[0].split(' ').pop() for x in pluginblock.values()]),)
 
     @property
     def DOCKER_REPO(self):
@@ -136,12 +136,18 @@ class ExecPlugin(Plugin):
         #the executable wrapper to call the code
         self.exec_path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':f"/entropy/plugins/{name}",'mode':mode}
+        self.exec_volume = {'bind':f"/entropy/bin/{name}",'mode':'ro'}
         self.name = name
         self.skip = skip
 
-    def write(self,txt,**env):
+    def write(self,txt,ext,**env):
+        exec_map = {'sh':'.','py':'python3'}
         self.path.write_text(txt)
         self.env = env
+        self.exec_path.write_text(f"""
+#!/bin/sh
+{exec_map.get(ext)} {self.volume.get('bind') }.{ext}
+        """        )
         return self
     def chmod(self,mode):
         self.path.chmod(mode)
@@ -159,7 +165,7 @@ class FilePlugin(Plugin):
     def __init__(self, bind, mode='ro', text=None, path=None, **kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':bind,'mode':mode}
-    def write(self,txt,**fvars):
+    def write(self,txt,ext,**fvars):
         self.path.write_text(txt.format(**fvars))
         return self
     def chmod(self,mode):
