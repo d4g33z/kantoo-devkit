@@ -22,10 +22,10 @@ from datetime import datetime
 def dockerdriver(c,skip,pretend,interactive):
 
     if pretend:
-        [setattr(bp,'skip',True) for bp in c.bash_plugins]
+        [setattr(bp,'skip',True) for bp in c.exec_plugins]
 
-    #use cli --skip to set certain bash plugins to skip=True
-    [setattr(bp,'skip',True) for bp in filter(lambda x:getattr(x,'name') in skip,c.bash_plugins)]
+    #use cli --skip to set certain exec plugins to skip=True
+    [setattr(bp,'skip',True) for bp in filter(lambda x:getattr(x,'name') in skip,c.exec_plugins)]
 
     client = docker.from_env()
 
@@ -38,31 +38,31 @@ def dockerdriver(c,skip,pretend,interactive):
         client.images.build(path=c.SCRIPT_PWD, dockerfile=c.DOCKER_FILE,tag=c.DOCKER_IMAGE,quiet=False,buildargs=c.DOCKER_BUILDARGS)
 
     prompt = ">>>"
-    for bash_plugin in c.bash_plugins:
+    for exec_plugin in c.exec_plugins:
         print(f"{prompt}"*20)
-        if not client.images.list(f"{c.DOCKER_REPO}:{bash_plugin.name}") and  bash_plugin.skip:
-            print(f"this step will commit an image of {bash_plugin.name} identical to {c.DOCKER_TAG}")
+        if not client.images.list(f"{c.DOCKER_REPO}:{exec_plugin.name}") and  exec_plugin.skip:
+            print(f"this step will commit an image of {exec_plugin.name} identical to {c.DOCKER_TAG}")
             if input('ok [y|N]') != 'y':
                 print('exiting')
                 return
 
-        if not (client.images.list(f"{c.DOCKER_REPO}:{bash_plugin.name}") and bash_plugin.skip):
+        if not (client.images.list(f"{c.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"creating container of {c.DOCKER_TAG} to run plugin on")
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
-            c.update(DOCKER_TAG=f"{bash_plugin.name}")
+            c.update(DOCKER_TAG=f"{exec_plugin.name}")
         else :
-            print(f"not creating container of existing image {c.DOCKER_REPO}:{bash_plugin.name} to run plugin on")
-            print(f"{bash_plugin.name} skipped" )
-            c.update(DOCKER_TAG=f"{bash_plugin.name}")
+            print(f"not creating container of existing image {c.DOCKER_REPO}:{exec_plugin.name} to run plugin on")
+            print(f"{exec_plugin.name} skipped" )
+            c.update(DOCKER_TAG=f"{exec_plugin.name}")
             continue
 
-        print(f"{prompt} BashPlugin: {bash_plugin}")
+        print(f"{prompt} BashPlugin: {exec_plugin}")
         print(f"{prompt} FilePlugins: {c.file_plugins}")
         print(f"{prompt} DirPlugins: {c.dir_plugins}")
         print(f"{prompt} EnvPlugins: {c.env_plugins}")
 
-        # not bash_plugin.skip has to be true
-        exec_result = container.exec_run(['sh','-c',f". {bash_plugin.DOCKER_SCRIPT}"] , environment=bash_plugin.docker_env)
+        # not exec_plugin.skip has to be true
+        exec_result = container.exec_run(['sh','-c',f". {exec_plugin.DOCKER_SCRIPT}"] , environment=exec_plugin.docker_env)
 
         open(f"{c.SCRIPT_PWD}/logs/last_logs.txt", 'wb').write(exec_result.output)
         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():

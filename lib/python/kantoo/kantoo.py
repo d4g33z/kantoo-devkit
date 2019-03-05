@@ -19,14 +19,16 @@ class Config:
         #a default value
         if not hasattr(self,'DOCKER_FILE'): setattr(self,'DOCKER_FILE','Dockerfile')
 
-        self.file_plugins = self._bash_or_file_plugins('fileplugins')
-        self.bash_plugins = self._bash_or_file_plugins('bashplugins')
+        self.file_plugins = self._exec_or_file_plugins('fileplugins')
+        self.exec_plugins = self._exec_or_file_plugins('execplugins')
         self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
         self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
-        self.all_plugins = self.file_plugins + self.dir_plugins + self.bash_plugins + self.env_plugins
+        self.all_plugins = self.file_plugins + self.dir_plugins + self.exec_plugins + self.env_plugins
 
         # DOCKER_OPTS is created in the hjson config file
-        self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
+        #paths are always relative to script_pwd
+        self.DOCKER_OPTS.update({'volumes':{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
+        # self.DOCKER_OPTS.update({'volumes':{x.path if x.path.is_absolute() else os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
 
@@ -34,17 +36,17 @@ class Config:
             'ARCH':self.ARCH,
             'SUBARCH':self.SUBARCH,}
 
-    def _bash_or_file_plugins(self,type):
+    def _exec_or_file_plugins(self, type):
         pluginblock = self.config.get(type)
         if pluginblock is None: return []
 
         return list(map(lambda x,y,z:x.write(y,**z),
-            #create the objs
-            [FilePlugin(**pluginblock.get(x)) if type == 'fileplugins' else BashPlugin(x,**pluginblock.get(x)).chmod(0o744) for x in pluginblock.keys()],
-            #get the text from the hjson file or a file on disk
-            [x.get('text',open(x.get('path','/dev/null'),'r').read()) for x in pluginblock.values()],
-            #get the env or f-string vars using value on Config obj or those set in the block itself
-            [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in pluginblock.values()] ))
+                        #create the objs
+                        [FilePlugin(**pluginblock.get(x)) if type == 'fileplugins' else ExecPlugin(x, **pluginblock.get(x)).chmod(0o744) for x in pluginblock.keys()],
+                        #get the text from the hjson file or a file on disk
+                        [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) for x in pluginblock.values()],
+                        #get the env or f-string vars using value on Config obj or those set in the block itself
+                        [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in pluginblock.values()]))
 
     @property
     def DOCKER_REPO(self):
@@ -95,7 +97,7 @@ class Config:
                 print('image not removed and can only be removed in the reverse order to creation. you are done')
                 raise RemovalFinished
        try:
-            [_image_cleanup(im) for im in list(map(lambda a:a.pop(),(filter(lambda y:y.pop() in map(lambda z:z.name,self.bash_plugins),[ [x,x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
+            [_image_cleanup(im) for im in list(map(lambda a:a.pop(), (filter(lambda y:y.pop() in map(lambda z:z.name, self.exec_plugins), [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
        except RemovalFinished:
             return
 
@@ -126,16 +128,13 @@ class DirPlugin(Plugin):
         return f"{self.path} : {self.volume.get('bind')}"
 
 #force isolation of scripts on the image
-class BashPlugin(Plugin):
+class ExecPlugin(Plugin):
     #allowing skipping of steps in hjson file or programmatically
     def __init__(self, name, mode='ro', text=None, path=None, skip=False,**kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
-        # self.volume = {'bind':f"/entropy/plugins/{name}.sh",'mode':mode}
-        self.volume = { 'bind': self._volume_template(name), 'mode':mode}
+        self.volume = {'bind':f"/entropy/plugins/{name}",'mode':mode}
         self.name = name
         self.skip = skip
-    def _volume_template(self,name):
-        return f"/entropy/plugins/{name}.sh"
     def write(self,txt,**env):
         self.path.write_text(txt)
         self.env = env
@@ -151,11 +150,6 @@ class BashPlugin(Plugin):
         return self.volume.get('bind')
     def __repr__(self):
         return f"{self.volume.get('bind')}"
-
-#use os.envion to have variables like Bash plugins
-class PythonPlugin(BashPlugin):
-    def _volume_template(self,name):
-        return f"/entropy/plugins/{name}.py"
 
 class FilePlugin(Plugin):
     def __init__(self, bind, mode='ro', text=None, path=None, **kwargs):
