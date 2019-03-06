@@ -72,7 +72,7 @@ Type 'copyright', 'credits' or 'license' for more information
 IPython 7.3.0 -- An enhanced Interactive Python. Type '?' for help.
 
 In [1]: from kantoo import Config
-In [2]: c = Config('.','../../configs/stage3.hjson')
+In [2]:  c = Config('../..','configs/stage3.hjson')
 In [3]: c.interact() 
 24d9f7f71407 / # cat etc/os-release
 ID="funtoo"
