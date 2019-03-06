@@ -23,7 +23,6 @@ class Config:
         self.exec_plugins = self._exec_or_file_plugins('execplugins')
         self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
         self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
-        self.all_plugins = self.file_plugins + self.dir_plugins + self.exec_plugins + self.env_plugins
 
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update(
