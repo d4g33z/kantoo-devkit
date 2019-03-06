@@ -56,7 +56,7 @@ def dockerdriver(c,skip,pretend,interactive):
             c.update(DOCKER_TAG=f"{exec_plugin.name}")
             continue
 
-        print(f"{prompt} BashPlugin: {exec_plugin}")
+        print(f"{prompt} ExecPlugin: {exec_plugin}")
         print(f"{prompt} FilePlugins: {c.file_plugins}")
         print(f"{prompt} DirPlugins: {c.dir_plugins}")
         print(f"{prompt} EnvPlugins: {c.env_plugins}")
