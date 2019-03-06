@@ -82,10 +82,13 @@ class Config:
         return list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
 
     def image_cleanup(self,client):
-       class RemovalFinished(Exception):
+        #remove danglers
+        [client.images.remove(image.id) for image in client.images.list(filters={'dangling':True})]
+
+        class RemovalFinished(Exception):
             pass
 
-       def _image_cleanup(image):
+        def _image_cleanup(image):
             print(f"about to remove image {image.tags.pop()}")
             if input('remove image? [y/N]') == 'y':
                 try:
@@ -97,9 +100,9 @@ class Config:
             else:
                 print('image not removed and can only be removed in the reverse order to creation. you are done')
                 raise RemovalFinished
-       try:
+        try:
             [_image_cleanup(im) for im in list(map(lambda a:a.pop(), (filter(lambda y:y.pop() in map(lambda z:z.name, self.exec_plugins), [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
-       except RemovalFinished:
+        except RemovalFinished:
             return
 
 #Docker plugins
