@@ -105,7 +105,7 @@ Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>FilePlugins: [/tmp/hello_file]
 >>>DirPlugins: [/var/git : /var/git]
 >>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
-(env3.6) # cat last_logs.txt
+(env3.6) # cat logs/last_logs.txt
 hello globally
 hello locally
 hello via override
@@ -122,7 +122,7 @@ Found docker image funtoo/x86-64bit/amd64-k10:stage3
 >>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
 >>>DirPlugins: [/var/git : /var/git]
 >>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
-(env3.6) # cat last_logs.txt
+(env3.6) # cat logs/last_logs.txt
 goodbye world
 goodbye, file world!!!
 ```
