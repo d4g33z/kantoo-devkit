@@ -21,7 +21,7 @@ DOCKER_OPTS:
 }
 
 
-pythonplugins:
+execplugins:
 {
     hello_world:
     {
@@ -31,7 +31,7 @@ pythonplugins:
         #!/usr/bin/env python3
         import os
 
-        print(os.environ.get('LOCAL_VAR'))
+        os.sys.stdout.write(os.environ.get('LOCAL_VAR'))
         '''
     }
 }

@@ -27,13 +27,12 @@ envplugins:
     LC_ALL: en_US.UTF-8
 }
 
-bashplugins:
+execplugins:
 {
 
     remove_portage_pkgs:
     {
 
-        skip:true
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
@@ -44,9 +43,20 @@ bashplugins:
     {
         skip:true
         IN_PORT_PKGS:
-            app-admin/equo sys-apps/entropy-server dev-util/bsdiff
+            '''
+            app-admin/equo
+            app-admin/metalog
+            app-admin/sudo
+            app-editors/vim
+            app-portage/eix
+            net-dns/avahi
+            net-misc/chrony
+            net-misc/networkmanager
+            sys-auth/nss-mdns
+            '''
 
         path: plugins/bash/create_repo/install_portage_pkgs.sh
+        #path: plugins/python/create_repo/install_portage_pkgs.py
     },
 
     rebuild_entropy_database:
