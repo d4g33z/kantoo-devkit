@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 if [ -d "/entropy/artifacts/standard" ]; then
   echo "=== Repository already exists, syncronizing ==="

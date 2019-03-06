@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 if [ ! -f /var/lib/entropy/client/database/${ENTROPY_ARCH}/equo.db ]; then
     echo "=== rebuilding the entropy database ==="

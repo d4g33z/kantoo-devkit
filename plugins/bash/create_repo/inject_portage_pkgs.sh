@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 built_pkgs=$(find /root/packages -name "*.tbz2" | xargs)
 
