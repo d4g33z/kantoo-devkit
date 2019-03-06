@@ -67,18 +67,16 @@ class Config:
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_IMAGE}"
 
-    def ip_interact(self):
-        'drop to an interactive shell of a container of self.DOCKER_IMAGE in an ipython console'
-        try:
-            ip = get_ipython()
-        except NameError:
-            print('only for use in an ipython console')
-            return
-        ip.system(self.interactive_run_cmd)
-
     def interact(self):
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
-        os.system(self.interactive_run_cmd)
+        try:
+            ip = get_ipython()
+            ip.system(self.interactive_run_cmd)
+        except NameError:
+            os.system(self.interactive_run_cmd)
+        else:
+            print('cannot interact')
+            return
 
     def images(self,client):
         return list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
