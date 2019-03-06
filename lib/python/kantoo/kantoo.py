@@ -8,7 +8,7 @@ from functools import reduce
 
 
 class Config:
-    'A configuration object for container containers'
+    'A configuration object for docker containers'
     def __init__(self,script_pwd,config_rel_path):
         self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
         self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
