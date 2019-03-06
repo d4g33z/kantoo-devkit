@@ -26,8 +26,11 @@ class Config:
         self.all_plugins = self.file_plugins + self.dir_plugins + self.exec_plugins + self.env_plugins
 
         # DOCKER_OPTS is created in the hjson config file
-        #paths are always relative to script_pwd
-        self.DOCKER_OPTS.update({'volumes':{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}})
+        self.DOCKER_OPTS.update(
+                {'volumes':{
+                    **{x.exec_path:x.exec_volume for x in self.exec_plugins},
+                    **{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}},
+                })
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
 
@@ -150,7 +153,7 @@ class ExecPlugin(Plugin):
         """        )
         return self
     def chmod(self,mode):
-        self.path.chmod(mode)
+        self.exec_path.chmod(mode)
         return self
     @property
     def docker_env(self):
