@@ -143,14 +143,14 @@ class ExecPlugin(Plugin):
         self.name = name
         self.skip = skip
 
-    def write(self,txt,ext,**env):
-        exec_map = {'sh':'.','py':'python3'}
+    def write(self, txt, executable, **env):
         self.path.write_text(txt)
         self.env = env
-        self.exec_path.write_text(f"""
-#!/bin/sh
-{exec_map.get(ext)} {self.volume.get('bind') }.{ext}
-        """        )
+        self.exec_path.write_text(
+f"""#!/usr/bin/env sh
+{executable} {self.volume.get('bind') }
+"""
+        )
         return self
     def chmod(self,mode):
         self.exec_path.chmod(mode)
@@ -160,7 +160,7 @@ class ExecPlugin(Plugin):
         return [f"{var}={value}" for var,value in self.env.items()]
     @property
     def DOCKER_SCRIPT(self):
-        return self.volume.get('bind')
+        return self.exec_volume.get('bind')
     def __repr__(self):
         return f"{self.volume.get('bind')}"
 
