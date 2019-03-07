@@ -45,12 +45,13 @@ def dockerdriver(c,skip,pretend,interactive):
             if input('ok [y|N]') != 'y':
                 print('exiting')
                 return
-
+        #images must exist at this point for each exec_plugin
         if not (client.images.list(f"{c.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"creating container of {c.DOCKER_TAG} to run plugin on")
             container = client.containers.run(c.DOCKER_IMAGE, None, **c.DOCKER_OPTS)
             c.update(DOCKER_TAG=f"{exec_plugin.name}")
         else :
+            #skipping and a container of this exec_plugin exists
             print(f"not creating container of existing image {c.DOCKER_REPO}:{exec_plugin.name} to run plugin on")
             print(f"{exec_plugin.name} skipped" )
             c.update(DOCKER_TAG=f"{exec_plugin.name}")
@@ -64,6 +65,8 @@ def dockerdriver(c,skip,pretend,interactive):
         # not exec_plugin.skip has to be true
         exec_result = container.exec_run(['sh','-c',f". {exec_plugin.DOCKER_SCRIPT}"] , environment=exec_plugin.docker_env)
 
+
+
         open(f"{c.SCRIPT_PWD}/logs/last_logs.txt", 'wb').write(exec_result.output)
         if pathlib.Path(f"{c.SCRIPT_PWD}/logs").exists():
             open(f"{c.SCRIPT_PWD}/logs/{c.ARCH}-{c.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt", 'wb').write(exec_result.output)
@@ -75,8 +78,9 @@ def dockerdriver(c,skip,pretend,interactive):
         image = container.commit(c.DOCKER_REPO,c.DOCKER_TAG)
         print(f"{container.name} : {image.id} committed")
 
-    if interactive:
-        c.interact()
+        if interactive:
+            c.interact(exec_plugin.name)
+
 
 
 
