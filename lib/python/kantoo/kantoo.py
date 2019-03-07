@@ -24,6 +24,7 @@ class Config:
         self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
         self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
 
+        #bind the contents of DOT_DIR as hidden files and dirs in /root
         if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
             dot_dir_configs,dot_file_configs = self._dot_plugins(self.DOT_DIR)
             [self.dir_plugins.append(DirPlugin(**dirplugin_values)) for dirplugin_values in dot_dir_configs.values()]
