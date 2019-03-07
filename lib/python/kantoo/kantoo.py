@@ -79,7 +79,7 @@ class Config:
     def interactive_run_cmd(self,tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
-        return f"docker run {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{self.DOCKER_TAG}"
+        return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
     def interact(self,tag='stage3'):
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
