@@ -6,6 +6,9 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
+#a directory of dot files
+DOT_DIR:lib/dot
+
 #the intial state
 DOCKER_TAG:stage3
 
@@ -143,5 +146,4 @@ dirplugins:
     },
 
 }
-
 

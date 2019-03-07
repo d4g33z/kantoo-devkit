@@ -50,4 +50,4 @@ logs/
 last_logs.txt
 env3.6/
 ipython_log.py*
-lib/ssh/*
+lib/dot/*

@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 import hjson
 from functools import reduce
-
+from collections import OrderedDict
 
 class Config:
     'A configuration object for docker containers'
@@ -23,6 +23,12 @@ class Config:
         self.exec_plugins = self._exec_or_file_plugins('execplugins')
         self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
         self.dir_plugins = [DirPlugin(**value) for value in self.config.get('dirplugins',{}).values()]
+
+        if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
+            dot_dir_configs,dot_file_configs = self._dot_plugins(self.DOT_DIR)
+            [self.dir_plugins.append(DirPlugin(**dirplugin_values)) for dirplugin_values in dot_dir_configs.values()]
+            [self.file_plugins.append(FilePlugin(**fileplugin_values).write(open(os.path.join(self.SCRIPT_PWD,fileplugin_values.get('path'))).read(),'')) for fileplugin_values in dot_file_configs.values()]
+
         self.all_plugins = self.file_plugins + self.dir_plugins + self.exec_plugins + self.env_plugins
 
         # DOCKER_OPTS is created in the hjson config file
@@ -37,6 +43,13 @@ class Config:
         self.DOCKER_BUILDARGS = {
             'ARCH':self.ARCH,
             'SUBARCH':self.SUBARCH,}
+
+    def _dot_plugins(self,dot_path='lib/dot'):
+        dot_path = os.path.join(self.SCRIPT_PWD,dot_path)
+        _,dirs_to_bind,files_to_bind = [x for x in os.walk(dot_path)][0]
+        dir_configs_objs = OrderedDict(**{dir_to_bind:OrderedDict(path=os.path.join(dot_path,dir_to_bind),bind=os.path.join('/root','.'+dir_to_bind)) for dir_to_bind in dirs_to_bind})
+        file_configs_objs = OrderedDict(**{os.path.basename(file_to_bind):OrderedDict(path=os.path.join(dot_path,file_to_bind),bind=os.path.join('/root','.'+file_to_bind)) for file_to_bind in files_to_bind})
+        return dir_configs_objs,file_configs_objs
 
     def _exec_or_file_plugins(self, type):
         pluginblock = self.config.get(type)
@@ -61,7 +74,7 @@ class Config:
 
     def update(self,**kwargs):
         [setattr(self,k,v) for k,v in kwargs.items()]
-        
+
     def interactive_run_cmd(self,tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
