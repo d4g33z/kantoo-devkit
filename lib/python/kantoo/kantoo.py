@@ -5,7 +5,7 @@ import pathlib
 import tempfile
 import hjson
 from functools import reduce
-
+from collections import OrderedDict
 
 class Config:
     'A configuration object for docker containers'
@@ -37,6 +37,11 @@ class Config:
         self.DOCKER_BUILDARGS = {
             'ARCH':self.ARCH,
             'SUBARCH':self.SUBARCH,}
+
+    def _dot_plugins(self):
+        dot_path = os.path.join(self.SCRIPT_PWD,'lib/dot')
+        _,dirs_to_bind,files_to_bind = [x for x in os.walk(dot_path)][0]
+        dir_configs_objs = OrderedDict(**{dir_to_bind:OrderedDict(path=os.path.join(dot_path,dir_to_bind),bind=os.path.join('/root','.'+dir_to_bind)) for dir_to_bind in dirs_to_bind})
 
     def _exec_or_file_plugins(self, type):
         pluginblock = self.config.get(type)
