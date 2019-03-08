@@ -37,11 +37,11 @@ def run_term_on_error(cmd):
 def run_print_output_error(cmd):
     o, e, rc = run_cmd(cmd)
     if o or e:
-        print '\ncommand: {}'.format(cmd)
+        print('\ncommand: {}'.format(cmd))
     if o:
-        print 'output:\n{}'.format(o.strip())
+        print('output:\n{}'.format(o.strip()))
     if e:
-        print '\nerror:\n{}'.format(e.strip())
+        print('\nerror:\n{}'.format(e.strip()))
     return o, e, rc
 
 
