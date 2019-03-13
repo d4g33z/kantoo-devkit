@@ -89,9 +89,9 @@ class Config:
             ip.system(self.interactive_run_cmd(tag))
         except NameError:
             os.system(self.interactive_run_cmd(tag))
-        else:
+        except:
             print('cannot interact')
-            return
+        return
 
     def images(self,client):
         return list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
