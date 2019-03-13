@@ -33,11 +33,19 @@ class Config:
         self.all_plugins = self.file_plugins + self.dir_plugins + self.exec_plugins + self.env_plugins
 
         # DOCKER_OPTS is created in the hjson config file
-        self.DOCKER_OPTS.update(
-                {'volumes':{
-                    **{x.exec_path:x.exec_volume for x in self.exec_plugins},
-                    **{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}},
-                })
+        # Plugin.path changed to Plugin.tmp_path
+        if False:
+            self.DOCKER_OPTS.update(
+                    {'volumes':{
+                        **{x.exec_path:x.exec_volume for x in self.exec_plugins},
+                        **{os.path.join(self.SCRIPT_PWD,x.path):x.volume for x in self.all_plugins if x.path is not None}},
+                    })
+        else:
+            self.DOCKER_OPTS.update(
+                    {'volumes':{
+                        **{x.exe_path:x.exe_volume for x in self.exec_plugins},
+                        **{os.path.join(self.SCRIPT_PWD,x.tmp_path):x.volume for x in self.all_plugins if x.path is not None}},
+                    })
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
 
@@ -185,7 +193,7 @@ class FilePlugin(Plugin):
     def __init__(self, bind, mode='ro', text=None, path=None, **kwargs):
         self.path = pathlib.Path(tempfile.mkstemp()[1])
         self.volume = {'bind':bind,'mode':mode}
-    def write(self,txt,ext,**fvars):
+    def write(self,txt,dummy,**fvars):
         self.path.write_text(txt.format(**fvars))
         return self
     def chmod(self,mode):
@@ -194,6 +202,90 @@ class FilePlugin(Plugin):
     def __repr__(self):
         return f"{self.volume.get('bind')}"
 
+class PluginBase:
+    def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,**kwargs):
+        assert not (text and path)
+        assert not (bind and exec)
+        self.path = path if path else '/dev/null' #it has a text element
+        self.bind = bind if bind else f"/entropy/plugins/{name}"
+        self.text = text
+        self.name = name
+        self.mode = mode
+        self.exec = exec
+
+        self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
+        self.exe_volume = {'bind':f"/entropy/bin/{self.name}",'mode':'ro'} if exec else None
+        self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if not os.path.isdir(self.path) else None
+        self.volume = {'bind':self.bind,'mode':self.mode}
+
+    def write(self,txt,**vars):
+        if txt is None: return self
+        #extract mandatory shebang
+        executable = txt.split('\n')[0].split(' ').pop() if self.exec else None
+        if not executable:
+            #use f-string subsitution
+            self.exec_path.write_text(txt.format(**vars))
+        else:
+            self.docker_env = [f"{var}={value}" for var,value in vars.items()]
+            self.path.write_text(txt)
+            self.exec_path.write_text(
+f"""#!/usr/bin/env sh
+{executable} {self.volume.get('bind') }
+""")
+        return self
 
 
+class PluginConfig:
+    'A configuration object for docker containers'
+    def __init__(self,script_pwd,config_rel_path):
+        self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
+        self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
+
+        #all-caps root level keys become attributes
+        [ setattr(self,y,self.config.get(y)) for y in filter(lambda x:x == x.upper(),self.config.keys()) ]
+
+        #a default value
+        if not hasattr(self,'DOCKER_FILE'): setattr(self,'DOCKER_FILE','Dockerfile')
+
+
+        self.plugins = self._plugin_factory(self.config.get('plugins'))
+
+        self.env_plugins = [EnvPlugin(var,value) for var,value in self.config.get('envplugins',{}).items()]
+
+        #bind the contents of DOT_DIR as hidden files and dirs in /root
+        if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
+            self.plugins += self._dot_plugin_factory(self.DOT_DIR)
+
+        # DOCKER_OPTS is created in the hjson config file
+        self.DOCKER_OPTS.update(
+                {'volumes':{
+                    **{x.exe_path:x.exe_volume for x in self.plugins if x.exec},
+                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if x.tmp_path else x.path):x.volume for x in self.plugins }},
+                })
+
+        self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
+        self.DOCKER_OPTS.update({'working_dir':'/'})
+
+        self.DOCKER_BUILDARGS = {
+            'ARCH':self.ARCH,
+            'SUBARCH':self.SUBARCH,}
+
+    def _plugin_factory(self,plugin_block):
+
+        return list(map(lambda x,y,z:x.write(y,**z),
+                        #create the objs
+                        [PluginBase(k, **v) for k,v in plugin_block.items()],
+                        #get the text from the hjson file or a file on disk
+                        [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) if x.get('tmp_path') else None\
+                                                                                        for x in plugin_block.values()],
+                        #get the env or f-string vars using value on Config obj or those set in the block itself
+                        [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) \
+                                for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in plugin_block.values()]))
+
+    def _dot_plugin_factory(self,dot_path='lib/dot'):
+        dot_path = os.path.join(self.SCRIPT_PWD,dot_path)
+        _,dirs_to_bind,files_to_bind = [x for x in os.walk(dot_path)][0]
+        dir_configs_objs = OrderedDict(**{dir_to_bind:OrderedDict(path=os.path.join(dot_path,dir_to_bind),bind=os.path.join('/root','.'+dir_to_bind),exec=False) for dir_to_bind in dirs_to_bind})
+        file_configs_objs = OrderedDict(**{os.path.basename(file_to_bind):OrderedDict(path=os.path.join(dot_path,file_to_bind),bind=os.path.join('/root','.'+file_to_bind),exec=False) for file_to_bind in files_to_bind})
+        return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
 
