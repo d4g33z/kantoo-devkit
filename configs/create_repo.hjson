@@ -36,6 +36,7 @@ execplugins:
     remove_portage_pkgs:
     {
 
+        skip:true
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
@@ -48,15 +49,17 @@ execplugins:
         IN_PORT_PKGS:
             '''
             app-admin/equo
-            app-admin/metalog
-            app-admin/sudo
-            app-editors/vim
-            app-portage/eix
-            net-dns/avahi
-            net-misc/chrony
-            net-misc/networkmanager
-            sys-auth/nss-mdns
+            sys-apps/entropy-server
             '''
+
+            #app-admin/metalog
+            #app-admin/sudo
+            #app-editors/vim
+            #app-portage/eix
+            #net-dns/avahi
+            #net-misc/chrony
+            #net-misc/networkmanager
+            #sys-auth/nss-mdns
 
         path: plugins/bash/create_repo/install_portage_pkgs.sh
         #path: plugins/python/create_repo/install_portage_pkgs.py
@@ -71,13 +74,11 @@ execplugins:
 
     patch_eit:
     {
-        skip:true
         path: plugins/bash/create_repo/patch_eit.sh
     },
 
     sync_or_create_local_repo:
     {
-        skip:true
         REPOSITORY_NAME:''
         path: plugins/bash/create_repo/sync_or_create_local_repo.sh
     },
@@ -106,6 +107,7 @@ fileplugins:
         text:
         '''
         EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
+        #for removing kernel sources in a container
         DONT_MOUNT_BOOT=1
         '''
     },
