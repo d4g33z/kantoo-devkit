@@ -202,6 +202,9 @@ class FilePlugin(Plugin):
     def __repr__(self):
         return f"{self.volume.get('bind')}"
 
+
+#-----------------------------------------------------------------------------------------
+#unified exec,file and dir plugin
 class PluginBase:
     def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,**kwargs):
         assert not (text and path)
@@ -288,4 +291,59 @@ class PluginConfig:
         dir_configs_objs = OrderedDict(**{dir_to_bind:OrderedDict(path=os.path.join(dot_path,dir_to_bind),bind=os.path.join('/root','.'+dir_to_bind),exec=False) for dir_to_bind in dirs_to_bind})
         file_configs_objs = OrderedDict(**{os.path.basename(file_to_bind):OrderedDict(path=os.path.join(dot_path,file_to_bind),bind=os.path.join('/root','.'+file_to_bind),exec=False) for file_to_bind in files_to_bind})
         return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
+
+    @property
+    def DOCKER_REPO(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}"
+    @property
+    def DOCKER_IMAGE(self):
+        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
+
+    def update(self,**kwargs):
+        [setattr(self,k,v) for k,v in kwargs.items()]
+
+    def interactive_run_cmd(self,tag):
+        volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path,info in self.DOCKER_OPTS.get('volumes').items()]
+        envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
+        #return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{self.DOCKER_TAG}"
+        return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
+
+    def interact(self,tag='stage3'):
+        "drop to an interactive shell of a container of self.DOCKER_IMAGE"
+        try:
+            ip = get_ipython()
+            ip.system(self.interactive_run_cmd(tag))
+        except NameError:
+            os.system(self.interactive_run_cmd(tag))
+        except:
+            print('cannot interact')
+        return
+
+    def images(self,client):
+        return list(filter(lambda x: x in client.images.list(f"{self.DOCKER_REPO}"),client.images.list()))
+
+    def image_cleanup(self,client):
+        #remove danglers
+        [client.images.remove(image.id) for image in client.images.list(filters={'dangling':True})]
+
+        #TODO: remove all running containers first
+        class RemovalFinished(Exception):
+            pass
+
+        def _image_cleanup(image):
+            print(f"about to remove image {image.tags.pop()}")
+            if input('remove image? [y/N]') == 'y':
+                try:
+                    client.images.remove(image.id)
+                except:
+                    print(f"images can only be removed in the reverse order they were created")
+                    raise RemovalFinished
+                print('image removed')
+            else:
+                print('image not removed and can only be removed in the reverse order to creation. you are done')
+                raise RemovalFinished
+        try:
+            [_image_cleanup(im) for im in list(map(lambda a:a.pop(), (filter(lambda y:y.pop() in map(lambda z:z.name, self.exec_plugins), [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
+        except RemovalFinished:
+            return
 
