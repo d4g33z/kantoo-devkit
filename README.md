@@ -99,29 +99,24 @@ the configured scripts in the container in sequence.
 ```commandline
 (env3.6) # vim configs/hello_world.hjson
 (env3.6) # ./dockerdriver --config configs/hello_world.hjson
-Found docker image funtoo/x86-64bit/amd64-k10:stage3
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>>ExecPlugin: /entropy/plugins/hello_world.sh
->>>FilePlugins: [/tmp/hello_file]
->>>DirPlugins: [/var/git : /var/git]
->>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
+Found docker image funtoo/x86-64bit/amd64-k10:stage3.
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of stage3 to run hello_world on.
+vigorous_mclean : sha256:14d879ecbd0828598add5ef6458c22ebb3d0d7ee54a2f265c65bcc1aa81803ad committed
 (env3.6) # cat logs/last_logs.txt
 hello globally
+hello locally from bash
 hello locally
 hello via override
 (env3.6) # vim configs/hello_goodbye_world.hjson
 (env3.6) # ./dockerdriver --config configs/hello_goodbye_world.hjson
-Found docker image funtoo/x86-64bit/amd64-k10:stage3
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>>ExecPlugin: /entropy/plugins/hello_world.sh
->>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
->>>DirPlugins: [/var/git : /var/git]
->>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>>ExecPlugin: /entropy/plugins/goodbye_world.sh
->>>FilePlugins: [/tmp/hello_file, /tmp/goodbye_file]
->>>DirPlugins: [/var/git : /var/git]
->>>EnvPlugins: [EDITOR = cat, LC_ALL = en_US.UTF-8]
+Found docker image funtoo/x86-64bit/amd64-k10:stage3.
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of stage3 to run hello_world on.
+festive_mendel : sha256:8a674e1cc5344275a48e8eb24f95801b2b9c3b3c61b605f32ca7e4c53965c980 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of hello_world to run goodbye_world on.
+stoic_engelbart : sha256:71116737a08920fe1045e450b29373257bf54cefbb22b300094eae58a6f1c63d committed
 (env3.6) # cat logs/last_logs.txt
 goodbye world
 goodbye, file world!!!
