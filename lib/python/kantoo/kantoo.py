@@ -12,7 +12,7 @@ class Plugin:
     def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,**kwargs):
         assert not (text and path)
         assert not (bind and exec)
-        self.path = path if path else '/dev/null' #it has a text element
+        self.path = pathlib.Path(path) if path else '/dev/null' #it has a text element
         self.bind = bind if bind else f"/entropy/plugins/{name}"
         self.text = text
         self.name = name
@@ -21,7 +21,7 @@ class Plugin:
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
         self.exe_volume = {'bind':f"/entropy/bin/{self.name}",'mode':'ro'} if exec else None
-        self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if not os.path.isdir(self.path) else None
+        self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) #ignored if os.path.isdir(PWD+self.path)
         self.volume = {'bind':self.bind,'mode':self.mode}
 
     def write(self,txt,**vars):
@@ -30,11 +30,11 @@ class Plugin:
         executable = txt.split('\n')[0].split(' ').pop() if self.exec else None
         if not executable:
             #use f-string subsitution
-            self.exec_path.write_text(txt.format(**vars))
+            self.tmp_path.write_text(txt.format(**vars))
         else:
             self.docker_env = [f"{var}={value}" for var,value in vars.items()]
-            self.path.write_text(txt)
-            self.exec_path.write_text(
+            self.tmp_path.write_text(txt)
+            self.exe_path.write_text(
 f"""#!/usr/bin/env sh
 {executable} {self.volume.get('bind') }
 """)
@@ -66,7 +66,7 @@ class PluginConfig:
         self.DOCKER_OPTS.update(
                 {'volumes':{
                     **{x.exe_path:x.exe_volume for x in self.plugins if x.exec},
-                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if x.tmp_path else x.path):x.volume for x in self.plugins }},
+                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path):x.volume for x in self.plugins }},
                 })
 
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
@@ -82,7 +82,8 @@ class PluginConfig:
                         #create the objs
                         [Plugin(k, **v) for k,v in plugin_block.items()],
                         #get the text from the hjson file or a file on disk
-                        [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) if x.get('tmp_path') else None\
+                        [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) \
+                             if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null'))) else None\
                                                                                         for x in plugin_block.values()],
                         #get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) \
