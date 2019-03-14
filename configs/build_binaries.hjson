@@ -1,0 +1,143 @@
+OS: funtoo
+#ARCH="arm-32bit"
+#SUBARCH="rpi3"
+#ENTROPY_ARCH="armv7l"
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+#a directory of dot files
+DOT_DIR:lib/dot
+
+#the intial state
+DOCKER_TAG:stage3
+
+DOCKER_OPTS:
+{
+    #docker.run kwargs
+    tty:true,
+    init:true,
+    remove:true
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
+plugins:
+{
+
+    #-----------------------------------------------------------
+    # exec plugins
+
+    install_portage_pkgs:
+    {
+        skip:true
+        IN_PORT_PKGS:
+            '''
+            app-admin/equo
+            sys-apps/entropy-server
+            app-admin/metalog
+            app-admin/sudo
+            app-editors/vim
+            app-portage/eix
+            net-dns/avahi
+            net-misc/chrony
+            net-misc/networkmanager
+            sys-auth/nss-mdns
+            '''
+
+        path: plugins/python/create_repo/install_portage_pkgs.py
+        exec:true
+    },
+
+    #-----------------------------------------------------------
+    # file plugins
+    #configure portage
+    makeconf:
+    {
+        N_MAKE_PROCS:4
+        bind: /etc/portage/make.conf
+        text:
+        '''
+DONT_MOUNT_BOOT=1
+
+#these features are for compiling
+FEATURES="buildpkg userfetch distcc distcc-pump"
+
+#these features are for rebuilding using existing binaries
+#FEATURES="userfetch getbinpkg"
+#PORTAGE_BINHOST="http://192.168.1.11/funtoo/packages"
+
+MAKEOPTS=-j{N_MAKE_PROCS}
+#MAKEOPTS="-j29 -l4"
+
+#if are we going to distribute packages
+#USE="bindist"
+
+PKGDIR=/root/packages
+PORTAGE_BINHOST="http://192.168.1.11/funtoo/packages"
+
+VIDEO_CARDS="fbdev vc4"
+INPUT_DEVICES="evdev tslib"
+
+EMERGE_DEFAULT_OPS="--autounmask-keep-masks --autounmask=y --autounmask-write=n --jobs=3 --quiet-build=n --quiet=n"
+
+        '''
+    },
+
+    #conifiguring local entropy server
+    entropysrv:
+    {
+
+        REPOSITORY_NAME:''
+        REPOSITORY_DESCRIPTION:''
+        path: plugins/file/server.conf
+        bind: /etc/entropy/server.conf
+    },
+
+    #-----------------------------------------------------------
+    # dir plugins
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /root/packages
+        mode: rw
+    },
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/entropy_artifacts
+        bind: /entropy/artifacts
+        mode: rw
+    },
+
+    meta_repo:
+    {
+        #must explicitly state this equivalence
+        path: /var/git
+        bind: /var/git
+    },
+
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+    },
+
+    #this is mounted in volatile memory;
+    portage_tmpdir:
+    {
+        #set tmpfs opts and notify plugin config; simpler
+        tmpfs:size=1G
+        bind: /var/tmp/portage
+    }
+
+}
+
