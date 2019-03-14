@@ -17,6 +17,11 @@ atomized by committing intermediate containers to images.
 You must have a working docker install on your development machine. Add yourself to the `docker` group to work without 
 needing root privileges.  
 
+## Why Not Just Use Dockerfiles? ##
+
+I'm not sure exactly. But I feel I needed to structure the modification process of an image more explicitly, and modularize
+the common steps, especially with respect to the initial use case: building lots of binary packages and managing repos of them.
+
 ## Use Virtualenv (Please) ##
 
 Use `virtualenv` to isolate everything nicely and in a disposable way. This preferable for most small projects, as 
