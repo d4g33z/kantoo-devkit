@@ -18,12 +18,15 @@
 import docker
 import pathlib
 from datetime import datetime
-from .kantoo import Config
+from .kantoo import Config,PluginConfig
 
 def dockerdriver(cwd,config,skip,pretend,interactive):
 
     client = docker.from_env()
-    config = Config(cwd,config)
+    if 'v1' in config:
+        config = Config(cwd,config)
+    else:
+        config = PluginConfig(cwd,config)
 
     if pretend:
         [setattr(bp,'skip',True) for bp in config.exec_plugins]
