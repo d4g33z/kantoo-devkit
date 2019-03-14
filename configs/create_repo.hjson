@@ -71,7 +71,6 @@ plugins:
 
     rebuild_entropy_database:
     {
-        skip:true
         ENTROPY_ARCH:''
         path: plugins/bash/create_repo/rebuild_entropy_database.sh
         exec:true
@@ -86,20 +85,19 @@ plugins:
     sync_or_create_local_repo:
     {
         REPOSITORY_NAME:''
+        skip:true
         path: plugins/bash/create_repo/sync_or_create_local_repo.sh
         exec:true
     },
 
     inject_portage_pkgs:
     {
-        skip:true
         path:plugins/bash/create_repo/inject_portage_pkgs.sh
         exec:true
     },
 
     commit_all_and_push:
     {
-        skip:true
         path:plugins/bash/create_repo/commit_all_and_push.sh
         exec:true
     },
@@ -151,6 +149,11 @@ plugins:
         bind: /var/git
     },
 
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+    }
 }
 
 
