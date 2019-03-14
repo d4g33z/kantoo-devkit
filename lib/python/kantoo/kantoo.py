@@ -9,7 +9,7 @@ from collections import OrderedDict
 #-----------------------------------------------------------------------------------------
 #unified exec,file and dir plugin
 class Plugin:
-    def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,**kwargs):
+    def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,skip=False,**kwargs):
         assert not (text and path)
         assert not (bind and exec)
         self.path = pathlib.Path(path) if path else '/dev/null' #it has a text element
@@ -18,6 +18,7 @@ class Plugin:
         self.name = name
         self.mode = mode
         self.exec = exec
+        self.skip = skip
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
         self.exe_volume = {'bind':f"/entropy/bin/{self.name}",'mode':'ro'} if exec else None
@@ -33,6 +34,7 @@ class Plugin:
             self.tmp_path.write_text(txt.format(**vars))
         else:
             self.docker_env = [f"{var}={value}" for var,value in vars.items()]
+            self.docker_exe = self.exe_volume.get('bind')
             self.tmp_path.write_text(txt)
             self.exe_path.write_text(
 f"""#!/usr/bin/env sh
@@ -40,6 +42,8 @@ f"""#!/usr/bin/env sh
 """)
         return self
 
+    def __repr__(self):
+        return f"{self.volume.get('bind')}"
 
 class PluginConfig:
     'A configuration object for docker containers'
@@ -147,7 +151,7 @@ class PluginConfig:
                 print('image not removed and can only be removed in the reverse order to creation. you are done')
                 raise RemovalFinished
         try:
-            [_image_cleanup(im) for im in list(map(lambda a:a.pop(), (filter(lambda y:y.pop() in map(lambda z:z.name, self.exec_plugins), [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
+            [_image_cleanup(im) for im in list(map(lambda a:a.pop(), (filter(lambda y:y.pop() in map(lambda z:z.name, filter(lambda x:x.exec,self.plugins)), [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
         except RemovalFinished:
             return
 
