@@ -109,14 +109,12 @@ plugins:
     #configure portage
     makeconf:
     {
-        #demo of f-string subsitions
-        dont_mount_book:1
         bind: /etc/portage/make.conf
         text:
         '''
         EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
         #for removing kernel sources in a container
-        DONT_MOUNT_BOOT={dont_mount_boot}
+        DONT_MOUNT_BOOT=1
         '''
     },
 
