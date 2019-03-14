@@ -1,0 +1,87 @@
+OS: funtoo
+#ARCH="arm-32bit"
+#SUBARCH="rpi3"
+#ENTROPY_ARCH="armv7l"
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+DOCKER_TAG:stage3
+
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:false,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+
+bashplugins:
+{
+    hello_world:
+    {
+        text:
+        '''
+        #!/bin/sh
+        echo hello world
+        cat /tmp/hello_file
+        '''
+    },
+
+
+    goodbye_world:
+    {
+        text:
+        '''
+        #!/bin/sh
+        echo goodbye world
+        cat /tmp/goodbye_file
+        '''
+    },
+
+
+}
+
+fileplugins:
+{
+    hello_file:
+    {
+        bind: /tmp/hello_file
+        text:
+        '''
+        hello, file world!!!
+        
+        '''
+    },
+
+    goodbye_file:
+    {
+        bind: /tmp/goodbye_file
+        text:
+        '''
+        goodbye, file world!!!
+
+        '''
+    },
+
+}
+
+
+dirplugins:
+{
+
+    meta_repo:
+    {
+        #same as bind
+        path: /var/git
+    },
+
+}
+
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}

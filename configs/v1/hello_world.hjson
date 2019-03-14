@@ -1,0 +1,99 @@
+#-----------------------------------------------------------------------------------------------------------------------
+# variables set on the Config obj; must be upper case a la shell
+OS: funtoo
+#ARCH: "arm-32bit"
+#SUBARCH: "raspi3"
+#ENTROPY_ARCH: "armv7l"
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+DOCKER_TAG: stage3
+
+#this doesn't work yet but it should
+DOCKER_BUILDKIT:1
+
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:false,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+#avaiable to all plugins
+GLOBAL_VAR:hello globally
+
+#-----------------------------------------------------------------------------------------------------------------------
+#environment variables for every call of container.exec_run
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
+bashplugins:
+{
+    hello_world:
+    {
+        #environment variable for just this plugin called with exec_run with given initial value
+        #an empty string means use the value set on the Config object above
+        #if set here they override values set in the root block
+        GLOBAL_VAR:''
+        LOCAL_VAR: hello locally from bash
+        text:
+        '''
+        #!/bin/sh
+        echo ${GLOBAL_VAR}
+        echo ${LOCAL_VAR}
+        cat /tmp/hello_file
+        '''
+        #bash plugins are bound automatically to the container
+    },
+
+    skipped_hello_world:
+    {
+        #demo of skip parameter; can be set on cmdline via --skip
+        skip: true
+        text:
+        '''
+        #!/bin/sh
+        echo I don\'t get to say hello due to skip=true
+        '''
+    },
+
+}
+
+fileplugins:
+{
+    hello_file:
+    {
+        #these are variables that are used in python f-string subsitutions
+        LOCAL_VAR: hello locally
+        #note the override
+        GLOBAL_VAR: hello via override
+        bind: /tmp/hello_file
+        text:
+        '''
+        {LOCAL_VAR}
+        {GLOBAL_VAR}
+
+        '''
+    },
+
+
+}
+
+
+dirplugins:
+{
+
+    meta_repo:
+    {
+        #same as bind
+        path: /var/git
+    },
+
+}
+
