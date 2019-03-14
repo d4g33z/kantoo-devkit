@@ -9,9 +9,11 @@ from collections import OrderedDict
 #-----------------------------------------------------------------------------------------
 #unified exec,file and dir plugin
 class Plugin:
-    def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,skip=False,**kwargs):
+    def __init__(self,name,text=None,path=None,bind=None,mode='ro',exec=False,skip=False,tmpfs=None,**kwargs):
         assert not (text and path)
         assert not (bind and exec)
+        assert not (tmpfs and (path or text))
+        #what happens if there is just bind?
         self.path = pathlib.Path(path) if path else '/dev/null' #it has a text element
         self.bind = bind if bind else f"/entropy/plugins/{name}"
         self.text = text
@@ -19,14 +21,19 @@ class Plugin:
         self.mode = mode
         self.exec = exec
         self.skip = skip
+        self.tmpfs = tmpfs if tmpfs else ''
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
         self.exe_volume = {'bind':f"/entropy/bin/{self.name}",'mode':'ro'} if exec else None
-        self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) #ignored if os.path.isdir(PWD+self.path)
-        self.volume = {'bind':self.bind,'mode':self.mode}
+        #ignored if os.path.isdir(PWD+self.path)
+        self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if path or text else None
+        self.volume = {'bind':self.bind,'mode':self.mode} if path or text else None
+        #see https://docker-py.readthedocs.io/en/stable/containers.html
+        self.tmpfs = {self.bind:self.tmpfs} if not (path or text) else {}
 
     def write(self,txt,**vars):
         if txt is None: return self
+        if self.tmp_path is None: return self
         #extract mandatory shebang
         executable = txt.split('\n')[0].split(' ').pop() if self.exec else None
         if not executable:
@@ -70,11 +77,12 @@ class PluginConfig:
         self.DOCKER_OPTS.update(
                 {'volumes':{
                     **{x.exe_path:x.exe_volume for x in self.plugins if x.exec},
-                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path):x.volume for x in self.plugins }},
+                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path):x.volume for x in filter(lambda x:x.tmp_path is not None,self.plugins) }},
                 })
 
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
+        self.DOCKER_OPTS.update({'tmpfs':reduce(lambda x,y:{**x,**y},map(lambda x:x.tmpfs,self.plugins))})
 
         self.DOCKER_BUILDARGS = {
             'ARCH':self.ARCH,
