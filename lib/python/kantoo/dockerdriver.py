@@ -18,7 +18,7 @@
 import docker
 import pathlib
 from datetime import datetime
-from .kantoo import Config,PluginConfig
+from .kantoo import PluginConfig
 
 def dockerdriver(cwd,config,skip,pretend,interactive):
 
