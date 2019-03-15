@@ -92,6 +92,7 @@ class PluginConfig:
 
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
+        # see https://docs.docker.com/storage/tmpfs/
         self.DOCKER_OPTS.update({'tmpfs':reduce(lambda x,y:{**x,**y},map(lambda x:x.tmpfs,self.plugins))})
 
         self.DOCKER_BUILDARGS = {

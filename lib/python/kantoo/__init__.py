@@ -1,3 +1,3 @@
 from .dockerdriver  import dockerdriver
 
-from .kantoo import Config
+from .kantoo import PluginConfig
