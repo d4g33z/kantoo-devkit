@@ -5,6 +5,9 @@ import tempfile
 import hjson
 from functools import reduce
 from collections import OrderedDict
+
+import docker
+
 #-----------------------------------------------------------------------------------------
 #unified exec,file and dir plugin
 class Plugin:
@@ -27,8 +30,17 @@ class Plugin:
         #ignored if os.path.isdir(PWD+self.path)
         self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if path or text else None
         self.volume = {'bind':self.bind,'mode':self.mode} if path or text else None
-        #see https://docker-py.readthedocs.io/en/stable/containers.html
-        self.tmpfs = {self.bind:self.tmpfs} if not (path or text) else {}
+        #see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
+        #set the arguements to create a new Mount object
+        # self.tmpfs = {self.bind:self.tmpfs} if not (path or text) else {}
+        self.tmpfs = {
+            'target':self.bind,
+            'source':'',
+            'type':'tmpfs',
+            # 'read_only': False,
+            # 'tmpfs_size':'',
+            # 'tmpfs_mode':0o775,
+        } if not (path or text) else {}
 
     def write(self,txt,**vars):
         if txt is None: return self
@@ -93,7 +105,9 @@ class PluginConfig:
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
         # see https://docs.docker.com/storage/tmpfs/
-        self.DOCKER_OPTS.update({'tmpfs':reduce(lambda x,y:{**x,**y},map(lambda x:x.tmpfs,self.plugins))})
+        # self.DOCKER_OPTS.update({'tmpfs':reduce(lambda x,y:{**x,**y},map(lambda x:x.tmpfs,self.plugins))})
+        # see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
+        # self.DOCKER_OPTS.update({'mount':list(map(lambda x:docker.types.Mount(**x),map(lambda x:x.tmpfs,filter(lambda x:x.tmpfs != {},self.plugins))))})
 
         self.DOCKER_BUILDARGS = {
             'ARCH':self.ARCH,
