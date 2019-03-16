@@ -67,6 +67,7 @@ def dockerdriver(cwd,config,skip,pretend,interactive):
         # not exec_plugin.skip has to be true
         exec_result = container.exec_run(['sh','-c',f". {exec_plugin.docker_exe}"] , environment=exec_plugin.docker_env)
 
+        #TODO test the exec_result and decide whether to proceed, report or fix a problem
 
 
         open(f"{config.SCRIPT_PWD}/logs/last_logs.txt", 'wb').write(exec_result.output)
