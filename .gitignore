@@ -51,3 +51,4 @@ last_logs.txt
 env3.6/
 ipython_log.py*
 lib/dot/*
+lib/python/portage
