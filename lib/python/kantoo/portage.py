@@ -2,5 +2,8 @@
 
 
 #get all profile info
-#import portage;
-# print("\n".join(portage.settings.profiles)
+
+import portage
+print("\n".join(portage.settings.profiles))
+
+
