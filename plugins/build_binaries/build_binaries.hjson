@@ -224,8 +224,8 @@ FEATURES="$FEATURES -distcc-pump"
 
     lib_python:
     {
-        path: lib/python/kano
-        bind: /entropy/plugins/kano
+        path: lib/python/kantoo
+        bind: /entropy/plugins/kantoo
     },
 
     #collect portage compiled binaries here
