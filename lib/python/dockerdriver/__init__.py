@@ -220,6 +220,38 @@ class PluginConfig:
         file_configs_objs = OrderedDict(**{os.path.basename(file_to_bind):OrderedDict(path=os.path.join(dot_path,file_to_bind),bind=os.path.join('/root','.'+file_to_bind),exec=False) for file_to_bind in files_to_bind})
         return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
 
+    def _sysroot_plugin_factory(self,sysroot_path='lib/sysroot'):
+        dir_configs_objs = {}
+        file_configs_objs = {}
+        sysroot_path = pathlib.Path(self.SCRIPT_PWD).joinpath(pathlib.Path(sysroot_path))
+        for dirpath,dirs_to_bind,files_to_bind in os.walk(sysroot_path,followlinks=False):
+            rel_link_paths = map(lambda x:x.relative_to(sysroot_path),
+                            filter(lambda x:x.is_symlink(),[pathlib.Path(dirpath).joinpath(pathlib.Path(dir_to_bind)) for dir_to_bind in dirs_to_bind]))
+            dir_configs_objs = \
+                {
+                    **dir_configs_objs,
+                    **OrderedDict(**{
+                            str(rel_link_path):OrderedDict(
+                            path=sysroot_path.joinpath(rel_link_path).resolve(),
+                            bind=pathlib.Path('/').joinpath(rel_link_path),
+                            exec=False) for rel_link_path in rel_link_paths})
+                }
+            rel_file_paths = map(lambda x:x.relative_to(sysroot_path),
+                            [pathlib.Path(dirpath).joinpath(pathlib.Path(file_to_bind)) for file_to_bind in files_to_bind])
+            file_configs_objs = \
+                {
+                    **file_configs_objs,
+                    **OrderedDict(**{
+                        str(rel_file_path):OrderedDict(
+                        path=sysroot_path.joinpath(rel_file_path).resolve(),
+                        bind=pathlib.Path('/').joinpath(rel_file_path),
+                        exec=False) for rel_file_path in rel_file_paths})
+
+                }
+
+
+        return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
+
     @property
     def DOCKER_REPO(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}"
