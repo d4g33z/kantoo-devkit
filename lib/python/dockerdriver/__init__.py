@@ -120,14 +120,14 @@ class Plugin:
         #see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
         #set the arguements to create a new Mount object
         # self.tmpfs = {self.bind:self.tmpfs} if not (path or text) else {}
-        self.tmpfs = {
-            'target':self.bind,
-            'source':'',
-            'type':'tmpfs',
-            # 'read_only': False,
-            # 'tmpfs_size':'',
-            # 'tmpfs_mode':0o775,
-        } if not (path or text) else {}
+        # self.tmpfs = {
+        #     'target':self.bind,
+        #     'source':'',
+        #     'type':'tmpfs',
+        #     # 'read_only': False,
+        #     # 'tmpfs_size':'',
+        #     # 'tmpfs_mode':0o775,
+        # } if not (path or text) else {}
 
     def write(self,txt,**vars):
         if txt is None: return self
