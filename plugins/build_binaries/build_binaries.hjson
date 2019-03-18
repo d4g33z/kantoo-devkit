@@ -6,8 +6,8 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-#a directory of dot files
-DOT_DIR:lib/dot
+#a directory of files and dirs to bind
+SYSROOT_DIR:lib/sysroot
 
 #the intial state
 DOCKER_TAG:stage3
@@ -68,6 +68,7 @@ plugins:
 
     #-----------------------------------------------------------
     # file plugins
+    # any paths here in SYSROOT_DIR take precedent over auto created plugins
 
 
     #notice the conf.d bash subsitutions are masked from f-string sub
@@ -167,44 +168,8 @@ net-wireless/wpa_supplicant -bindist
         '''
     },
 
-    package_env:
-    {
-        bind: /etc/portage/package.env
-        text:
-        '''
-sys-apps/man-db nodistcc-pump.conf
-sys-devel/bison nodistcc-pump.conf
-app-editors/nano nodistcc-pump.conf
-dev-util/cmake nodistcc.conf
-        '''
-    },
-
-    portage_env_no_distcc:
-    {
-        bind: /etc/portage/env/nodistcc.conf
-        text:
-        '''
-FEATURES="$FEATURES -distcc-pump -distcc"
-        '''
-    },
-
-    portage_env_no_distcc_pump:
-    {
-        bind: /etc/portage/env/nodistcc-pump.conf
-        text:
-        '''
-FEATURES="$FEATURES -distcc-pump"
-        '''
-    },
-
     #-----------------------------------------------------------
     # dir plugins
-    meta_repo:
-    {
-        #must explicitly state this equivalence
-        path: /var/git
-        bind: /var/git
-    },
 
     distfiles:
     {
@@ -222,11 +187,9 @@ FEATURES="$FEATURES -distcc-pump"
 #        bind: /var/tmp/portage
 #    },
 
-    lib_python:
-    {
-        path: lib/python/kantoo
-        bind: /entropy/plugins/kantoo
-    },
+
+    #RW dirs must be explicitedly configured here
+    #all sysroot dirs are RO
 
     #collect portage compiled binaries here
     portage_artifacts:
