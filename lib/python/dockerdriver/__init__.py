@@ -179,8 +179,11 @@ class PluginConfig:
         self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
 
         #bind the contents of DOT_DIR as hidden files and dirs in /root
-        if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
-            self.plugins += self._dot_plugin_factory(self.DOT_DIR)
+        #if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
+        #    self.plugins += self._dot_plugin_factory(self.DOT_DIR)
+
+        #self.plugins += self._sysroot_plugin_factory(self.SYSROOT_DIR)
+        self.plugins += self._sysroot_plugin_factory()
 
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update(
