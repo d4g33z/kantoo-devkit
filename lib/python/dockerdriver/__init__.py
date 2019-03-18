@@ -173,27 +173,22 @@ class PluginConfig:
         #a default value
         if not hasattr(self,'DOCKER_FILE'): setattr(self,'DOCKER_FILE','Dockerfile')
 
-
         self.plugins = self._plugin_factory(self.config.get('plugins'))
 
         self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
 
-        #bind the contents of DOT_DIR as hidden files and dirs in /root
-        #if hasattr(self,'DOT_DIR') and pathlib.Path(os.path.join(self.SCRIPT_PWD,self.DOT_DIR)).exists():
-        #    self.plugins += self._dot_plugin_factory(self.DOT_DIR)
-
-        #self.plugins += self._sysroot_plugin_factory(self.SYSROOT_DIR)
-        self.plugins += self._sysroot_plugin_factory()
+        self.plugins += self._sysroot_plugin_factory(self.SYSROOT_DIR)
 
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update(
                 {'volumes':{
-                    **{x.exe_path:x.exe_volume for x in self.plugins if x.exec},
-                    **{os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path):x.volume for x in filter(lambda x:x.tmp_path is not None,self.plugins) }},
+                    **{str(x.exe_path):x.exe_volume for x in self.plugins if x.exec},
+                    **{str(os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path)):x.volume for x in filter(lambda x:x.tmp_path is not None,self.plugins) }},
                 })
 
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
         self.DOCKER_OPTS.update({'working_dir':'/'})
+
         # see https://docs.docker.com/storage/tmpfs/
         # self.DOCKER_OPTS.update({'tmpfs':reduce(lambda x,y:{**x,**y},map(lambda x:x.tmpfs,self.plugins))})
         # see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
@@ -204,7 +199,6 @@ class PluginConfig:
             'SUBARCH':self.SUBARCH,}
 
     def _plugin_factory(self,plugin_block):
-
         return list(map(lambda x,y,z:x.write(y,**z),
                         #create the objs
                         [Plugin(k, **v) for k,v in plugin_block.items()],
@@ -215,13 +209,6 @@ class PluginConfig:
                         #get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) \
                                 for i in filter(lambda y:y[0]==y[0].upper(),x.items())} for x in plugin_block.values()]))
-
-    def _dot_plugin_factory(self,dot_path='lib/dot'):
-        dot_path = os.path.join(self.SCRIPT_PWD,dot_path)
-        _,dirs_to_bind,files_to_bind = [x for x in os.walk(dot_path)][0]
-        dir_configs_objs = OrderedDict(**{dir_to_bind:OrderedDict(path=os.path.join(dot_path,dir_to_bind),bind=os.path.join('/root','.'+dir_to_bind),exec=False) for dir_to_bind in dirs_to_bind})
-        file_configs_objs = OrderedDict(**{os.path.basename(file_to_bind):OrderedDict(path=os.path.join(dot_path,file_to_bind),bind=os.path.join('/root','.'+file_to_bind),exec=False) for file_to_bind in files_to_bind})
-        return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
 
     def _sysroot_plugin_factory(self,sysroot_path='lib/sysroot'):
         dir_configs_objs = {}
@@ -235,23 +222,24 @@ class PluginConfig:
                     **dir_configs_objs,
                     **OrderedDict(**{
                             str(rel_link_path):OrderedDict(
-                            path=sysroot_path.joinpath(rel_link_path).resolve(),
-                            bind=pathlib.Path('/').joinpath(rel_link_path),
+                            path=str(sysroot_path.joinpath(rel_link_path).resolve()),
+                            bind=str(pathlib.Path('/').joinpath(rel_link_path)),
                             exec=False) for rel_link_path in rel_link_paths})
                 }
+
             rel_file_paths = map(lambda x:x.relative_to(sysroot_path),
                             [pathlib.Path(dirpath).joinpath(pathlib.Path(file_to_bind)) for file_to_bind in files_to_bind])
+
             file_configs_objs = \
                 {
                     **file_configs_objs,
                     **OrderedDict(**{
                         str(rel_file_path):OrderedDict(
-                        path=sysroot_path.joinpath(rel_file_path).resolve(),
-                        bind=pathlib.Path('/').joinpath(rel_file_path),
+                        path=str(sysroot_path.joinpath(rel_file_path).resolve()),
+                        bind=str(pathlib.Path('/').joinpath(rel_file_path)),
                         exec=False) for rel_file_path in rel_file_paths})
 
                 }
-
 
         return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
 
