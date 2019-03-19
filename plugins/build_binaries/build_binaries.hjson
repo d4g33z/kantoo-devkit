@@ -1,3 +1,8 @@
+#------------------------------------------------------------------
+#   build a set of portage packages and their dependencies and
+#   store them as binaries to be injected by create_repo
+#------------------------------------------------------------------
+
 OS: funtoo
 #ARCH="arm-32bit"
 #SUBARCH="rpi3"
@@ -48,10 +53,9 @@ plugins:
 
     install_portage_pkgs:
     {
+        #do not put anything entropy related in here
         IN_PORT_PKGS:
             '''
-            app-admin/equo
-            sys-apps/entropy-server
             app-admin/metalog
             app-admin/sudo
             app-editors/vim
@@ -212,5 +216,10 @@ net-wireless/wpa_supplicant -bindist
         mode: rw
     },
 
+    lib_python:
+    {
+        path: lib/python/kantoo
+        bind: /entropy/plugins/kantoo
+    }
 }
 

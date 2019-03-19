@@ -68,10 +68,6 @@ def dd(cwd,config,skip,pretend,interactive):
             config.update(DOCKER_TAG=f"{exec_plugin.name}")
             continue
 
-        # print(f"{prompt} ExecPlugin: {exec_plugin}")
-        # print(f"{prompt} FilePlugins: {config.file_plugins}")
-        # print(f"{prompt} DirPlugins: {config.dir_plugins}")
-        # print(f"{prompt} EnvPlugins: {config.env_plugins}")
 
         # not exec_plugin.skip has to be true
         exec_result = container.exec_run(['sh','-c',f". {exec_plugin.docker_exe}"] , environment=exec_plugin.docker_env)

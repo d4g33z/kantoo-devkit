@@ -34,14 +34,26 @@ plugins:
 
     #-----------------------------------------------------------
     # exec plugins
+
     remove_portage_pkgs:
     {
 
-        skip:true
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
         path: plugins/create_repo/bash/remove_portage_pkgs.sh
+        exec:true
+    },
+
+    install_portage_pkgs:
+    {
+        IN_PORT_PKGS:
+            '''
+            app-admin/equo
+            sys-apps/entropy-server
+            '''
+
+        path: plugins/create_repo/python/install_portage_pkgs.py
         exec:true
     },
 
@@ -61,7 +73,6 @@ plugins:
     sync_or_create_local_repo:
     {
         REPOSITORY_NAME:''
-        skip:true
         path: plugins/create_repo/bash/sync_or_create_local_repo.sh
         exec:true
     },
@@ -125,7 +136,13 @@ plugins:
     {
         path: /var/cache/portage/distfiles
         bind: /var/cache/portage/distfiles
-    }
+    },
+
+    lib_python:
+    {
+        path: lib/python/kantoo
+        bind: /entropy/plugins/kantoo
+    },
 }
 
 
