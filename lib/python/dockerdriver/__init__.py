@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #local
+
 import docker
 import hjson
 
@@ -46,7 +47,7 @@ def dd(cwd,config,skip,pretend,interactive):
         print(f"Found docker image {config.DOCKER_IMAGE}.")
     else:
         print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be initialized as a Funtoo stage3.")
-        client.images.build(path=config.SCRIPT_PWD, dockerfile=config.DOCKER_FILE,tag=config.DOCKER_IMAGE,quiet=False,buildargs=config.DOCKER_BUILDARGS)
+        client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE,tag=config.DOCKER_IMAGE,quiet=False,buildargs=config.DOCKER_BUILDARGS)
 
     prompt = ">>>"
     for exec_plugin in filter(lambda x:x.exec,config.plugins):
@@ -114,7 +115,7 @@ class Plugin:
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
         self.exe_volume = {'bind':f"/entropy/bin/{self.name}",'mode':'ro'} if exec else None
-        #ignored if os.path.isdir(PWD+self.path)
+        #ignored if self.path.is_dir()
         self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if path or text else None
         self.volume = {'bind':self.bind,'mode':self.mode} if path or text else None
         #see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
@@ -164,8 +165,8 @@ class EnvPlugin:
 class PluginConfig:
     'A configuration object for docker containers'
     def __init__(self,script_pwd,config_rel_path):
-        self.SCRIPT_PWD = str(pathlib.Path(script_pwd).absolute())
-        self.config = hjson.load(open(os.path.join(self.SCRIPT_PWD,config_rel_path),'r'))
+        self.SCRIPT_PWD = pathlib.Path(script_pwd).absolute().resolve()
+        self.config = hjson.load(open(self.SCRIPT_PWD.joinpath(config_rel_path),'r'))
 
         #all-caps root level keys become attributes
         [ setattr(self,y,self.config.get(y)) for y in filter(lambda x:x == x.upper(),self.config.keys()) ]
@@ -183,7 +184,7 @@ class PluginConfig:
         self.DOCKER_OPTS.update(
                 {'volumes':{
                     **{str(x.exe_path):x.exe_volume for x in self.plugins if x.exec},
-                    **{str(os.path.join(self.SCRIPT_PWD,x.tmp_path if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.path)) else x.path)):x.volume for x in filter(lambda x:x.tmp_path is not None,self.plugins) }},
+                    **{str(self.SCRIPT_PWD.joinpath(x.tmp_path if not self.SCRIPT_PWD.joinpath(x.path).is_dir() else x.path)):x.volume for x in filter(lambda x:x.tmp_path is not None,self.plugins) }},
                 })
 
         self.DOCKER_OPTS.update({'environment':list(reduce(lambda x,y:x+y,[z.docker_env for z in self.env_plugins],[]))})
@@ -203,8 +204,8 @@ class PluginConfig:
                         #create the objs
                         [Plugin(k, **v) for k,v in plugin_block.items()],
                         #get the text from the hjson file or a file on disk
-                        [x.get('text',open(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null')),'r').read()) \
-                             if not os.path.isdir(os.path.join(self.SCRIPT_PWD,x.get('path','/dev/null'))) else None\
+                        [x.get('text',open(self.SCRIPT_PWD.joinpath(x.get('path','/dev/null')),'r').read()) \
+                             if not self.SCRIPT_PWD.joinpath(x.get('path','/dev/null')).is_dir() else None\
                                                                                         for x in plugin_block.values()],
                         #get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]:i[1] if i[1] != '' else getattr(self,i[0]) \
@@ -213,7 +214,7 @@ class PluginConfig:
     def _sysroot_plugin_factory(self,sysroot_path='lib/sysroot'):
         dir_configs_objs = {}
         file_configs_objs = {}
-        sysroot_path = pathlib.Path(self.SCRIPT_PWD).joinpath(pathlib.Path(sysroot_path))
+        sysroot_path = self.SCRIPT_PWD.joinpath(pathlib.Path(sysroot_path))
         for dirpath,dirs_to_bind,files_to_bind in os.walk(sysroot_path,followlinks=False):
             rel_link_paths = map(lambda x:x.relative_to(sysroot_path),
                             filter(lambda x:x.is_symlink(),[pathlib.Path(dirpath).joinpath(pathlib.Path(dir_to_bind)) for dir_to_bind in dirs_to_bind]))
