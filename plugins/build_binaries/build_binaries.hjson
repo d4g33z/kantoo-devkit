@@ -137,12 +137,18 @@ DISTCCD_OPTS="${{DISTCCD_OPTS}} -N 15"
 DONT_MOUNT_BOOT=1
 
 #these features are for compiling
-FEATURES="buildpkg userfetch distcc distcc-pump"
-PKGDIR=/root/packages
+#FEATURES="buildpkg userfetch distcc distcc-pump"
+#PKGDIR=/root/packages
 
 #these features are for rebuilding using existing binaries
 #FEATURES="userfetch getbinpkg"
-#PORTAGE_BINHOST="http://192.168.1.11/funtoo/packages"
+#PORTAGE_BINHOST=http://192.168.1.11/funtoo/packages
+
+#these features are for rebuildin and using existing binaries
+FEATURES="buildpkg userfetch getbinpkg distcc distcc-pump"
+#this configures the local static http server
+PKGDIR=/root/packages
+PORTAGE_BINHOST=http://localhost:8080
 
 MAKEOPTS="-j{JN_MAKE_PROCS} -l{LN_MAKE_PROCS}"
 
