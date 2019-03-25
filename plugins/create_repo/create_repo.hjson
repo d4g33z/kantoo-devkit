@@ -6,7 +6,7 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-SYSROOT_DIR:lib/dot
+SYSROOT_DIR:lib/sysroot
 
 #the intial state
 DOCKER_TAG:stage3
@@ -37,7 +37,8 @@ plugins:
 
     remove_portage_pkgs:
     {
-
+        skip:true
+        DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
@@ -47,10 +48,12 @@ plugins:
 
     install_portage_pkgs:
     {
+        skip:true
         IN_PORT_PKGS:
             '''
             app-admin/equo
             sys-apps/entropy-server
+            dev-util/bsdiff
             '''
 
         path: plugins/create_repo/python/install_portage_pkgs.py
@@ -59,6 +62,7 @@ plugins:
 
     rebuild_entropy_database:
     {
+        skip:true
         ENTROPY_ARCH:''
         path: plugins/create_repo/bash/rebuild_entropy_database.sh
         exec:true
@@ -66,23 +70,40 @@ plugins:
 
     patch_eit:
     {
+        skip:true
         path: plugins/create_repo/bash/patch_eit.sh
         exec:true
     },
 
     sync_or_create_local_repo:
     {
+        skip:true
         REPOSITORY_NAME:''
         path: plugins/create_repo/bash/sync_or_create_local_repo.sh
         exec:true
     },
 
-    inject_portage_pkgs:
+    rsync_portage_pkgs:
     {
         PKGDIR:/root/packages
+        TMP_PKGDIR:/portage/artifacts
+        text:
+        '''
+#!/usr/bin/env sh
+mkdir -p ${TMP_PKGDIR}
+rsync -a ${PKGDIR} ${TMP_PKGDIR}
+        '''
+        exec:true
+
+    },
+
+    inject_portage_pkgs:
+    {
+        TMP_PKGDIR:/portage/artifacts
         path:plugins/create_repo/bash/inject_portage_pkgs.sh
         exec:true
     },
+
 
 
     #-----------------------------------------------------------
@@ -93,9 +114,9 @@ plugins:
         bind: /etc/portage/make.conf
         text:
         '''
-        EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
-        #for removing kernel sources in a container
-        DONT_MOUNT_BOOT=1
+EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
+#for removing kernel sources in a container
+DONT_MOUNT_BOOT=1
         '''
     },
 
@@ -111,11 +132,12 @@ plugins:
 
     #-----------------------------------------------------------
     # dir plugins
+    #eit inject will erase these if it can
     portage_artifacts:
     {
         path: sab_workspace/portage_artifacts
         bind: /root/packages
-        mode: rw
+        mode: ro
     },
 
     entropy_artifacts:
@@ -138,11 +160,6 @@ plugins:
         bind: /var/cache/portage/distfiles
     },
 
-    lib_python:
-    {
-        path: lib/python/kantoo
-        bind: /entropy/plugins/kantoo
-    },
 }
 
 

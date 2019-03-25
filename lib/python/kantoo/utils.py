@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-# kano.utils
-#
-# Copyright (C) 2014 Kano Computing Ltd.
-# License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
-#
 
 import os
 import subprocess
@@ -16,7 +11,34 @@ import getpass
 import pwd
 import json
 
+# kantoo.utils
+#
+# License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
+#
 
+def write_docker_stdout(text_or_bytes):
+    if type(text_or_bytes) == str:
+        os.sys.stdout.buffer.write(bytes(text_or_bytes,encoding='UTF-8'))
+    if type(text_or_bytes) == bytes:
+        os.sys.stdout.buffer.write(text_or_bytes)
+
+def write_docker_stderr(text_or_bytes):
+    if type(text_or_bytes) == str:
+        os.sys.stderr.buffer.write(bytes(text_or_bytes,encoding='UTF-8'))
+    if type(text_or_bytes) == bytes:
+        os.sys.stderr.buffer.write(text_or_bytes)
+
+def run_write_docker_output(cmd):
+    o, e, _ = run_cmd(cmd)
+    #see https://stackoverflow.com/questions/908331/how-to-write-binary-data-to-stdout-in-python-3
+    write_docker_stdout(o)
+    write_docker_stderr(e)
+
+# kano.utils
+#
+# Copyright (C) 2014 Kano Computing Ltd.
+# License: http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
+#
 def run_cmd(cmd):
     process = subprocess.Popen(cmd, shell=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,

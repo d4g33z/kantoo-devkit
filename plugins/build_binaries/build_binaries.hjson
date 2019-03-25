@@ -40,16 +40,35 @@ plugins:
 
     #-----------------------------------------------------------
     # exec plugins
-    install_distcc:
+    remove_portage_pkgs:
     {
         skip:true
+        DONT_MOUNT_BOOT:1
+        RM_PORT_PKGS:
+            sys-kernel/debian-sources-lts
+
+        path: plugins/create_repo/bash/remove_portage_pkgs.sh
+        exec:true
+    },
+
+    install_distcc:
+    {
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
         path: plugins/build_binaries/bash/install_distcc.sh
         exec:true
     },
 
-
+    #to eliminate bindist USE flags shipped with stage3s
+    emerge_world:
+    {
+        text:
+        '''
+#!/usr/bin/env sh
+emerge -uDN @world
+        '''
+        exec:true
+    },
 
     install_portage_pkgs:
     {
@@ -69,6 +88,9 @@ plugins:
         path: plugins/build_binaries/python/install_portage_pkgs.py
         exec:true
     },
+
+    #TODO: put in a revdep-rebuild step here
+    #see https://wiki.gentoo.org/wiki/Binary_package_guide
 
     #-----------------------------------------------------------
     # file plugins
@@ -149,10 +171,12 @@ DONT_MOUNT_BOOT=1
 #PORTAGE_BINHOST=http://192.168.1.11/funtoo/packages
 
 #these features are for rebuildin and using existing binaries
-FEATURES="buildpkg userfetch getbinpkg distcc distcc-pump"
-#this configures the local static http server
+#FEATURES="buildpkg getbinpkg distcc distcc-pump"
+FEATURES="buildpkg distcc distcc-pump"
 PKGDIR=/root/packages
-PORTAGE_BINHOST=http://localhost:8080
+#this configures the local static http server
+#not used for local binaries via --usepkg
+#PORTAGE_BINHOST=http://localhost:8080
 
 MAKEOPTS="-j{JN_MAKE_PROCS} -l{LN_MAKE_PROCS}"
 

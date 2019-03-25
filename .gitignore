@@ -52,4 +52,5 @@ env3.6/
 ipython_log.py*
 lib/dot/*
 lib/python/portage
+lib/python/_emerge
 lib/sysroot/*

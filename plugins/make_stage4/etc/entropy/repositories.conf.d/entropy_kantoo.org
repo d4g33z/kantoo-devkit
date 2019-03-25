@@ -1,0 +1,5 @@
+[{REPOSITORY_NAME}]
+desc = {REPOSITORY_DESCRIPTION}
+repo = {REPOSITORY_URI}
+enabled = true
+pkg = {REPOSITORY_URI}

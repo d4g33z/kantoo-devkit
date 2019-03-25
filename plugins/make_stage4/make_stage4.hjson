@@ -1,0 +1,214 @@
+#------------------------------------------------------------------
+#   install equo on a fresh stage3, and then use it to install
+#   a set of binaries
+#
+#   use the entropy server to install from a local testing repo
+#   then remove it
+#------------------------------------------------------------------
+
+OS: funtoo
+#ARCH="arm-32bit"
+#SUBARCH="rpi3"
+#ENTROPY_ARCH="armv7l"
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+#a directory of files and dirs to bind
+SYSROOT_DIR:lib/sysroot
+
+#the intial state
+DOCKER_TAG:stage3
+
+DOCKER_OPTS:
+{
+    #docker.run kwargs
+    tty:true,
+    init:true,
+    remove:true
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+#for testing
+REPOSITORY_URI: file:///entropy/artifacts
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
+plugins:
+{
+
+    #-----------------------------------------------------------
+    # exec plugins
+
+    remove_portage_pkgs:
+    {
+        skip:true
+        DONT_MOUNT_BOOT:1
+        RM_PORT_PKGS:
+            sys-kernel/debian-sources-lts
+
+        path: plugins/create_repo/bash/remove_portage_pkgs.sh
+        exec:true
+    },
+
+    install_equo:
+    {
+        skip:true
+        text:
+        '''
+#!/usr/bin/env sh
+emerge --binpkg-changed-deps=n equo
+#REMOVE the ._cfg_client.conf files as we supply one
+find /etc -iname '._cfg_*' -exec rm {} \;
+#edit /etc/entropy/client.conf
+#create /etc/entropy/repositories.conf.d/entropy_kantoo.org
+
+#use these command to regenerate the list of all packages installed by portage
+#see https://www.funtoo.org/Entropy
+equo rescue generate <<EOF
+Yes
+Yes
+Yes
+EOF
+equo rescue spmsync
+equo update
+        '''
+        exec:true
+    },
+
+    unmask_equo_pkgs:
+    {
+        skip:true
+        PKGDIR:/root/packages
+        ENTR_UNMASK_FILE:/etc/entropy/packages/package.unmask
+        path:plugins/make_stage4/python/unmask_equo_packages.py
+        exec:true
+    },
+
+    equo_upgrade:
+    {
+        skip:true
+        text:
+        '''
+#!/usr/bin/env sh
+equo update --force
+equo upgrade
+        '''
+        exec:true
+    },
+
+    #these all have be configured and ._cfg_* files removed
+    install_equo_packages:
+    {
+        #unset means false
+        #ENTR_PRETEND:1
+        IN_ENTR_PKGS:
+            '''
+            app-admin/metalog
+            app-admin/sudo
+            app-editors/vim
+            app-portage/eix
+            net-dns/avahi
+            net-misc/chrony
+            net-misc/networkmanager
+            sys-auth/nss-mdns
+            '''
+
+        path: plugins/make_stage4/python/install_equo_packages.py
+        exec:true
+    },
+
+    #-----------------------------------------------------------
+    # file plugins
+    # any paths here in SYSROOT_DIR take precedent over auto created plugins
+
+    #NOTE: entropy/client.conf is in SYSROOT_DIR
+    makeconf:
+    {
+        bind: /etc/portage/make.conf
+        text:
+        '''
+#for removing kernel sources in a container
+DONT_MOUNT_BOOT=1
+        '''
+    },
+
+    entropyrepo:
+    {
+        REPOSITORY_URI: ''
+        REPOSITORY_NAME: ''
+        REPOSITORY_DESCRIPTION: ''
+
+        path: plugins/make_stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
+        bind: /etc/entropy/repositories.conf.d/entropy_kantoo.org
+
+    },
+    #conifiguring local entropy server for local testing repo
+    entropysrv:
+    {
+        REPOSITORY_URI: ''
+        REPOSITORY_NAME: ''
+        REPOSITORY_DESCRIPTION: ''
+
+        path: plugins/make_stage4/etc/entropy/server.conf
+        bind: /etc/entropy/server.conf
+    },
+
+    #-----------------------------------------------------------
+    # dir plugins
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/entropy_artifacts
+        bind: /entropy/artifacts
+        mode: rw
+    },
+
+#    logs:
+#    {
+#        path:logs
+#        bind:/var/log
+#
+#    },
+
+    #used for unmasking keywordless packages in the repo
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /root/packages
+        mode: ro
+    },
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/entropy_artifacts
+        bind: /entropy/artifacts
+        mode: rw
+    },
+
+    lib_python:
+    {
+        path: lib/python/kantoo
+        bind: /entropy/plugins/kantoo
+    }
+    #RW dirs must be explicitedly configured here
+    #all sysroot dirs are RO
+     #this is mounted in volatile memory;
+    #this does not work yet
+#    portage_tmpdir:
+#    {
+#        #tmpfs should set tmpfs_size and tmpfs_mode as well
+#        tmpfs: ''
+#        bind: /var/tmp/portage
+#    },
+
+
+}
+

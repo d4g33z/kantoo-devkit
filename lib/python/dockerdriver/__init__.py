@@ -29,6 +29,8 @@ from functools import reduce
 from collections import OrderedDict
 from datetime import datetime
 
+#TODO if an image exists with the name of an executalbe plugin, should it be automatically skipped?
+
 def dd(cwd,config,skip,pretend,interactive):
 
     client = docker.from_env()
