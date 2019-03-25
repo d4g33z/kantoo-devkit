@@ -4,28 +4,21 @@ Kantoo **is** Funtoo, with a twist.
 
 This is a collection of tools modeled on the [Sabayon Devkit](https://github.com/Sabayon/devkit).
 
-The idea is to facilitate the creation of 'Kantoo stage4s:' Funtoo stage3s that have been augmented to allow
-installation of binary packages via the Entropy package manager.
+The idea is to facilitate the creation of 'Kantoo stage4s:' Funtoo stage3s that have been augmented to allow installation of binary packages (comprising a small subset of the total Portage universe) via the Entropy package manager.
 
-Docker containers are used to create images of a choosen subarch, profile and mixins, with a predefined list of 
-packages to build with portage and distribute with entropy.
+Docker containers are used to create images of a choosen subarch, profile and mixins using Funtoo stage3s as the base filesystem.  
 
-The `dockerdriver` executable is used to create a container(s) (creating a Funtoo stage3 image if required), attaching 
-volumes and environment variables as needed, and execute a series of bash or python scripts to modify it. The steps are 
-atomized by committing intermediate containers to images.
+The `dockerdriver` executable is used to create a containers of of a choosen subarch, profile and mixins, attaching volumes (files and directorys on the host that become visible in the container at a choosen location) and environment variables, and execute a series of bash or python scripts to modify it and commit the result as a new image.
 
-You must have a working docker install on your development machine. Add yourself to the `docker` group to work without 
-needing root privileges.  
+You must have a working docker install on your development machine. Add yourself to the `docker` group to work without needing root privileges.  
 
 ## Why Not Just Use Dockerfiles? ##
 
-I'm not sure exactly. But I feel I needed to structure the modification process of an image more explicitly, and modularize
-the common steps, especially with respect to the initial use case: building lots of binary packages and managing repos of them.
+I'm not sure exactly. But I feel I needed to structure the modification process of an image more explicitly, and modularize the common steps, especially with respect to the initial use case: building lots of binary packages and managing repos of them.
 
 ## Use Virtualenv (Please) ##
 
-Use `virtualenv` to isolate everything nicely and in a disposable way. This preferable for most small projects, as 
-opposed to installing and maintaining system wide packages.
+Use `virtualenv` to isolate everything nicely and in a disposable way. This preferable for most small projects, as opposed to installing and maintaining system wide packages.
 
 ```commandline
 # cd kantoo-devkit
@@ -36,8 +29,7 @@ opposed to installing and maintaining system wide packages.
 
 ## Quick Start to Interact with a Funtoo Stage3 ##
 
-Use the bash shell or `ipython` to work with images interactively in a simple way.using [`hjson`](hjson.org) files that are turned 
-into a `kantoo.config` object which the `dockerdriver` script uses to build the images and create containers.
+Use `ipython` or the `dockerdriver` to work with images interactively in a simple way, using [`hjson`](hjson.org) files that are marshalled into a `kantoo.config` object.
 
 
 ```commandline
@@ -94,16 +86,12 @@ exit
 
 ## How To Use it ##
 
-Everything can be done by writing an [hjson](hjson.org) configuration file, and the necessary bash and python scripts it
-references and runs as the `command` argument to the `container.exec_run` method in the 
-[python docker sdk](https://docker-py.readthedocs.io/en/stable/index.html). The `dockerdriver` sets up the container and runs 
-the configured scripts in the container in sequence.
+Everything can be done by writing an [hjson](hjson.org) configuration file, and the necessary bash and python scripts it references and runs as the `command` argument to the `container.exec_run` method in the [python docker sdk](https://docker-py.readthedocs.io/en/stable/index.html). The `dockerdriver` sets up the container and runs the configured scripts in the container in sequence.
 
 ### Hello, world! ###
 
 ```commandline
-(env3.6) # vim configs/hello_world.hjson
-(env3.6) # ./dockerdriver --config configs/hello_world.hjson
+(env3.6) # ./dockerdriver --config plugins/hello_world/hello_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3.
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of stage3 to run hello_world on.
@@ -113,8 +101,7 @@ hello globally
 hello locally from bash
 hello locally
 hello via override
-(env3.6) # vim configs/hello_goodbye_world.hjson
-(env3.6) # ./dockerdriver --config configs/hello_goodbye_world.hjson
+(env3.6) # ./dockerdriver --config plugins/hello_world/hello_goodbye_world.hjson
 Found docker image funtoo/x86-64bit/amd64-k10:stage3.
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of stage3 to run hello_world on.
