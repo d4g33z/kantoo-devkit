@@ -138,7 +138,7 @@ class Plugin:
             self.docker_env = [f"{var}={value}" for var, value in vars.items()]
             self.docker_exe = self.exe_volume.get('bind')
             self.tmp_path.write_text(txt)
-            self.exe_path.write_text(f"""#!/usr/bin/env sh {executable} {self.volume.get('bind') }""")
+            self.exe_path.write_text(f"#!/usr/bin/env sh {executable} {self.volume.get('bind') }")
         return self
 
     def __repr__(self):
