@@ -68,8 +68,8 @@ Python 3.6.6 (default, Dec  8 2018, 03:41:35)
 Type 'copyright', 'credits' or 'license' for more information
 IPython 7.3.0 -- An enhanced Interactive Python. Type '?' for help.
 
-In [1]: from kantoo import Config
-In [2]:  c = Config('../..','configs/stage3.hjson')
+In [1]: from kantoo import * 
+In [2]:  c = PluginConfig('../..','plugins/stage3/stage3.hjson')
 In [3]: c.interact() 
 24d9f7f71407 / # cat etc/os-release
 ID="funtoo"
