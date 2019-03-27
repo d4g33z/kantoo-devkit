@@ -54,6 +54,7 @@ rm stage3-latest.tar.xz*
 rm -rf usr/src/linux-debian-sources-*
 rm -rf lib/modules/*
 rm -rf boot/*
+rm /root/funtoo.sh
 }
 
 install_distcc() {
