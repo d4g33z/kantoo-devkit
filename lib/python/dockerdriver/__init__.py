@@ -21,11 +21,8 @@ import docker
 import hjson
 
 # system
-import io
 import os
-import lzma
 import pathlib
-import tarfile
 import tempfile
 
 from functools import reduce
