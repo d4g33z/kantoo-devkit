@@ -21,8 +21,11 @@ import docker
 import hjson
 
 # system
+import io
 import os
+import lzma
 import pathlib
+import tarfile
 import tempfile
 
 from functools import reduce
@@ -63,12 +66,12 @@ def dd(cwd, config, skip, pretend, interactive):
         if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
             container = client.containers.run(config.DOCKER_IMAGE, None, **config.DOCKER_OPTS)
-            config.update(DOCKER_TAG=f"{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{exec_plugin.name}")
         else:
             # skipping and a container of this exec_plugin exists
             print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
             print(f"{exec_plugin.name} skipped")
-            config.update(DOCKER_TAG=f"{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{exec_plugin.name}")
             continue
 
         # not exec_plugin.skip has to be true
@@ -90,6 +93,7 @@ def dd(cwd, config, skip, pretend, interactive):
 
         if interactive:
             config.interact(exec_plugin.name)
+
 
 
 # -----------------------------------------------------------------------------------------
@@ -252,6 +256,10 @@ class PluginConfig:
 
         return self._plugin_factory(dir_configs_objs) + self._plugin_factory(file_configs_objs)
 
+
+    def _update(self, **kwargs):
+        [setattr(self, k, v) for k, v in kwargs.items()]
+
     @property
     def DOCKER_REPO(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}"
@@ -259,9 +267,6 @@ class PluginConfig:
     @property
     def DOCKER_IMAGE(self):
         return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
-
-    def update(self, **kwargs):
-        [setattr(self, k, v) for k, v in kwargs.items()]
 
     def interactive_run_cmd(self, tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path, info in
