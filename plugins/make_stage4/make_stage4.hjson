@@ -125,9 +125,31 @@ equo upgrade
         exec:true
     },
 
+    export_fs:
+    {
+        XZ_OPT:-9e --threads=3
+        text:
+        '''
+        #!/usr/bin/env sh
+        rm /.dockerenv
+        tar cJf /entropy/stage4s/stage4.xz --exclude=entropy --exclude=dev --exclude=sys --exclude=proc /
+        '''
+        exec:true
+    },
+
+
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
+    release:
+    {
+        text:
+        '''
+        ###KANTOO###
+        '''
+        bind:/etc/kantoo-release
+    },
+
 
     #NOTE: entropy/client.conf is in SYSROOT_DIR
     makeconf:
@@ -163,6 +185,13 @@ DONT_MOUNT_BOOT=1
 
     #-----------------------------------------------------------
     # dir plugins
+
+    stage4s:
+    {
+        path:sab_workspace/stage4s
+        bind:/entropy/stage4s
+        mode:rw
+    },
 
     entropy_artifacts:
     {
