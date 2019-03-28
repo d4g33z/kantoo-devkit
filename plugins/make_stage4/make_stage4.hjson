@@ -160,6 +160,7 @@ equo upgrade
 
     install_kernel:
     {
+        skip:true
         RPI_FIRMWARE:/entropy/rpi
         path:plugins/make_stage4/bash/install_kernel.sh
         exec:true
@@ -167,15 +168,16 @@ equo upgrade
 
     export_fs:
     {
-        skip:true
 
-        #XZ_OPT:-9
         text:
         '''
         #!/usr/bin/env sh
         rm /.dockerenv
+        sed -i -e 's/rc_sys="docker"/#rc_sys=""/g' etc/rc.conf
         find /etc -iname '._cfg*' -exec rm {} \;
         tar chf /entropy/stage4s/stage4.tar --anchored --exclude=/portage --exclude=/entropy --exclude=/dev/* --exclude=/sys/* --exclude=/proc/* --exclude=/boot/* --exclude=/var/lib/entropy/client/packages --exclude /var/git/meta-repo /
+
+        tar chf /entropy/stage4s/boot.tar /boot/
         '''
         exec:true
     },
