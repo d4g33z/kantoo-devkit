@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 
+import os
 import re
 import portage
 from kantoo.utils import *
 from urllib.parse import urlparse
 import sys
 
+import tarfile
+
 #get all profile info
 def profile_info():
     print("\n".join(portage.settings.profiles))
+
+def export_profiles():
+    with tarfile.open(os.environ.get('STAGE4_TAR_PATH'),'a') as tar_archive:
+        [tar_archive.add(profile) for profile in portage.settings.profiles]
 
 def all_wildcard_keywords():
     p = portage.db[portage.root]["porttree"].dbapi
