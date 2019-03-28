@@ -51,6 +51,8 @@ def dd(cwd, config, skip, pretend, interactive):
         print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be initialized as a Funtoo stage3.")
         client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=config.DOCKER_IMAGE,
                             quiet=False, buildargs=config.DOCKER_BUILDARGS)
+    if interactive:
+        config.interact()
 
     prompt = ">>>"
     for exec_plugin in filter(lambda x: x.exec, config.plugins):
