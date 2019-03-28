@@ -85,7 +85,7 @@ plugins:
 
     rsync_portage_pkgs:
     {
-        PKGDIR:/root/packages
+        PKGDIR:/portage/packages
         TMP_PKGDIR:/portage/artifacts
         text:
         '''
@@ -136,7 +136,7 @@ DONT_MOUNT_BOOT=1
     portage_artifacts:
     {
         path: sab_workspace/portage_artifacts
-        bind: /root/packages
+        bind: /portage/packages
         mode: ro
     },
 

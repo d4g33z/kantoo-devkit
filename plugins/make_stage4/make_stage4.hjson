@@ -86,7 +86,7 @@ equo update
     unmask_equo_pkgs:
     {
         skip:true
-        PKGDIR:/root/packages
+        PKGDIR:/portage/packages
         ENTR_UNMASK_FILE:/etc/entropy/packages/package.unmask
         path:plugins/make_stage4/python/unmask_equo_packages.py
         exec:true
@@ -107,14 +107,12 @@ equo upgrade
     #these all have be configured and ._cfg_* files removed
     install_equo_packages:
     {
+        skip:true
         #unset means false
         #ENTR_PRETEND:1
         IN_ENTR_PKGS:
             '''
             app-admin/metalog
-            app-admin/sudo
-            app-editors/vim
-            app-portage/eix
             net-dns/avahi
             net-misc/chrony
             net-misc/networkmanager
@@ -125,22 +123,89 @@ equo upgrade
         exec:true
     },
 
-    export_fs:
+    config_services:
     {
-        XZ_OPT:-9e --threads=3
+        skip:true
         text:
         '''
         #!/usr/bin/env sh
-        rm /.dockerenv
-        tar cJf /entropy/stage4s/stage4.xz --exclude=entropy --exclude=dev --exclude=sys --exclude=proc /
+        rc-update del hwclock boot
+        rc-update add swclock boot
+        rc-update add dhcpcd default
+        rc-update add dbus default
+        rc-update add chronyd default
+        rc-update add NetworkManager default
+        rc-update add metalog default
+        rc-update add avahi-daemon default
+        rc-update add avahi-dnsconfd default
         '''
         exec:true
     },
 
+    config_system:
+    {
+        skip:true
+        ROOT_PASSWD:iamsolame
+        path:plugins/make_stage4/bash/configure_system.sh
+        exec:true
+    },
+
+    install_firmware:
+    {
+        skip:true
+        RPI_FIRMWARE:/entropy/rpi
+        path:plugins/make_stage4/bash/install_firmware.sh
+        exec:true
+    },
+
+    install_kernel:
+    {
+        RPI_FIRMWARE:/entropy/rpi
+        path:plugins/make_stage4/bash/install_kernel.sh
+        exec:true
+    },
+
+    export_fs:
+    {
+        skip:true
+
+        #XZ_OPT:-9
+        text:
+        '''
+        #!/usr/bin/env sh
+        rm /.dockerenv
+        find /etc -iname '._cfg*' -exec rm {} \;
+        tar chf /entropy/stage4s/stage4.tar --anchored --exclude=/portage --exclude=/entropy --exclude=/dev/* --exclude=/sys/* --exclude=/proc/* --exclude=/boot/* --exclude=/var/lib/entropy/client/packages --exclude /var/git/meta-repo /
+        '''
+        exec:true
+    },
+
+    export_profiles:
+    {
+        skip:true
+        STAGE4_TAR_PATH:/entropy/stage4s/stage4.tar
+        path: plugins/make_stage4/python/export_profiles.py
+        exec: true
+    },
 
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
+    package_use:
+    {
+        bind: /etc/portage/package.use
+        text:
+        '''
+net-wireless/hostapd -ssl -wps -ipv6
+        '''
+    },
+
+    nsswitch_conf:
+    {
+       path: plugins/make_stage4/etc/nsswitch.conf
+       bind: /etc/nsswitch.conf
+    },
+
     release:
     {
         text:
@@ -186,6 +251,13 @@ DONT_MOUNT_BOOT=1
     #-----------------------------------------------------------
     # dir plugins
 
+    rpi:
+    {
+        path:sab_workspace/rpi
+        bind:/entropy/rpi
+        mode:rw
+    },
+
     stage4s:
     {
         path:sab_workspace/stage4s
@@ -211,7 +283,7 @@ DONT_MOUNT_BOOT=1
     portage_artifacts:
     {
         path: sab_workspace/portage_artifacts
-        bind: /root/packages
+        bind: /portage/packages
         mode: ro
     },
 

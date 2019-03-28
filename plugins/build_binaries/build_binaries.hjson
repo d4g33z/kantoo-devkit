@@ -83,6 +83,7 @@ emerge -uDN @world
             net-misc/chrony
             net-misc/networkmanager
             sys-auth/nss-mdns
+            net-wireless/hostapd
             '''
 
         path: plugins/build_binaries/python/install_portage_pkgs.py
@@ -164,7 +165,7 @@ DONT_MOUNT_BOOT=1
 
 #these features are for compiling
 #FEATURES="buildpkg userfetch distcc distcc-pump"
-#PKGDIR=/root/packages
+#PKGDIR=/portage/packages
 
 #these features are for rebuilding using existing binaries
 #FEATURES="userfetch getbinpkg"
@@ -173,7 +174,7 @@ DONT_MOUNT_BOOT=1
 #these features are for rebuildin and using existing binaries
 #FEATURES="buildpkg getbinpkg distcc distcc-pump"
 FEATURES="buildpkg distcc distcc-pump"
-PKGDIR=/root/packages
+PKGDIR=/portage/packages
 #this configures the local static http server
 #not used for local binaries via --usepkg
 #PORTAGE_BINHOST=http://localhost:8080
@@ -199,6 +200,7 @@ sys-fs/lvm2 thin
 net-misc/openssh -bindist
 dev-libs/openssl -bindist
 net-wireless/wpa_supplicant -bindist
+net-wireless/hostapd -ssl -wps -ipv6
         '''
     },
 
@@ -229,7 +231,7 @@ net-wireless/wpa_supplicant -bindist
     portage_artifacts:
     {
         path: sab_workspace/portage_artifacts
-        bind: /root/packages
+        bind: /portage/packages
         mode: rw
     },
 
