@@ -47,7 +47,7 @@ stage3s/
 log-*
 sab_workspace/
 logs/
-last_logs.txt
+output.txt
 env3.6/
 ipython_log.py*
 lib/dot/*
