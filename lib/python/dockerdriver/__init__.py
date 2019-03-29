@@ -65,12 +65,12 @@ def dd(cwd, config, skip, pretend, interactive):
         if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
             container = client.containers.run(config.DOCKER_IMAGE, None, **config.DOCKER_OPTS)
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{config.name}.{exec_plugin.name}")
         else:
             # skipping and a container of this exec_plugin exists
             print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
             print(f"{exec_plugin.name} skipped")
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{config.name}.{exec_plugin.name}")
             continue
 
         # not exec_plugin.skip has to be true
@@ -168,6 +168,7 @@ class PluginConfig:
     'A configuration object for docker containers'
 
     def __init__(self, script_pwd, config_rel_path):
+        self.name = pathlib.Path(config_rel_path).parts[-1].split('.')[0]
         self.SCRIPT_PWD = pathlib.Path(script_pwd).absolute().resolve()
         self.config = hjson.load(open(self.SCRIPT_PWD.joinpath(config_rel_path), 'r'))
 
