@@ -117,6 +117,7 @@ equo upgrade
             net-misc/chrony
             net-misc/networkmanager
             sys-auth/nss-mdns
+            sys-kernel/linux-firmware
             '''
 
         path: plugins/make_stage4/python/install_equo_packages.py
@@ -166,6 +167,7 @@ equo upgrade
         exec:true
     },
 
+    #be careful about exporting secrets!!!!
     export_fs:
     {
 
@@ -175,7 +177,7 @@ equo upgrade
         rm /.dockerenv
         sed -i -e 's/rc_sys="docker"/#rc_sys=""/g' etc/rc.conf
         find /etc -iname '._cfg*' -exec rm {} \;
-        tar chf /entropy/stage4s/stage4.tar --anchored --exclude=/portage --exclude=/entropy --exclude=/dev/* --exclude=/sys/* --exclude=/proc/* --exclude=/boot/* --exclude=/var/lib/entropy/client/packages --exclude /var/git/meta-repo /
+        tar chf /entropy/stage4s/stage4.tar --anchored --exclude=/portage --exclude=/entropy --exclude=/dev/* --exclude=/sys/* --exclude=/proc/* --exclude=/boot/* --exclude=/var/lib/entropy/client/packages --exclude /var/git/meta-repo --exclude /root/.ssh /
 
         tar chf /entropy/stage4s/boot.tar /boot/
         '''

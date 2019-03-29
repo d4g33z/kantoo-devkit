@@ -75,6 +75,7 @@ emerge -uDN @world
         #do not put anything entropy related in here
         IN_PORT_PKGS:
             '''
+            sys-kernel/linux-firmware
             app-admin/metalog
             app-admin/sudo
             app-editors/vim
