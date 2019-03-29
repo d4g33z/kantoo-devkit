@@ -9,7 +9,7 @@ sed -i "s/\#\/dev\/cdrom.*//" ${SYSROOT}/etc/fstab
 ################################################################################
 # Set Up Root Password
 #sed -i "s|root\:\*|root\:${ROOT_PASSWD}|" $SYSROOT/etc/shadow
-sed -i "s|root\:\*|root\::$(openssl passwd -1 "${ROOT_PASSWD}")|" $SYSROOT/etc/shadow
+sed -i "s|root\:\*|root\:$(openssl passwd -1 "${ROOT_PASSWD}")|" $SYSROOT/etc/shadow
 
 
 ################################################################################
