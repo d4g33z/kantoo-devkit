@@ -74,16 +74,18 @@ def dd(cwd, config, skip, pretend, interactive):
             continue
 
         # not exec_plugin.skip has to be true
-        exec_result = container.exec_run(['sh', '-c', f". {exec_plugin.docker_exe}"],
-                                         environment=exec_plugin.docker_env)
+        exit_code, output = container.exec_run(
+            ['sh', '-c', f". {exec_plugin.docker_exe}"],environment=exec_plugin.docker_env,detach=False,stream=True)
 
         # TODO test the exec_result and decide whether to proceed, report or fix a problem
+        with open(f"{config.SCRIPT_PWD}/output.txt", 'wb') as f:
+            for chunk in output:
+                f.write(chunk)
 
-        open(f"{config.SCRIPT_PWD}/logs/last_logs.txt", 'wb').write(exec_result.output)
         if pathlib.Path(f"{config.SCRIPT_PWD}/logs").exists():
             open(
-                f"{config.SCRIPT_PWD}/logs/{config.ARCH}-{config.SUBARCH}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
-                'wb').write(exec_result.output)
+                f"{config.SCRIPT_PWD}/logs/{config.ARCH}-{config.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
+                'wb').write(open(f"{config.SCRIPT_PWD}/output.txt", 'rb').read())
         else:
             print("Create a logs/ directory to save a timestamped file of container logs")
 
