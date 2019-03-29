@@ -113,9 +113,9 @@ stoic_engelbart : sha256:71116737a08920fe1045e450b29373257bf54cefbb22b300094eae5
 goodbye world
 goodbye, file world!!!
 (env3.6) # docker images
-funtoo/x86-64bit/amd64-k10   goodbye_world           b0c43a20e7d9        13 seconds ago      892MB
-funtoo/x86-64bit/amd64-k10   hello_world             7cf4b20937f2        13 seconds ago      892MB
-funtoo/x86-64bit/amd64-k10   stage3                  b348c5cf7c6f        3 weeks ago         892MB
+funtoo/x86-64bit/amd64-k10   hello_goodbye_world.goodbye_world           b0c43a20e7d9        13 seconds ago      892MB
+funtoo/x86-64bit/amd64-k10   hello_goodbye_world.hello_world             7cf4b20937f2        13 seconds ago      892MB
+funtoo/x86-64bit/amd64-k10   stage3                                      b348c5cf7c6f        3 weeks ago         892MB
 (env3.6) # docker rmi b0c43a20e7d9 7cf4b20937f2 
 b0c43a20e7d9
 7cf4b20937f2
