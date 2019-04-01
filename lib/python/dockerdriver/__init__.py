@@ -207,6 +207,14 @@ class PluginConfig:
             'ARCH': self.ARCH,
             'SUBARCH': self.SUBARCH, }
 
+    @property
+    def DOCKER_REPO(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
+
+    @property
+    def DOCKER_IMAGE(self):
+        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
+
     def _plugin_factory(self, plugin_block):
         return list(map(lambda x, y, z: x.write(y, **z),
                         # create the objs
@@ -259,14 +267,9 @@ class PluginConfig:
     def _update(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.items()]
 
-    @property
-    def DOCKER_REPO(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
-    @property
-    def DOCKER_IMAGE(self):
-        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
-    def interactive_run_cmd(self, tag):
+
+    def _interactive_run_cmd(self, tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path, info in
                    self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
@@ -277,9 +280,9 @@ class PluginConfig:
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
         try:
             ip = get_ipython()
-            ip.system(self.interactive_run_cmd(tag))
+            ip.system(self._interactive_run_cmd(tag))
         except NameError:
-            os.system(self.interactive_run_cmd(tag))
+            os.system(self._interactive_run_cmd(tag))
         except:
             print('cannot interact')
         return
