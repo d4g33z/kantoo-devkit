@@ -65,12 +65,12 @@ def dd(cwd, config, skip, pretend, interactive):
         if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
             container = client.containers.run(config.DOCKER_IMAGE, None, **config.DOCKER_OPTS)
-            config._update(DOCKER_TAG=f"{config.name}.{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{exec_plugin.name}")
         else:
             # skipping and a container of this exec_plugin exists
             print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
             print(f"{exec_plugin.name} skipped")
-            config._update(DOCKER_TAG=f"{config.name}.{exec_plugin.name}")
+            config._update(DOCKER_TAG=f"{exec_plugin.name}")
             continue
 
         # not exec_plugin.skip has to be true
@@ -261,8 +261,7 @@ class PluginConfig:
 
     @property
     def DOCKER_REPO(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}"
-
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
     @property
     def DOCKER_IMAGE(self):
         return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
