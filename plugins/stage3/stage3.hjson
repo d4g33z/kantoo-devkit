@@ -6,7 +6,7 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-DOCKER_TAG: stage3
+SYSROOT_DIR:lib/sysroot
 
 #this doesn't work yet but it should
 DOCKER_BUILDKIT:1
@@ -20,14 +20,17 @@ DOCKER_OPTS:
     detach:true,
 }
 
+
 plugins:
 {
-    meta_repo:
+    remove_portage_pkgs:
     {
-        #must explicitly state this equivalence
-        path: /var/git
-        bind: /var/git
+        DONT_MOUNT_BOOT:1
+        RM_PORT_PKGS:
+            sys-kernel/debian-sources-lts
+
+        path: plugins/create_repo/bash/remove_portage_pkgs.sh
+        exec:true
     },
 
 }
-

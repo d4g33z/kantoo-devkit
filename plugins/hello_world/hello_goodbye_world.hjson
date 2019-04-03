@@ -6,8 +6,9 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-DOCKER_TAG:stage3
+DOCKER_INIT_IMG: stage3:stock
 
+SYSROOT_DIR:lib/sysroot
 DOCKER_OPTS:
 {
     tty:true,

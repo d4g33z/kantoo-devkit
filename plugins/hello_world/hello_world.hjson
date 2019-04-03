@@ -8,7 +8,10 @@ ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
 
-DOCKER_TAG: stage3
+SYSROOT_DIR:lib/sysroot
+#the image to start with
+#new tagging system <config>:<plugin>
+DOCKER_INIT_IMG: stage3:stock
 
 #this doesn't work yet but it should
 DOCKER_BUILDKIT:1

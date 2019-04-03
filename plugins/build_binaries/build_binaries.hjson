@@ -15,7 +15,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_TAG:stage3
+DOCKER_INIT_IMG: stage3:remove_portage_pkgs
 
 DOCKER_OPTS:
 {
@@ -25,6 +25,7 @@ DOCKER_OPTS:
     remove:true
     entrypoint:"/bin/bash",
     detach:true,
+    auto_remove:true,
 }
 
 REPOSITORY_NAME: testing.kantoo.org
@@ -40,17 +41,6 @@ plugins:
 
     #-----------------------------------------------------------
     # exec plugins
-    remove_portage_pkgs:
-    {
-        skip:true
-        DONT_MOUNT_BOOT:1
-        RM_PORT_PKGS:
-            sys-kernel/debian-sources-lts
-
-        path: plugins/create_repo/bash/remove_portage_pkgs.sh
-        exec:true
-    },
-
     install_distcc:
     {
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
@@ -60,12 +50,13 @@ plugins:
     },
 
     #to eliminate bindist USE flags shipped with stage3s
+    #is --usepkg acceptable?
     emerge_world:
     {
         text:
         '''
 #!/usr/bin/env sh
-emerge -uDN @world
+emerge --usepkg -uDN @world
         '''
         exec:true
     },
@@ -73,6 +64,8 @@ emerge -uDN @world
     install_portage_pkgs:
     {
         #do not put anything entropy related in here
+        #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
+        #to customize firmware install
         IN_PORT_PKGS:
             '''
             sys-kernel/linux-firmware
@@ -84,6 +77,10 @@ emerge -uDN @world
             net-misc/networkmanager
             sys-auth/nss-mdns
             net-wireless/hostapd
+
+            app-admin/equo
+            sys-apps/entropy-server
+            dev-util/bsdiff
             '''
 
         path: plugins/build_binaries/python/install_portage_pkgs.py

@@ -18,7 +18,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_TAG:stage3
+DOCKER_INIT_IMG: build_binaries:emerge_world
 
 DOCKER_OPTS:
 {
@@ -47,24 +47,13 @@ plugins:
     #-----------------------------------------------------------
     # exec plugins
 
-    remove_portage_pkgs:
-    {
-        skip:true
-        DONT_MOUNT_BOOT:1
-        RM_PORT_PKGS:
-            sys-kernel/debian-sources-lts
-
-        path: plugins/create_repo/bash/remove_portage_pkgs.sh
-        exec:true
-    },
-
     install_equo:
     {
-        skip:true
         text:
         '''
 #!/usr/bin/env sh
-emerge --binpkg-changed-deps=n equo
+#emerge --binpkg-changed-deps=n equo
+emerge --usepkg equo
 #REMOVE the ._cfg_client.conf files as we supply one
 find /etc -iname '._cfg_*' -exec rm {} \;
 #edit /etc/entropy/client.conf
@@ -85,7 +74,6 @@ equo update
 
     unmask_equo_pkgs:
     {
-        skip:true
         PKGDIR:/portage/packages
         ENTR_UNMASK_FILE:/etc/entropy/packages/package.unmask
         path:plugins/make_stage4/python/unmask_equo_packages.py
@@ -94,7 +82,6 @@ equo update
 
     equo_upgrade:
     {
-        skip:true
         text:
         '''
 #!/usr/bin/env sh
@@ -107,7 +94,6 @@ equo upgrade
     #these all have be configured and ._cfg_* files removed
     install_equo_packages:
     {
-        skip:true
         #unset means false
         #ENTR_PRETEND:1
         IN_ENTR_PKGS:
@@ -125,7 +111,6 @@ equo upgrade
 
     config_services:
     {
-        skip:true
         text:
         '''
         #!/usr/bin/env sh
@@ -144,7 +129,6 @@ equo upgrade
 
     config_system:
     {
-        skip:true
         ROOT_PASSWD:iamsolame
         path:plugins/make_stage4/bash/configure_system.sh
         exec:true
@@ -152,7 +136,6 @@ equo upgrade
 
     install_firmware:
     {
-        skip:true
         RPI_FIRMWARE:/entropy/rpi
         path:plugins/make_stage4/bash/install_firmware.sh
         exec:true
@@ -160,7 +143,6 @@ equo upgrade
 
     install_kernel:
     {
-        skip:true
         RPI_FIRMWARE:/entropy/rpi
         path:plugins/make_stage4/bash/install_kernel.sh
         exec:true
@@ -185,7 +167,6 @@ equo upgrade
 
     export_profiles:
     {
-        skip:true
         STAGE4_TAR_PATH:/entropy/stage4s/stage4.tar
         path: plugins/make_stage4/python/export_profiles.py
         exec: true

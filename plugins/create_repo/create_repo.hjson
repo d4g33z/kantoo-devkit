@@ -9,7 +9,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_TAG:stage3
+DOCKER_INIT_IMG: build_binaries:emerge_world
 
 DOCKER_OPTS:
 {
@@ -19,6 +19,7 @@ DOCKER_OPTS:
     remove:true
     entrypoint:"/bin/bash",
     detach:true,
+    auto_remove:true,
 }
 
 REPOSITORY_NAME: testing.kantoo.org
@@ -35,20 +36,8 @@ plugins:
     #-----------------------------------------------------------
     # exec plugins
 
-    remove_portage_pkgs:
-    {
-        skip:true
-        DONT_MOUNT_BOOT:1
-        RM_PORT_PKGS:
-            sys-kernel/debian-sources-lts
-
-        path: plugins/create_repo/bash/remove_portage_pkgs.sh
-        exec:true
-    },
-
     install_portage_pkgs:
     {
-        skip:true
         IN_PORT_PKGS:
             '''
             app-admin/equo
@@ -62,7 +51,6 @@ plugins:
 
     rebuild_entropy_database:
     {
-        skip:true
         ENTROPY_ARCH:''
         path: plugins/create_repo/bash/rebuild_entropy_database.sh
         exec:true
@@ -70,14 +58,12 @@ plugins:
 
     patch_eit:
     {
-        skip:true
         path: plugins/create_repo/bash/patch_eit.sh
         exec:true
     },
 
     sync_or_create_local_repo:
     {
-        skip:true
         REPOSITORY_NAME:''
         path: plugins/create_repo/bash/sync_or_create_local_repo.sh
         exec:true
@@ -158,6 +144,7 @@ DONT_MOUNT_BOOT=1
     {
         path: /var/cache/portage/distfiles
         bind: /var/cache/portage/distfiles
+        mode: rw
     },
 
 }
