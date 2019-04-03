@@ -22,15 +22,14 @@ import hjson
 
 # system
 import os
+import json
+import hashlib
 import pathlib
 import tempfile
 
 from functools import reduce
 from collections import OrderedDict
 from datetime import datetime
-
-
-# TODO if an image exists with the name of an executalbe plugin, should it be automatically skipped?
 
 def dd(cwd, config, skip, pretend, interactive):
     client = docker.from_env()
@@ -42,17 +41,20 @@ def dd(cwd, config, skip, pretend, interactive):
     # use cli --skip to set certain exec plugins to skip=True
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
-    # https://docs.docker.com/engine/api/v1.29/#tag/Image
-    # there's a filter for this on the images list, probably. can't figure out the api
-    if config.DOCKER_IMAGE in list(
-            map(lambda x: x.pop(), (filter(lambda x: x != [], (map(lambda x: x.tags, client.images.list())))))):
-        print(f"Found docker image {config.DOCKER_IMAGE}.")
-    else:
-        print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be initialized as a Funtoo stage3.")
-        client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=config.DOCKER_IMAGE,
-                            quiet=False, buildargs=config.DOCKER_BUILDARGS)
+    if not pretend:
+        if list(filter(lambda x: config.DOCKER_IMAGE in x,
+                       filter(lambda x: x != [], (map(lambda x: x.tags, client.images.list()))))):
+            print(f"Found docker image {config.DOCKER_IMAGE}.")
+        elif config.DOCKER_INIT_IMG:
+            print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be created from {config.DOCKER_INITIAL_IMAGE} ")
+            config.import_initial_image(client)
+        else:
+            print(f"No DOCKER_INITIAL_IMAGE found. Will be initialized from Funtoo stage3")
+            client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=f"{config.DOCKER_IMAGE}",
+                                quiet=False, buildargs=config.DOCKER_BUILDARGS)
+
     if interactive:
-        config.interact()
+        config.interact(config.DOCKER_TAG)
 
     prompt = ">>>"
     for exec_plugin in filter(lambda x: x.exec, config.plugins):
@@ -115,9 +117,11 @@ class Plugin:
         self.tmpfs = tmpfs if tmpfs else ''
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
+        # self.exe_volume = {'bind': f"/entropy/bin/{self.name}", 'mode': 'ro'} if exec else None
         self.exe_volume = {'bind': f"/entropy/bin/{self.name}", 'mode': 'ro'} if exec else None
         # ignored if self.path.is_dir()
         self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if path or text else None
+        # self.volume = {'bind': self.bind, 'mode': self.mode} if path or text else None
         self.volume = {'bind': self.bind, 'mode': self.mode} if path or text else None
         # see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
         # set the arguements to create a new Mount object
@@ -167,6 +171,8 @@ class EnvPlugin:
 class PluginConfig:
     'A configuration object for docker containers'
 
+    TMPFS = None
+
     def __init__(self, script_pwd, config_rel_path):
         self.name = pathlib.Path(config_rel_path).parts[-1].split('.')[0]
         self.SCRIPT_PWD = pathlib.Path(script_pwd).absolute().resolve()
@@ -175,10 +181,17 @@ class PluginConfig:
         # all-caps root level keys become attributes
         [setattr(self, y, self.config.get(y)) for y in filter(lambda x: x == x.upper(), self.config.keys())]
 
+        #all plugins start with an :intial tag
+        self.DOCKER_TAG = 'initial'
+
         # a default value
         if not hasattr(self, 'DOCKER_FILE'): setattr(self, 'DOCKER_FILE', 'Dockerfile')
+        if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', None)
 
-        self.plugins = self._plugin_factory(self.config.get('plugins'))
+        if self.DOCKER_INIT_IMG:
+            assert  ':' in self.DOCKER_INIT_IMG
+
+        self.plugins = self._plugin_factory(self.config.get('plugins',{}))
 
         self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
 
@@ -207,6 +220,9 @@ class PluginConfig:
             'ARCH': self.ARCH,
             'SUBARCH': self.SUBARCH, }
 
+        #tmpfs filesystem for speed up
+        self.TMPFS = self.SCRIPT_PWD.joinpath('tmpfs')
+
     @property
     def DOCKER_REPO(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
@@ -214,6 +230,10 @@ class PluginConfig:
     @property
     def DOCKER_IMAGE(self):
         return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
+
+    @property
+    def DOCKER_INITIAL_IMAGE(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
 
     def _plugin_factory(self, plugin_block):
         return list(map(lambda x, y, z: x.write(y, **z),
@@ -273,8 +293,11 @@ class PluginConfig:
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path, info in
                    self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
-        # return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{self.DOCKER_TAG}"
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
+
+    def _save_cmd(self,image):
+        #tmpfile = pathlib.Path(tempfile.mkstemp()[1])
+        return f"docker save {image.tags[0]} /tmp/"
 
     def interact(self, tag='stage3'):
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
@@ -316,4 +339,79 @@ class PluginConfig:
                 filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
                        [[x, x.tags.pop().split(':').pop()] for x in self.images(client)]))))]
         except RemovalFinished:
+            #remove DOCKER_INITIAL_IMAGE
             return
+
+
+    def _rm_mounts(self,image,tag):
+        data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
+        input_file = self.TMPFS.joinpath('input_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+        output_file = self.TMPFS.joinpath('output_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+
+        os.system(f"mkdir -p {data_dir}")
+        os.system(f"docker save {image.tags[0]} > {input_file}")
+        os.system(f"tar xf {input_file} -C {data_dir}")
+
+        manifest_file = "manifest.json"
+        manifest_filename = data_dir.joinpath(manifest_file)
+        with open(manifest_filename) as fp:
+            manifest = json.load(fp)
+        replaced = {}
+        for item in range(len(manifest)):
+            config_file = manifest[item]["Config"]
+            config_filename = data_dir.joinpath(config_file)
+            replaced[config_filename] = None
+        #
+        for item in range(len(manifest)):
+            config_file = manifest[item]["Config"]
+            config_filename = data_dir.joinpath(config_file)
+            with open(config_filename) as fp:
+                config = json.load(fp)
+            old_config_text = json.dumps(config).encode('utf-8') # to compare later
+
+            for CONFIG in ['config','Config','container_config']:
+                if CONFIG not in config:
+                    #logg.debug("no section '%s' in config", CONFIG)
+                    continue
+                #logg.debug("with %s: %s", CONFIG, config[CONFIG])
+                if config[CONFIG]['Volumes'] is not None:
+                    del config[CONFIG]['Volumes']
+
+        new_config_text = json.dumps(config).encode('utf-8')
+
+            # for CONFIG in ['history']:
+            #     if CONFIG in config:
+            #         myself = os.path.basename(sys.argv[0])
+            #         config[CONFIG] += [ {"empty_layer": True,
+            #             "created_by": "%s #(%s)" % (myself, __version__),
+            #             "created": datetime.datetime.utcnow().isoformat() + "Z"} ]
+            #         new_config_text = json.dumps(config)
+        new_config_md = hashlib.sha256()
+        new_config_md.update(new_config_text)
+        for collision in range(1, 100):
+            new_config_hash = new_config_md.hexdigest()
+            new_config_file = f"{new_config_hash}.json"
+            new_config_filename = data_dir.joinpath(new_config_file)
+            if new_config_filename in list(replaced.keys()) or new_config_filename in list(replaced.values()):
+                new_config_md.update(" ")
+                continue
+            break
+        with open(new_config_filename, "wb") as fp:
+            fp.write(new_config_text)
+        manifest[item]["Config"] = new_config_file
+        replaced[config_filename] = new_config_filename
+        if manifest[item]["RepoTags"]:
+            manifest[item]["RepoTags"] = [tag]
+        manifest_text = json.dumps(manifest).encode('utf-8')
+        manifest_filename = data_dir.joinpath(manifest_file)
+
+        with open(manifest_filename, "wb") as fp:
+            fp.write(manifest_text)
+
+        os.system(f"cd {data_dir} && tar cf {output_file} .")
+        os.system(f"docker load -i {output_file}")
+        os.system(f"rm -rf {data_dir} {input_file} {output_file}")
+
+    def import_initial_image(self,client):
+        initial_image = list(filter(lambda x: x in client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"), client.images.list())).pop()
+        self._rm_mounts(initial_image,self.DOCKER_IMAGE)
