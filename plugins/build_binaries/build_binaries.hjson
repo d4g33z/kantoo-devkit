@@ -109,7 +109,7 @@ emerge --usepkg -uDN @world
         LN_MAKE_PROCS:4
         PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
-        path: plugings/build_binaries/etc/portage/make.conf
+        path: plugins/build_binaries/etc/portage/make.conf
     },
 
     confd_distccd:
