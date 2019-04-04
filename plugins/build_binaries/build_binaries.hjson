@@ -116,7 +116,7 @@ emerge --usepkg -uDN @world
     {
         DISTCCD_ALLOW: 192.168.1.0/24
         #DISTCCD_ALLOW: 10.0.0.0/24
-        path: plugins/make_stage4/etc/conf.d/distccd
+        path: plugins/build_binaries/etc/conf.d/distccd
         bind: /etc/conf.d/distccd
 
     },
