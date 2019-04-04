@@ -9,7 +9,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: stage3:emerge_world
+DOCKER_INIT_IMG: build_binaries:emerge_world
 
 DOCKER_OPTS:
 {
@@ -94,15 +94,16 @@ rsync -a ${PKGDIR} ${TMP_PKGDIR}
 
     #-----------------------------------------------------------
     # file plugins
-    #configure portage
+    #configure portage for simple binary install
     makeconf:
     {
+        PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
         text:
         '''
-EMERGE_DEFAULT_OPTS="--quiet-build=y --jobs=3"
+EMERGE_DEFAULT_OPTS="--quiet-build=n --jobs=3"
 #for removing kernel sources in a container
-DONT_MOUNT_BOOT=1
+PKGDIR={PORT_PKGDIR}
         '''
     },
 

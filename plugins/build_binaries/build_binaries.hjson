@@ -15,7 +15,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: stage3:emerge_world
+DOCKER_INIT_IMG: stage3:remove_portage_pkgs
 
 DOCKER_OPTS:
 {
@@ -44,6 +44,27 @@ plugins:
 
     #-----------------------------------------------------------
     # exec plugins
+    install_distcc:
+    {
+        #DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
+        CHOST:x86_64-pc-linux-gnu
+        #CHOST:armv7a-hardfloat-linux-gnueabi
+        path: plugins/build_binaries/bash/install_distcc.sh
+        exec:true
+    },
+
+    #to eliminate bindist USE flags shipped with stage3s
+    #is --usepkg acceptable?
+    emerge_world:
+    {
+        text:
+        '''
+#!/usr/bin/env sh
+emerge --usepkg -uDN @world
+        '''
+        exec:true
+    },
 
     install_portage_pkgs:
     {
@@ -86,37 +107,22 @@ plugins:
         #INPUT_DEVICES:evdev tslib
         JN_MAKE_PROCS:29
         LN_MAKE_PROCS:4
+        PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
-        text:
-        '''
-DONT_MOUNT_BOOT=1
+        path: plugings/build_binaries/etc/portage/make.conf
+    },
 
-#these features are for rebuildin and using existing binaries
-FEATURES="buildpkg distcc distcc-pump"
-PKGDIR=/portage/packages
-#this configures the local static http server
-#not used for local binaries via --usepkg
-#PORTAGE_BINHOST=http://localhost:8080
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        #DISTCCD_ALLOW: 10.0.0.0/24
+        path: plugins/make_stage4/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
 
-MAKEOPTS="-j{JN_MAKE_PROCS} -l{LN_MAKE_PROCS}"
-
-#VIDEO_CARDS="{VIDEO_CARDS}"
-#INPUT_DEVICES="{INPUT_DEVICES}"
-
-EMERGE_DEFAULT_OPS="--autounmask-keep-masks --autounmask=y --autounmask-write=n --jobs=3 --quiet-build=n --quiet=n"
-
-        '''
     },
 
     #-----------------------------------------------------------
     # dir plugins
-
-    distfiles:
-    {
-        path: /var/cache/portage/distfiles
-        bind: /var/cache/portage/distfiles
-        mode: rw
-    },
 
     #RW dirs must be explicitedly configured here
     #all sysroot dirs are RO
@@ -129,13 +135,13 @@ EMERGE_DEFAULT_OPS="--autounmask-keep-masks --autounmask=y --autounmask-write=n 
         mode: rw
     },
 
-    confd_distccd:
+    distfiles:
     {
-        DISTCCD_ALLOW: 192.168.1.0/24
-        #DISTCCD_ALLOW: 10.0.0.0/24
-        path: plugins/make_stage4/etc/conf.d/distccd
-        bind: /etc/conf.d/distccd
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+        mode: rw
+    },
 
-    }
+
 }
 

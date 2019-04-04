@@ -18,7 +18,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: stage3:emerge_world
+DOCKER_INIT_IMG: build_binaries:emerge_world
 
 DOCKER_OPTS:
 {
@@ -192,11 +192,13 @@ equo upgrade
     #NOTE: entropy/client.conf is in SYSROOT_DIR
     makeconf:
     {
+        PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
         text:
         '''
 #for removing kernel sources in a container
 DONT_MOUNT_BOOT=1
+PKGDIR={PORT_PKGDIR}
         '''
     },
 

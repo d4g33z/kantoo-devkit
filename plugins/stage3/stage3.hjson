@@ -20,9 +20,6 @@ DOCKER_OPTS:
     detach:true,
 }
 
-# etc/conf.d/distccd
-DISTCCD_ALLOW: 192.168.1.0/24
-
 plugins:
 {
     remove_portage_pkgs:
@@ -35,54 +32,15 @@ plugins:
         exec:true
     },
 
-    install_distcc:
+    makeconf:
     {
-        #DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
-        DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
-        CHOST:x86_64-pc-linux-gnu
-        #CHOST:armv7a-hardfloat-linux-gnueabi
-        path: plugins/build_binaries/bash/install_distcc.sh
-        exec:true
-    },
-
-    #to eliminate bindist USE flags shipped with stage3s
-    #is --usepkg acceptable?
-    emerge_world:
-    {
+        bind: /etc/portage/make.conf
         text:
         '''
-#!/usr/bin/env sh
-emerge --usepkg -uDN @world
+#for removing kernel sources in a container
+DONT_MOUNT_BOOT=1
         '''
-        exec:true
     },
-
-    distfiles:
-    {
-        path: /var/cache/portage/distfiles
-        bind: /var/cache/portage/distfiles
-        mode: rw
-    },
-
-    #RW dirs must be explicitedly configured here
-    #all sysroot dirs are RO
-
-    #collect portage compiled binaries here
-    portage_artifacts:
-    {
-        path: sab_workspace/portage_artifacts
-        bind: /portage/packages
-        mode: rw
-    },
-
-    confd_distccd:
-    {
-        DISTCCD_ALLOW: 192.168.1.0/24
-        #DISTCCD_ALLOW: 10.0.0.0/24
-        path: plugins/make_stage4/etc/conf.d/distccd
-        bind: /etc/conf.d/distccd
-
-    }
 }
 
 
