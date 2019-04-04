@@ -102,7 +102,6 @@ rsync -a ${PKGDIR} ${TMP_PKGDIR}
         text:
         '''
 EMERGE_DEFAULT_OPTS="--quiet-build=n --jobs=3"
-#for removing kernel sources in a container
 PKGDIR={PORT_PKGDIR}
         '''
     },
