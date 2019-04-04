@@ -1,7 +1,7 @@
 OS: funtoo
-#ARCH="arm-32bit"
-#SUBARCH="rpi3"
-#ENTROPY_ARCH="armv7l"
+#ARCH; arm-32bit
+#SUBARCH; raspi3
+#ENTROPY_ARCH: armv7l
 ARCH: x86-64bit
 SUBARCH: amd64-k10
 ENTROPY_ARCH: amd64
