@@ -15,7 +15,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: stage3:remove_portage_pkgs
+DOCKER_INIT_IMG: stage3:emerge_world
 
 DOCKER_OPTS:
 {
@@ -28,8 +28,11 @@ DOCKER_OPTS:
     auto_remove:true,
 }
 
-REPOSITORY_NAME: testing.kantoo.org
-REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+#sysroot vars
+
+# etc/conf.d/distccd
+DISTCCD_ALLOW: 192.168.1.0/24
+
 envplugins:
 {
     EDITOR: cat
@@ -41,25 +44,6 @@ plugins:
 
     #-----------------------------------------------------------
     # exec plugins
-    install_distcc:
-    {
-        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
-        CHOST:x86_64-pc-linux-gnu
-        path: plugins/build_binaries/bash/install_distcc.sh
-        exec:true
-    },
-
-    #to eliminate bindist USE flags shipped with stage3s
-    #is --usepkg acceptable?
-    emerge_world:
-    {
-        text:
-        '''
-#!/usr/bin/env sh
-emerge --usepkg -uDN @world
-        '''
-        exec:true
-    },
 
     install_portage_pkgs:
     {
@@ -94,60 +78,7 @@ emerge --usepkg -uDN @world
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
 
-
-    #notice the conf.d bash subsitutions are masked from f-string sub
-    conf_d_distccd:
-    {
-        DISTCCD_ALLOW: 192.168.1.0/24
-        bind: /etc/conf.d/distccd
-        text:
-        '''
-# /etc/conf.d/distccd: config file for /etc/init.d/distccd
-
-DISTCCD_OPTS=""
-
-# this is the distccd executable
-DISTCCD_EXEC="/usr/bin/distccd"
-
-# this is where distccd will store its pid file
-DISTCCD_PIDFILE="/var/run/distccd/distccd.pid"
-
-# set this option to run distccd with extra parameters
-# Default port is 3632.  For most people the default is okay.
-DISTCCD_OPTS="${{DISTCCD_OPTS}} --port 3632"
-
-# Logging
-# You can change some logging options here:
-# --log-file FILE
-# --log-level LEVEL  [critical,error,warning, notice, info, debug]
-#
-# Leaving --log-file blank will log to syslog
-# example: --log-file /dev/null --log-level warning
-# example: --log-level critical
-
-DISTCCD_OPTS="${{DISTCCD_OPTS}} --log-level critical"
-
-# SECURITY NOTICE:
-# It is HIGHLY recommended that you use the --listen option
-# for increased security. You can specify an IP to permit connections
-# from or a CIDR mask
-# --listen accepts only a single IP
-# --allow is now mandatory as of distcc-2.18.
-# example:  --allow 192.168.0.0/24
-# example:  --allow 192.168.0.5 --allow 192.168.0.150
-# example:  --listen 192.168.0.2
-DISTCCD_OPTS="${{DISTCCD_OPTS}} --allow {DISTCCD_ALLOW} --allow 127.0.0.1"
-#DISTCCD_OPTS="${{DISTCCD_OPTS}} --allow 192.168.0.0/24"
-#DISTCCD_OPTS="${{DISTCCD_OPTS}} --listen 192.168.0.2"
-
-# set this for niceness
-# Default is 15
-DISTCCD_OPTS="${{DISTCCD_OPTS}} -N 15"
-
-        '''
-    },
-
-    makeconf:
+    make_conf:
     {
         VIDEO_CARDS:nvidia
         INPUT_DEVICES:evdev
@@ -160,16 +91,7 @@ DISTCCD_OPTS="${{DISTCCD_OPTS}} -N 15"
         '''
 DONT_MOUNT_BOOT=1
 
-#these features are for compiling
-#FEATURES="buildpkg userfetch distcc distcc-pump"
-#PKGDIR=/portage/packages
-
-#these features are for rebuilding using existing binaries
-#FEATURES="userfetch getbinpkg"
-#PORTAGE_BINHOST=http://192.168.1.11/funtoo/packages
-
 #these features are for rebuildin and using existing binaries
-#FEATURES="buildpkg getbinpkg distcc distcc-pump"
 FEATURES="buildpkg distcc distcc-pump"
 PKGDIR=/portage/packages
 #this configures the local static http server
@@ -186,21 +108,6 @@ EMERGE_DEFAULT_OPS="--autounmask-keep-masks --autounmask=y --autounmask-write=n 
         '''
     },
 
-    package_use:
-    {
-        bind: /etc/portage/package.use
-        text:
-        '''
-net-dns/avahi -python mdnsresponder-compat -utils dbus
-#for docker
-sys-fs/lvm2 thin
-net-misc/openssh -bindist
-dev-libs/openssl -bindist
-net-wireless/wpa_supplicant -bindist
-net-wireless/hostapd -ssl -wps -ipv6
-        '''
-    },
-
     #-----------------------------------------------------------
     # dir plugins
 
@@ -210,16 +117,6 @@ net-wireless/hostapd -ssl -wps -ipv6
         bind: /var/cache/portage/distfiles
         mode: rw
     },
-
-    #this is mounted in volatile memory;
-    #this does not work yet
-#    portage_tmpdir:
-#    {
-#        #tmpfs should set tmpfs_size and tmpfs_mode as well
-#        tmpfs: ''
-#        bind: /var/tmp/portage
-#    },
-
 
     #RW dirs must be explicitedly configured here
     #all sysroot dirs are RO
@@ -232,17 +129,5 @@ net-wireless/hostapd -ssl -wps -ipv6
         mode: rw
     },
 
-    entropy_artifacts:
-    {
-        path: sab_workspace/entropy_artifacts
-        bind: /entropy/artifacts
-        mode: rw
-    },
-
-    lib_python:
-    {
-        path: lib/python/kantoo
-        bind: /entropy/plugins/kantoo
-    }
 }
 

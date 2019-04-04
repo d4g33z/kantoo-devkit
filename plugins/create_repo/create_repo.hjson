@@ -9,7 +9,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: build_binaries:emerge_world
+DOCKER_INIT_IMG: stage3:emerge_world
 
 DOCKER_OPTS:
 {
@@ -123,7 +123,6 @@ DONT_MOUNT_BOOT=1
     {
         path: sab_workspace/portage_artifacts
         bind: /portage/packages
-        mode: ro
     },
 
     entropy_artifacts:
@@ -131,13 +130,6 @@ DONT_MOUNT_BOOT=1
         path: sab_workspace/entropy_artifacts
         bind: /entropy/artifacts
         mode: rw
-    },
-
-    meta_repo:
-    {
-        #must explicitly state this equivalence
-        path: /var/git
-        bind: /var/git
     },
 
     distfiles:

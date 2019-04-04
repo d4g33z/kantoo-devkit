@@ -18,7 +18,7 @@ ENTROPY_ARCH: amd64
 SYSROOT_DIR:lib/sysroot
 
 #the intial state
-DOCKER_INIT_IMG: build_binaries:emerge_world
+DOCKER_INIT_IMG: stage3:emerge_world
 
 DOCKER_OPTS:
 {
@@ -34,6 +34,7 @@ DOCKER_OPTS:
 REPOSITORY_URI: file:///entropy/artifacts
 REPOSITORY_NAME: testing.kantoo.org
 REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
 
 envplugins:
 {
@@ -146,6 +147,7 @@ equo upgrade
         RPI_FIRMWARE:/entropy/rpi
         path:plugins/make_stage4/bash/install_kernel.sh
         exec:true
+    #sysroot vars
     },
 
     #be careful about exporting secrets!!!!
@@ -175,20 +177,7 @@ equo upgrade
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
-    package_use:
-    {
-        bind: /etc/portage/package.use
-        text:
-        '''
-net-wireless/hostapd -ssl -wps -ipv6
-        '''
-    },
 
-    nsswitch_conf:
-    {
-       path: plugins/make_stage4/etc/nsswitch.conf
-       bind: /etc/nsswitch.conf
-    },
 
     release:
     {
@@ -232,6 +221,13 @@ DONT_MOUNT_BOOT=1
         bind: /etc/entropy/server.conf
     },
 
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        path: plugins/make_stage4/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
+
+    }
     #-----------------------------------------------------------
     # dir plugins
 
@@ -256,12 +252,6 @@ DONT_MOUNT_BOOT=1
         mode: rw
     },
 
-#    logs:
-#    {
-#        path:logs
-#        bind:/var/log
-#
-#    },
 
     #used for unmasking keywordless packages in the repo
     portage_artifacts:
@@ -277,22 +267,6 @@ DONT_MOUNT_BOOT=1
         bind: /entropy/artifacts
         mode: rw
     },
-
-    lib_python:
-    {
-        path: lib/python/kantoo
-        bind: /entropy/plugins/kantoo
-    }
-    #RW dirs must be explicitedly configured here
-    #all sysroot dirs are RO
-     #this is mounted in volatile memory;
-    #this does not work yet
-#    portage_tmpdir:
-#    {
-#        #tmpfs should set tmpfs_size and tmpfs_mode as well
-#        tmpfs: ''
-#        bind: /var/tmp/portage
-#    },
 
 
 }

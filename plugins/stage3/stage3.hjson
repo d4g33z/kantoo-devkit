@@ -20,6 +20,8 @@ DOCKER_OPTS:
     detach:true,
 }
 
+# etc/conf.d/distccd
+DISTCCD_ALLOW: 192.168.1.0/24
 
 plugins:
 {
@@ -33,4 +35,43 @@ plugins:
         exec:true
     },
 
+    install_distcc:
+    {
+        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        CHOST:x86_64-pc-linux-gnu
+        path: plugins/build_binaries/bash/install_distcc.sh
+        exec:true
+    },
+
+    #to eliminate bindist USE flags shipped with stage3s
+    #is --usepkg acceptable?
+    emerge_world:
+    {
+        text:
+        '''
+#!/usr/bin/env sh
+emerge --usepkg -uDN @world
+        '''
+        exec:true
+    },
+
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+        mode: rw
+    },
+
+    #RW dirs must be explicitedly configured here
+    #all sysroot dirs are RO
+
+    #collect portage compiled binaries here
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /portage/packages
+        mode: rw
+    },
 }
+
+
