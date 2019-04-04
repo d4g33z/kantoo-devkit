@@ -129,5 +129,13 @@ EMERGE_DEFAULT_OPS="--autounmask-keep-masks --autounmask=y --autounmask-write=n 
         mode: rw
     },
 
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        #DISTCCD_ALLOW: 10.0.0.0/24
+        path: plugins/make_stage4/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
+
+    }
 }
 

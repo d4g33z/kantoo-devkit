@@ -221,13 +221,6 @@ DONT_MOUNT_BOOT=1
         bind: /etc/entropy/server.conf
     },
 
-    confd_distccd:
-    {
-        DISTCCD_ALLOW: 192.168.1.0/24
-        path: plugins/make_stage4/etc/conf.d/distccd
-        bind: /etc/conf.d/distccd
-
-    }
     #-----------------------------------------------------------
     # dir plugins
 

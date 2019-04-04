@@ -37,8 +37,10 @@ plugins:
 
     install_distcc:
     {
-        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        #DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
+        #CHOST:armv7a-hardfloat-linux-gnueabi
         path: plugins/build_binaries/bash/install_distcc.sh
         exec:true
     },
@@ -72,6 +74,15 @@ emerge --usepkg -uDN @world
         bind: /portage/packages
         mode: rw
     },
+
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        #DISTCCD_ALLOW: 10.0.0.0/24
+        path: plugins/make_stage4/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
+
+    }
 }
 
 
