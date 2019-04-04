@@ -54,3 +54,4 @@ lib/dot/*
 lib/python/portage
 lib/python/_emerge
 lib/sysroot/*
+tmpfs
