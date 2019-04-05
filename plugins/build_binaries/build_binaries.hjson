@@ -83,7 +83,6 @@ emerge --usepkg -uDN @world
             sys-auth/nss-mdns
             net-wireless/hostapd
             net-fs/nfs-utils
-
             app-admin/equo
             sys-apps/entropy-server
             dev-util/bsdiff
