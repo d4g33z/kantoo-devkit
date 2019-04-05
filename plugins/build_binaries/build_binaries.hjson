@@ -82,7 +82,7 @@ emerge --usepkg -uDN @world
             net-misc/networkmanager
             sys-auth/nss-mdns
             net-wireless/hostapd
-            net-nfs/nfs-utils
+            net-fs/nfs-utils
 
             app-admin/equo
             sys-apps/entropy-server

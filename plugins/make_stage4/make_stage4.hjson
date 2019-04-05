@@ -104,7 +104,7 @@ equo upgrade
             net-misc/chrony
             net-misc/networkmanager
             sys-auth/nss-mdns
-            net-nfs/nfs-utils
+            net-fs/nfs-utils
             '''
 
         path: plugins/make_stage4/python/install_equo_packages.py
