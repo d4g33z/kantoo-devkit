@@ -4,7 +4,7 @@ built_pkgs=$(find ${TMP_PKGDIR} -name "*.tbz2" | xargs)
 
 echo "=== Injecting packages ==="
 #if [ ! -z ${built_pkgs} ]; then
-eit inject ${built_pkgs} || { echo "ouch unable to inject"; }
+eit inject --quick ${built_pkgs} || { echo "ouch unable to inject"; }
 #else
 #    echo "no built portage packages found"
 #fi
