@@ -85,6 +85,7 @@ rsync -a ${PKGDIR} ${TMP_PKGDIR}
 
     inject_portage_pkgs:
     {
+        REPOSITORY_NAME: ''
         TMP_PKGDIR:/portage/artifacts
         path:plugins/create_repo/bash/inject_portage_pkgs.sh
         exec:true
