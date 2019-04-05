@@ -22,9 +22,8 @@ mkdir -p ${SYSROOT}/lib/rc/cache
 touch ${SYSROOT}/lib/rc/cache/shutdowntime
 
 ################################################################################
-# Disable Serial Console Access
-#sed -i "s/s0\:.*/\#&/" ${SYSROOT}/etc/inittab
-
+# Enable Serial Console Access
+sed -i "s/s0:.*/s0:12345:respawn:\/sbin\/agetty -L 115200 ttyAMA0 vt100/" ${SYSROOT}/etc/inittab
 ################################################################################
 # Link to Accelerated Video Libraries
 echo "LDPATH=\"/opt/vc/lib\"" > ${SYSROOT}/etc/env.d/99vc
