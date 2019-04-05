@@ -105,6 +105,7 @@ equo upgrade
             net-misc/networkmanager
             sys-auth/nss-mdns
             net-fs/nfs-utils
+            net-wireless/hostapd
             '''
 
         path: plugins/make_stage4/python/install_equo_packages.py
