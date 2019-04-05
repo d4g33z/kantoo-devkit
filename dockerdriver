@@ -7,7 +7,7 @@ import click
 import os
 
 @click.command()
-@click.option('--skip',type=str,help='The name of a bash plugin in the config file to skip',multiple=True)
+@click.option('--skip','-s',multiple=True,type=str,help='The name of a bash plugin in the config file to skip')
 @click.option('--config',type=click.Path(exists=True), help='A relative path to an hjson file')
 @click.option('--pretend',is_flag=True,help="skip all bash plugins")
 @click.option('--interactive',is_flag=True,default=False,help='interact with the container after each plugin is applied')
