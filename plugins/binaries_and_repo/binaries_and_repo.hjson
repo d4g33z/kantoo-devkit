@@ -1,0 +1,191 @@
+#------------------------------------------------------------------
+#   build a set of portage packages and their dependencies and
+#   store them as binaries to be injected by create_repo
+#------------------------------------------------------------------
+
+OS: funtoo
+#ARCH: arm-32bit
+#SUBARCH: raspi3
+#ENTROPY_ARCH: armv7l
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+#a directory of files and dirs to bind
+SYSROOT_DIR:lib/sysroot
+
+#the intial state
+DOCKER_INIT_IMG: stage3:remove_portage_pkgs
+
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
+DOCKER_OPTS:
+{
+    #docker.run kwargs
+    tty:true,
+    init:true,
+    remove:true
+    entrypoint:"/bin/bash",
+    detach:true,
+    auto_remove:true,
+}
+
+#sysroot vars
+
+# etc/conf.d/distccd
+DISTCCD_ALLOW: 192.168.1.0/24
+
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
+plugins:
+{
+
+    #-----------------------------------------------------------
+    # exec plugins
+    install_distcc:
+    {
+        #DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
+        CHOST:x86_64-pc-linux-gnu
+        #CHOST:armv7a-hardfloat-linux-gnueabi
+        path: plugins/build_binaries/bash/install_distcc.sh
+        exec:true
+    },
+
+    #to eliminate bindist USE flags shipped with stage3s
+    #is --usepkg acceptable?
+    emerge_world:
+    {
+        text:
+        '''
+#!/usr/bin/env sh
+emerge --usepkg -uDN @world
+        '''
+        exec:true
+    },
+
+    install_portage_pkgs:
+    {
+        #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
+        #to customize firmware install
+        IN_PORT_PKGS:
+            '''
+            sys-kernel/linux-firmware
+            app-admin/metalog
+            app-admin/sudo
+            app-editors/vim
+            net-dns/avahi
+            net-misc/chrony
+            net-misc/networkmanager
+            sys-auth/nss-mdns
+            net-wireless/hostapd
+            net-fs/nfs-utils
+            app-admin/equo
+            sys-apps/entropy-server
+            dev-util/bsdiff
+            '''
+
+        path: plugins/build_binaries/python/install_portage_pkgs.py
+        exec:true
+    },
+
+    #TODO: put in a revdep-rebuild step here
+    #see https://wiki.gentoo.org/wiki/Binary_package_guide
+
+    rebuild_entropy_database:
+    {
+        ENTROPY_ARCH:''
+        path: plugins/create_repo/bash/rebuild_entropy_database.sh
+        exec:true
+    },
+
+    patch_eit:
+    {
+        path: plugins/create_repo/bash/patch_eit.sh
+        exec:true
+    },
+
+    sync_or_create_local_repo:
+    {
+        REPOSITORY_NAME:''
+        path: plugins/create_repo/bash/sync_or_create_local_repo.sh
+        exec:true
+    },
+
+    commit_all_and_push:
+    {
+       path: plugins/create_repo/bash/commit_all_and_push.sh
+       exec:true
+    },
+    #-----------------------------------------------------------
+    # file plugins
+    # any paths here in SYSROOT_DIR take precedent over auto created plugins
+
+    make_conf:
+    {
+        VIDEO_CARDS:nvidia
+        INPUT_DEVICES:evdev
+        #VIDEO_CARDS:fbdev vc4
+        #INPUT_DEVICES:evdev tslib
+        JN_MAKE_PROCS:29
+        LN_MAKE_PROCS:4
+        PORT_PKGDIR:/portage/packages
+        bind: /etc/portage/make.conf
+        path: plugins/build_binaries/etc/portage/make.conf
+    },
+
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        #DISTCCD_ALLOW: 10.0.0.0/24
+        path: plugins/build_binaries/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
+
+    },
+
+    entropysrv:
+    {
+        ENTROPY_PKGDIR: /entropy/artifacts
+        REPOSITORY_NAME:''
+        REPOSITORY_DESCRIPTION:''
+        path: plugins/create_repo/etc/entropy/server.conf
+        bind: /etc/entropy/server.conf
+    },
+
+
+    #-----------------------------------------------------------
+    # dir plugins
+
+    #RW dirs must be explicitedly configured here
+    #all sysroot dirs are RO
+
+    #collect portage compiled binaries here
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /portage/packages
+        mode: rw
+    },
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/entropy_artifacts
+        bind: /entropy/artifacts
+        mode: rw
+    },
+
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+        mode: rw
+    },
+
+
+}
+
