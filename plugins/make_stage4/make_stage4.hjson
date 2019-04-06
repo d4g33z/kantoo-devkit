@@ -132,6 +132,7 @@ equo upgrade
 
     config_system:
     {
+        HOST_NAME:stage4
         ROOT_PASSWD:iamsolame
         path:plugins/make_stage4/bash/configure_system.sh
         exec:true
