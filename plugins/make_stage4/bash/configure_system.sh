@@ -8,9 +8,7 @@ sed -i "s/\#\/dev\/cdrom.*//" ${SYSROOT}/etc/fstab
 
 ################################################################################
 # Set Up Root Password
-#sed -i "s|root\:\*|root\:${ROOT_PASSWD}|" $SYSROOT/etc/shadow
 sed -i "s|root\:\*|root\:$(openssl passwd -1 "${ROOT_PASSWD}")|" $SYSROOT/etc/shadow
-
 
 ################################################################################
 # Set Up SSH root Access
@@ -24,7 +22,14 @@ touch ${SYSROOT}/lib/rc/cache/shutdowntime
 ################################################################################
 # Enable Serial Console Access
 sed -i "s/s0:.*/s0:12345:respawn:\/sbin\/agetty -L 115200 ttyAMA0 vt100/" ${SYSROOT}/etc/inittab
+
 ################################################################################
 # Link to Accelerated Video Libraries
 echo "LDPATH=\"/opt/vc/lib\"" > ${SYSROOT}/etc/env.d/99vc
+
+################################################################################
+# Set hostname
+sed -i "s/hostname=\"localhost\"/hostname=\"${HOST_NAME}\"/" ${SYSROOT}/etc/conf.d/hostname
+
+
 
