@@ -17,6 +17,9 @@ SYSROOT_DIR:lib/sysroot
 #the intial state
 DOCKER_INIT_IMG: stage3:remove_portage_pkgs
 
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
 DOCKER_OPTS:
 {
     #docker.run kwargs
@@ -27,11 +30,6 @@ DOCKER_OPTS:
     detach:true,
     auto_remove:true,
 }
-
-#sysroot vars
-
-# etc/conf.d/distccd
-DISTCCD_ALLOW: 192.168.1.0/24
 
 envplugins:
 {
@@ -95,6 +93,32 @@ emerge --usepkg -uDN @world
     #TODO: put in a revdep-rebuild step here
     #see https://wiki.gentoo.org/wiki/Binary_package_guide
 
+    rebuild_entropy_database:
+    {
+        ENTROPY_ARCH:''
+        path: plugins/create_repo/bash/rebuild_entropy_database.sh
+        exec:true
+    },
+
+    patch_eit:
+    {
+        path: plugins/create_repo/bash/patch_eit.sh
+        exec:true
+    },
+
+    sync_or_create_local_repo:
+    {
+        REPOSITORY_NAME:''
+        path: plugins/create_repo/bash/sync_or_create_local_repo.sh
+        exec:true
+    },
+
+    commit_all_and_push:
+    {
+       path: plugins/create_repo/bash/commit_all_and_push.sh
+       exec:true
+    },
+
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
@@ -121,6 +145,15 @@ emerge --usepkg -uDN @world
 
     },
 
+    entropysrv:
+    {
+        ENTROPY_PKGDIR: /entropy/artifacts
+        REPOSITORY_NAME:''
+        REPOSITORY_DESCRIPTION:''
+        path: plugins/create_repo/etc/entropy/server.conf
+        bind: /etc/entropy/server.conf
+    },
+
     #-----------------------------------------------------------
     # dir plugins
 
@@ -132,6 +165,13 @@ emerge --usepkg -uDN @world
     {
         path: sab_workspace/portage_artifacts
         bind: /portage/packages
+        mode: rw
+    },
+
+    entropy_artifacts:
+    {
+        path: sab_workspace/entropy_artifacts
+        bind: /entropy/artifacts
         mode: rw
     },
 
