@@ -8,6 +8,6 @@ if [ -d "/entropy/artifacts/standard" ]; then
 else
   echo "=== Repository is empty, intializing ==="
   echo "Yes" | eit init --quick ${REPOSITORY_NAME}
-  eit push --quick --force
+#  eit push --quick --force
 fi
 
