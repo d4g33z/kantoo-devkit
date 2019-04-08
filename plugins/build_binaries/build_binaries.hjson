@@ -60,6 +60,9 @@ plugins:
         '''
 #!/usr/bin/env sh
 emerge --usepkg -uDN @world
+emerge --depclean
+revdep-rebuild --ignore
+emerge @preserved-rebuild
         '''
         exec:true
     },
