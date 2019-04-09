@@ -96,16 +96,16 @@ emerge @preserved-rebuild
     #TODO: put in a revdep-rebuild step here
     #see https://wiki.gentoo.org/wiki/Binary_package_guide
 
+    patch_eit:
+    {
+        path: plugins/create_repo/bash/patch_eit.sh
+        exec:true
+    },
+
     rebuild_entropy_database:
     {
         ENTROPY_ARCH:''
         path: plugins/create_repo/bash/rebuild_entropy_database.sh
-        exec:true
-    },
-
-    patch_eit:
-    {
-        path: plugins/create_repo/bash/patch_eit.sh
         exec:true
     },
 
