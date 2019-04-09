@@ -10,7 +10,6 @@ EOF
 
 fi
 
-#not necessary if just building a repo
-#echo "=== registering all portage installed packages ==="
-#equo rescue spmsync
+echo "=== registering all portage installed packages ==="
+equo rescue spmsync
 
