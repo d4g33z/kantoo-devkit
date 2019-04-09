@@ -243,14 +243,6 @@ PKGDIR={PORT_PKGDIR}
         mode:rw
     },
 
-    entropy_artifacts:
-    {
-        path: sab_workspace/entropy_artifacts
-        bind: /entropy/artifacts
-        mode: rw
-    },
-
-
     #used for unmasking keywordless packages in the repo
     portage_artifacts:
     {
