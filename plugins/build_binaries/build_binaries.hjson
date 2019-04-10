@@ -116,6 +116,20 @@ emerge @preserved-rebuild
         exec:true
     },
 
+    rsync_portage_pkgs:
+    {
+        PKGDIR:/portage/packages
+        TMP_PKGDIR:/portage/artifacts
+        text:
+        '''
+#!/usr/bin/env sh
+mkdir -p ${TMP_PKGDIR}
+rsync -a ${PKGDIR} ${TMP_PKGDIR}
+        '''
+        exec:true
+
+    },
+
     inject_pkgdir:
     {
         TMP_PKGDIR:/portage/artifacts
@@ -123,11 +137,12 @@ emerge @preserved-rebuild
         exec: true
     },
 
-    commit_all:
-    {
-       path: plugins/create_repo/bash/commit_all.sh
-       exec:true
-    },
+#    commit_all:
+#    {
+#
+#       path: plugins/create_repo/bash/commit_all.sh
+#       exec:true
+#    },
 
     push:
     {
