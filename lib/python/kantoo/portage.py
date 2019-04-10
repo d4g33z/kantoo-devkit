@@ -28,6 +28,7 @@ def emerge_local_binaries():
     IN_PORT_PKGS = os.environ.get('IN_PORT_PKGS')
     for in_port_pkg in IN_PORT_PKGS.splitlines():
         run_write_docker_output(f"emerge --keep-going --usepkg {in_port_pkg}")
+    run_write_docker_output('revdep-rebuild --ignore')
 
 #not necessary, but interesting
 def spawn_local_binhost_server(make_conf='/etc/portage/make.conf'):
