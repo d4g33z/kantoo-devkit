@@ -116,6 +116,13 @@ emerge @preserved-rebuild
         exec:true
     },
 
+    inject_pkgdir:
+    {
+        TMP_PKGDIR:/portage/artifacts
+        path: plugins/create_repo/inject_portage_pkgs.sh
+        exec: true
+    },
+
     commit_all:
     {
        path: plugins/create_repo/bash/commit_all.sh
