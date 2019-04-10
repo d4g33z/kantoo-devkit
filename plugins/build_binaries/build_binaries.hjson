@@ -116,9 +116,15 @@ emerge @preserved-rebuild
         exec:true
     },
 
-    commit_all_and_push:
+    commit_all:
     {
-       path: plugins/create_repo/bash/commit_all_and_push.sh
+       path: plugins/create_repo/bash/commit_all.sh
+       exec:true
+    },
+
+    push:
+    {
+       path: plugins/create_repo/bash/push.sh
        exec:true
     },
 
