@@ -133,7 +133,7 @@ rsync -a ${PKGDIR} ${TMP_PKGDIR}
     inject_pkgdir:
     {
         TMP_PKGDIR:/portage/artifacts
-        path: plugins/create_repo/inject_portage_pkgs.sh
+        path: plugins/create_repo/bash/inject_portage_pkgs.sh
         exec: true
     },
 
