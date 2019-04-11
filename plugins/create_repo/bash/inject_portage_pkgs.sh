@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+mkdir -p ${TMP_PKGDIR}
+rsync -a ${PKGDIR} ${TMP_PKGDIR}
+
 built_pkgs=$(find ${TMP_PKGDIR} -name "*.tbz2" | xargs)
 
 echo "=== Injecting packages ==="
