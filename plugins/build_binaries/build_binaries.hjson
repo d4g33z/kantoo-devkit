@@ -83,8 +83,8 @@ emerge @preserved-rebuild
             net-misc/chrony
             net-misc/networkmanager
             sys-auth/nss-mdns
-            dev-libs/libverto
             net-wireless/hostapd
+            dev-libs/libverto
             net-fs/nfs-utils
             app-admin/equo
             sys-apps/entropy-server
