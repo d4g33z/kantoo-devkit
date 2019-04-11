@@ -226,6 +226,12 @@ PKGDIR={PORT_PKGDIR}
         bind: /etc/entropy/server.conf
     },
 
+    nsswitch_conf:
+    {
+        path: plugins/make_stage4/etc/nsswitch.conf
+        bind: /etc/nsswitch.conf
+    },
+    
     #-----------------------------------------------------------
     # dir plugins
 
