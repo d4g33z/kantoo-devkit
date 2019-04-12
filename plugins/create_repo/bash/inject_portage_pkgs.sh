@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-wget https://patch-diff.githubusercontent.com/raw/Sabayon/entropy/pull/70.patch -O /tmp/sayabyon-patch
+wget https://patch-diff.githubusercontent.com/raw/Sabayon/entropy/pull/70.patch -O /tmp/sabayon-patch
 cd /usr/lib/entropy
 git apply /tmp/sabayon-patch
 cd -
