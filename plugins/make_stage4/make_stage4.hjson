@@ -182,12 +182,25 @@ equo upgrade
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
 
+    #for development
+    nfs_exports:
+    {
+        text:
+        '''
+        # /etc/exports: NFS file systems being exported.  See exports(5).
+        /      192.168.1.0/24(insecure,no_root_squash,nohide,rw,sync,no_subtree_check)
+        /boot/ 192.168.1.0/24(insecure,no_root_squash,nohide,rw,sync,no_subtree_check)
+
+        '''
+        bind: /etc/exports
+    },
 
     release:
     {
         text:
         '''
         ###KANTOO###
+
         '''
         bind:/etc/kantoo-release
     },
@@ -200,9 +213,10 @@ equo upgrade
         bind: /etc/portage/make.conf
         text:
         '''
-#for removing kernel sources in a container
-DONT_MOUNT_BOOT=1
-PKGDIR={PORT_PKGDIR}
+        #for removing kernel sources in a container
+        DONT_MOUNT_BOOT=1
+        PKGDIR={PORT_PKGDIR}
+
         '''
     },
 
