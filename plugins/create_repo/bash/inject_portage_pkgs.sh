@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 
+wget https://patch-diff.githubusercontent.com/raw/Sabayon/entropy/pull/70.patch -O /tmp/sayabyon-patch
+cd /usr/lib/entropy
+git apply /tmp/sabayon-patch
+cd -
+
 mkdir -p ${TMP_PKGDIR}
 rsync -a ${PKGDIR} ${TMP_PKGDIR}
 
