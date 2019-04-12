@@ -63,16 +63,15 @@ emerge --usepkg -uDN @world
 emerge --depclean
 revdep-rebuild --ignore
 emerge @preserved-rebuild
+eclean packages
         '''
         exec:true
     },
 
     install_portage_pkgs:
     {
-        #do not put anything entropy related in here
         #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
         #to customize firmware install
-        #dev-libs/libverto is required for nfs-utils; broken on arm docker
         IN_PORT_PKGS:
             '''
             sys-kernel/linux-firmware
