@@ -25,7 +25,9 @@ sed -i "s/s0:.*/s0:12345:respawn:\/sbin\/agetty -L 115200 ttyAMA0 vt100/" ${SYSR
 
 ################################################################################
 # Link to Accelerated Video Libraries
-echo "LDPATH=\"/opt/vc/lib\"" > ${SYSROOT}/etc/env.d/99vc
+if [ ${ENTROPY_ARCH} = armv7l ]; then
+    echo "LDPATH=\"/opt/vc/lib\"" > ${SYSROOT}/etc/env.d/99vc
+fi
 
 ################################################################################
 # Set hostname

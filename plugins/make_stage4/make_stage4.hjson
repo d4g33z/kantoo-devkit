@@ -133,6 +133,7 @@ equo upgrade
 
     config_system:
     {
+        ENTROPY_ARCH: ''
         HOST_NAME:stage4
         ROOT_PASSWD:iamsolame
         path:plugins/make_stage4/bash/configure_system.sh
