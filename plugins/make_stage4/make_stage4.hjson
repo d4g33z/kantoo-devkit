@@ -99,6 +99,7 @@ equo upgrade
         #ENTR_PRETEND:1
         IN_ENTR_PKGS:
             '''
+            app-editors/vim
             app-admin/metalog
             net-dns/avahi
             net-misc/chrony
