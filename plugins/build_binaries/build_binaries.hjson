@@ -44,8 +44,9 @@ plugins:
     # exec plugins
     install_distcc:
     {
-        #DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
-        DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
+        skip:true
+        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        #DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
         #CHOST:armv7a-hardfloat-linux-gnueabi
         path: plugins/build_binaries/bash/install_distcc.sh
@@ -56,6 +57,7 @@ plugins:
     #is --usepkg acceptable?
     emerge_world:
     {
+        skip:true
         text:
         '''
 #!/usr/bin/env sh
@@ -70,6 +72,7 @@ eclean packages
 
     install_portage_pkgs:
     {
+        skip:true
         #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
         #to customize firmware install
         IN_PORT_PKGS:
@@ -83,13 +86,11 @@ eclean packages
             net-misc/networkmanager
             sys-auth/nss-mdns
             net-wireless/hostapd
-            dev-libs/libverto
             net-fs/nfs-utils
             app-admin/equo
             sys-apps/entropy-server
             dev-util/bsdiff
             '''
-
         path: plugins/build_binaries/python/install_portage_pkgs.py
         exec:true
     },
