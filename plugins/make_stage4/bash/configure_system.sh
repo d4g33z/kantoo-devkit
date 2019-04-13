@@ -21,7 +21,9 @@ touch ${SYSROOT}/lib/rc/cache/shutdowntime
 
 ################################################################################
 # Enable Serial Console Access
-sed -i "s/s0:.*/s0:12345:respawn:\/sbin\/agetty -L 115200 ttyAMA0 vt100/" ${SYSROOT}/etc/inittab
+if [ ${CONFIG_SERIAL} = 1 ]; then
+    sed -i "s/s0:.*/s0:12345:respawn:\/sbin\/agetty -L 115200 ttyAMA0 vt100/" ${SYSROOT}/etc/inittab
+fi
 
 ################################################################################
 # Link to Accelerated Video Libraries
