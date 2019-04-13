@@ -343,10 +343,11 @@ class PluginConfig:
             return
 
 
-    def _rm_mounts(self,image,tag):
+    def _rm_mounts(self,image,tag=None):
         data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
         input_file = self.TMPFS.joinpath('input_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
         output_file = self.TMPFS.joinpath('output_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+        if tag is None: tag = image.tags[0]
 
         os.system(f"mkdir -p {data_dir}")
         os.system(f"docker save {image.tags[0]} > {input_file}")
