@@ -47,11 +47,16 @@ def dd(cwd, config, skip, pretend, interactive):
             print(f"Found docker image {config.DOCKER_IMAGE}.")
         elif config.DOCKER_INIT_IMG:
             print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be created from {config.DOCKER_INITIAL_IMAGE} ")
-            config.import_initial_image(client)
-        else:
-            print(f"No DOCKER_INITIAL_IMAGE found. Will be initialized from Funtoo stage3")
-            client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=f"{config.DOCKER_IMAGE}",
-                                quiet=False, buildargs=config.DOCKER_BUILDARGS)
+            try:
+                config.import_initial_image(client)
+            except:
+                yn = input(f"No DOCKER_INITIAL_IMAGE found. Build it from Funtoo stage3?")
+                if yn == 'y':
+                    client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=f"{config.DOCKER_IMAGE}",
+                                        quiet=False, buildargs=config.DOCKER_BUILDARGS)
+                else:
+                    print('Quiting. No image to work from.')
+                    return
 
     if interactive:
         config.interact(config.DOCKER_TAG)
