@@ -53,6 +53,23 @@ def dd(cwd, config, skip, pretend, interactive):
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
+
+    @property
+    def TMPFS(self):
+        return TMPFS_PATH
+
+    @property
+    def DOCKER_BUILDARGS(self):
+        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH}
+
+    @property
+    def DOCKER_REPO(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
+
+    @property
+    def DOCKER_INITIAL_IMAGE(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
+
     def __init__(self,cwd,config_path):
         self.cwd = cwd
         self.name = config_path.parts[-1].split('.')[0]
@@ -268,20 +285,6 @@ class DockerDriver:
     def _update(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.items()]
 
-    @property
-    def DOCKER_BUILDARGS(self):
-        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH}
-
-    @property
-    def TMPFS(self):
-        return TMPFS_PATH
-    @property
-    def DOCKER_REPO(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
-
-    @property
-    def DOCKER_INITIAL_IMAGE(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
 
     def _rm_mounts(self,image,tag):
         data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
