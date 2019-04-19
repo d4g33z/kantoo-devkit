@@ -44,12 +44,14 @@ def dd(cwd, config, skip, pretend, interactive):
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
     if not pretend:
-        try:
-            config.initialize(cwd)
-        except:
-            return
+        if len(config.client.images.list(config.DOCKER_IMAGE)) == 0:
+            try:
+                config.initialize(cwd)
+            except:
+                return
 
     if interactive:
+        #DOCKER_TAG == 'initial'
         config.interact(config.DOCKER_TAG)
 
     prompt = ">>>"
@@ -62,8 +64,8 @@ def dd(cwd, config, skip, pretend, interactive):
         # images must exist at this point for each exec_plugin
         if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
             print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
-            container = config.run()
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
+            container = config.run(config.DOCKER_IMAGE)
+            config._update(DOCKER_TAG=f"{exec_plugin.name}") #changes DOCKER_IMAGE
         else:
             # skipping and a container of this exec_plugin exists
             print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
@@ -103,23 +105,20 @@ class DockerDriver:
         self._set_docker_opts()
 
     def initialize(self,working_dir_path):
+        try:
+            self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),self.DOCKER_IMAGE)
+        except IndexError:
+            yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
+            if yn == 'y' or yn =='Y':
+                self.client.images.build(path=working_dir_path, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
+                                    quiet=False, buildargs=self.DOCKER_BUILDARGS)
+                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),self.DOCKER_IMAGE)
+            else:
+                print('No image to work from.')
+                raise Exception
 
-        if not list(filter(lambda x: self.DOCKER_IMAGE in x,
-                       filter(lambda x: x != [], (map(lambda x: x.tags, self.client.images.list()))))):
-            print(f"Did not find docker image {self.DOCKER_IMAGE}. Will be created from {self.DOCKER_INITIAL_IMAGE} ")
-            try:
-                self.import_initial_image()
-            except:
-                yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
-                if yn == 'y' or yn =='Y':
-                    self.client.images.build(path=working_dir_path, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_IMAGE}",
-                                        quiet=False, buildargs=self.DOCKER_BUILDARGS)
-                else:
-                    print('No image to work from.')
-                    raise
-
-    def run(self):
-        container = self.client.containers.run(self.DOCKER_IMAGE, None, **self.DOCKER_OPTS)
+    def run(self,docker_image):
+        container = self.client.containers.run(docker_image, None, **self.DOCKER_OPTS)
         return container
 
     def exec_run(self,container,exec_plugin):
@@ -309,13 +308,7 @@ class DockerDriver:
         os.system(f"docker load -i {output_file}")
         os.system(f"rm -rf {data_dir} {input_file} {output_file}")
 
-    def import_initial_image(self):
-        try:
-            initial_image = list(filter(lambda x: x in self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"), self.client.images.list())).pop()
-        except IndexError:
-            raise
 
-        self._rm_mounts(initial_image,self.DOCKER_IMAGE)
 
     def _interactive_run_cmd(self, tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path, info in
