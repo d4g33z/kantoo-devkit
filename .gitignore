@@ -43,13 +43,15 @@ __pycache__/
 __javascript__/
 *.png
 *.ico
+
+
+# kantoo-devkit #
+# ############# #
 stage3s/
-log-*
 sab_workspace/
 logs/
 output.txt
 env3.6/
-ipython_log.py*
 lib/dot/*
 lib/python/portage
 lib/python/_emerge
