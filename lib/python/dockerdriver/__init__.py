@@ -43,16 +43,18 @@ def dd(cwd, config, skip, pretend, interactive):
     # use cli --skip to set certain exec plugins to skip=True
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
+    CURRENT_DOCKER_IMAGE=f"{config.DOCKER_REPO}:initial"
+
+    # try to find initial image or create it
     if not pretend:
-        if len(config.client.images.list(config.DOCKER_IMAGE)) == 0:
+        if len(config.client.images.list(CURRENT_DOCKER_IMAGE)) == 0:
             try:
                 config.initialize(cwd)
-            except:
-                return
+            except Exception as e:
+                raise e
 
     if interactive:
-        #DOCKER_TAG == 'initial'
-        config.interact(config.DOCKER_TAG)
+        config.interact('initial')
 
     prompt = ">>>"
     for exec_plugin in filter(lambda x: x.exec, config.plugins):
@@ -63,14 +65,14 @@ def dd(cwd, config, skip, pretend, interactive):
 
         # images must exist at this point for each exec_plugin
         if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
-            print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
-            container = config.run(config.DOCKER_IMAGE)
-            config._update(DOCKER_TAG=f"{exec_plugin.name}") #changes DOCKER_IMAGE
+            print(f"Creating container of {CURRENT_DOCKER_IMAGE} to run {exec_plugin.name} on.")
+            container = config.run(CURRENT_DOCKER_IMAGE)
+            CURRENT_DOCKER_IMAGE = f"{config.DOCKER_REPO}:{exec_plugin.name}"
         else:
             # skipping and a container of this exec_plugin exists
             print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
             print(f"{exec_plugin.name} skipped")
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
+            CURRENT_DOCKER_IMAGE = f"{config.DOCKER_REPO}:{exec_plugin.name}"
             continue
 
         # not exec_plugin.skip has to be true
@@ -87,7 +89,7 @@ def dd(cwd, config, skip, pretend, interactive):
         else:
             print("Create a logs/ directory to save a timestamped file of container logs")
 
-        image = container.commit(config.DOCKER_REPO, config.DOCKER_TAG)
+        image = container.commit(config.DOCKER_REPO, exec_plugin.name)
         print(f"{container.name} : {image.id} committed")
 
         if interactive:
@@ -106,13 +108,14 @@ class DockerDriver:
 
     def initialize(self,working_dir_path):
         try:
-            self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),self.DOCKER_IMAGE)
+            print(f"Initializing image from {self.DOCKER_INITIAL_IMAGE}")
+            self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
         except IndexError:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
             if yn == 'y' or yn =='Y':
                 self.client.images.build(path=working_dir_path, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
                                     quiet=False, buildargs=self.DOCKER_BUILDARGS)
-                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),self.DOCKER_IMAGE)
+                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),f"{self.DOCKER_REPO}:initial")
             else:
                 print('No image to work from.')
                 raise Exception
@@ -184,11 +187,6 @@ class DockerDriver:
         # all-caps root level keys become attributes
         [setattr(self, y, self.config.get(y)) for y in filter(lambda x: x == x.upper(), self.config.keys())]
 
-        #all plugins start with an :intial tag in each plugin's repo slot
-        #these images are just DOCKER_INIT_IMG with new bind mounts, so
-        #they can be removed to save space if you can handle the delay in rebuilding them
-        self.DOCKER_TAG = 'initial'
-
         # a default value
         if not hasattr(self, 'DOCKER_FILE'): setattr(self, 'DOCKER_FILE', 'Dockerfile')
         if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', None)
@@ -230,10 +228,6 @@ class DockerDriver:
     @property
     def DOCKER_REPO(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
-
-    @property
-    def DOCKER_IMAGE(self):
-        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
 
     @property
     def DOCKER_INITIAL_IMAGE(self):
@@ -318,7 +312,6 @@ class DockerDriver:
 
 
     def interact(self, tag='initial'):
-        "drop to an interactive shell of a container of self.DOCKER_IMAGE"
         try:
             ip = get_ipython()
             ip.system(self._interactive_run_cmd(tag))
@@ -362,7 +355,7 @@ class DockerDriver:
         yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
         if yn == 'y' or yn =='Y':
         #remove DOCKER_INITIAL_IMAGE
-            self.client.images.remove(self.images().pop())
+            self.client.images.remove(self.images().pop().id)
         return
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
