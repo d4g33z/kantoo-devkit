@@ -151,6 +151,10 @@ class DockerDriver:
             print('cannot interact')
         return
 
+    def container_cleanup(self):
+        [c.stop() for c in self.client.containers.list()]
+        [c.remove() for c in self.client.containers.list()]
+
     def images(self):
         return self.client.images.list(self.DOCKER_REPO)
 
@@ -158,7 +162,8 @@ class DockerDriver:
         # remove danglers
         [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
 
-        # TODO: remove all running containers first
+        self.container_cleanup()
+
         class RemovalFinished(Exception):
             pass
 
@@ -363,8 +368,6 @@ class DockerDriver:
                    self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
-
-
 
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
