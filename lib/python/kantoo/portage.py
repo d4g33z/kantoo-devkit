@@ -9,6 +9,18 @@ import sys
 
 import tarfile
 
+def remove_packages():
+    RM_PORT_PKGS = os.environ.get('RM_PORT_PKGS')
+    for rm_port_pkg in RM_PORT_PKGS.splitlines():
+        run_write_docker_output(f"emerge -C {rm_port_pkg}")
+    run_write_docker_output('emerge --depclean')
+
+def emerge_packages():
+    IN_PORT_PKGS = os.environ.get('RM_PORT_PKGS')
+    for in_port_pkgs in IN_PORT_PKGS.splitlines():
+        run_write_docker_output(f"emerge -C {in_port_pkgs}")
+    run_write_docker_output('revdep-rebuild --ignore')
+
 #get all profile info
 def profile_info():
     print("\n".join(portage.settings.profiles))
