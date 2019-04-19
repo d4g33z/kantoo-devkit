@@ -322,7 +322,7 @@ class DockerDriver:
         return
 
     def images(self):
-        return list(filter(lambda x: x in self.client.images.list(f"{self.DOCKER_REPO}"), self.client.images.list()))
+        return self.client.images.list(self.DOCKER_REPO)
 
     def image_cleanup(self):
         # remove danglers
