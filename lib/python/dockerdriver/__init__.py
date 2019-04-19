@@ -33,7 +33,6 @@ from datetime import datetime
 
 def dd(cwd, config, skip, pretend, interactive):
     client = docker.from_env()
-    # config = PluginConfig(cwd, config)
 
     config = DockerDriver(pathlib.Path(config).absolute())
 
@@ -43,7 +42,6 @@ def dd(cwd, config, skip, pretend, interactive):
     # use cli --skip to set certain exec plugins to skip=True
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
-    CURRENT_DOCKER_IMAGE=f"{config.DOCKER_REPO}:initial"
 
     # try to find initial image or create it
     if not pretend:
@@ -52,45 +50,8 @@ def dd(cwd, config, skip, pretend, interactive):
     if interactive:
         config.interact('initial')
 
-    prompt = ">>>"
-    for exec_plugin in filter(lambda x: x.exec, config.plugins):
-        print(f"{prompt}" * 20)
-        if not client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip:
-            print(f"You requested skipping {exec_plugin.name} but no image exists yet. Exiting.")
-            return
-
-        # images must exist at this point for each exec_plugin
-        if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
-            print(f"Creating container of {CURRENT_DOCKER_IMAGE} to run {exec_plugin.name} on.")
-            container = config.run(CURRENT_DOCKER_IMAGE)
-            CURRENT_DOCKER_IMAGE = f"{config.DOCKER_REPO}:{exec_plugin.name}"
-        else:
-            # skipping and a container of this exec_plugin exists
-            print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
-            print(f"{exec_plugin.name} skipped")
-            CURRENT_DOCKER_IMAGE = f"{config.DOCKER_REPO}:{exec_plugin.name}"
-            continue
-
-        # not exec_plugin.skip has to be true
-        exit_code, output = config.exec_run(container,exec_plugin)
-        # TODO test the exec_result and decide whether to proceed, report or fix a problem
-        with open(f"{cwd}/output.txt", 'wb') as f:
-            for chunk in output:
-                f.write(chunk)
-
-        if pathlib.Path(f"{cwd}/logs").exists():
-            open(
-                f"{cwd}/logs/{config.ARCH}-{config.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
-                'wb').write(open(f"{cwd}/output.txt", 'rb').read())
-        else:
-            print("Create a logs/ directory to save a timestamped file of container logs")
-
-        image = container.commit(config.DOCKER_REPO, exec_plugin.name)
-        print(f"{container.name} : {image.id} committed")
-
-        if interactive:
-            config.interact(exec_plugin.name)
-
+    #start the sequence of operations
+    config.start(cwd,interactive)
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
@@ -117,6 +78,47 @@ class DockerDriver:
             else:
                 print('No image to work from.')
                 raise Exception
+
+    def start(self,cwd,interactive=False):
+        CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
+        prompt = ">>>"
+        for exec_plugin in filter(lambda x: x.exec, self.plugins):
+            print(f"{prompt}" * 20)
+            if not self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip:
+                print(f"You requested skipping {exec_plugin.name} but no image exists yet. Exiting.")
+                return
+
+            # images must exist at this point for each exec_plugin
+            if not (self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
+                print(f"Creating container of {CURRENT_DOCKER_IMAGE} to run {exec_plugin.name} on.")
+                container = self.run(CURRENT_DOCKER_IMAGE)
+                CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
+            else:
+                # skipping and a container of this exec_plugin exists
+                print(f"Not creating container of existing image {self.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
+                print(f"{exec_plugin.name} skipped")
+                CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
+                continue
+
+            # not exec_plugin.skip has to be true
+            exit_code, output = self.exec_run(container,exec_plugin)
+            # TODO test the exec_result and decide whether to proceed, report or fix a problem
+            with open(f"{cwd}/output.txt", 'wb') as f:
+                for chunk in output:
+                    f.write(chunk)
+
+            if pathlib.Path(f"{cwd}/logs").exists():
+                open(
+                    f"{cwd}/logs/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
+                    'wb').write(open(f"{cwd}/output.txt", 'rb').read())
+            else:
+                print("Create a logs/ directory to save a timestamped file of container logs")
+
+            image = container.commit(self.DOCKER_REPO, exec_plugin.name)
+            print(f"{container.name} : {image.id} committed")
+
+            if interactive:
+                self.interact(exec_plugin.name)
 
     def run(self,docker_image):
         container = self.client.containers.run(docker_image, None, **self.DOCKER_OPTS)
