@@ -47,11 +47,7 @@ def dd(cwd, config, skip, pretend, interactive):
 
     # try to find initial image or create it
     if not pretend:
-        if len(config.client.images.list(CURRENT_DOCKER_IMAGE)) == 0:
-            try:
-                config.initialize(cwd)
-            except Exception as e:
-                raise e
+        config.initialize(cwd)
 
     if interactive:
         config.interact('initial')
@@ -107,6 +103,8 @@ class DockerDriver:
         self._set_docker_opts()
 
     def initialize(self,working_dir_path):
+        if self.client.images.list(f"{self.DOCKER_REPO}:initial"):
+            return
         try:
             print(f"Initializing image from {self.DOCKER_INITIAL_IMAGE}")
             self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
