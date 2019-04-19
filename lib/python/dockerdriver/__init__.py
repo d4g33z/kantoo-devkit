@@ -50,7 +50,7 @@ def dd(cwd, config, skip, pretend, interactive):
         elif config.DOCKER_INIT_IMG:
             print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be created from {config.DOCKER_INITIAL_IMAGE} ")
             try:
-                config.import_initial_image(client)
+                config.import_initial_image()
             except:
                 yn = input(f"No DOCKER_INITIAL_IMAGE found. Build it from Funtoo stage3?")
                 if yn == 'y' or yn =='Y':
