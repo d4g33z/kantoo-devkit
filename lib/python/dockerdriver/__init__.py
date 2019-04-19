@@ -32,10 +32,8 @@ from collections import OrderedDict
 from datetime import datetime
 
 def dd(cwd, config, skip, pretend, interactive):
-    client = docker.from_env()
-    # config = PluginConfig(cwd, config)
 
-    config = DockerDriver(pathlib.Path(config).absolute())
+    config = DockerDriver(cwd,pathlib.Path(config))
 
     if pretend:
         [setattr(p, 'skip', True) for p in filter(lambda x: x.exec, config.plugins)]
@@ -43,81 +41,158 @@ def dd(cwd, config, skip, pretend, interactive):
     # use cli --skip to set certain exec plugins to skip=True
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
+    # try to find initial image or create it
     if not pretend:
-        if list(filter(lambda x: config.DOCKER_IMAGE in x,
-                       filter(lambda x: x != [], (map(lambda x: x.tags, client.images.list()))))):
-            print(f"Found docker image {config.DOCKER_IMAGE}.")
-        elif config.DOCKER_INIT_IMG:
-            print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be created from {config.DOCKER_INITIAL_IMAGE} ")
-            try:
-                config.import_initial_image()
-            except:
-                yn = input(f"No DOCKER_INITIAL_IMAGE found. Build it from Funtoo stage3?")
-                if yn == 'y' or yn =='Y':
-                    client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=f"{config.DOCKER_IMAGE}",
-                                        quiet=False, buildargs=config.DOCKER_BUILDARGS)
-                else:
-                    print('Quiting. No image to work from.')
-                    return
+        config.initialize()
 
     if interactive:
-        config.interact(config.DOCKER_TAG)
+        config.interact('initial')
 
-    prompt = ">>>"
-    for exec_plugin in filter(lambda x: x.exec, config.plugins):
-        print(f"{prompt}" * 20)
-        if not client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip:
-            print(f"You requested skipping {exec_plugin.name} but no image exists yet. Exiting.")
-            return
-
-        # images must exist at this point for each exec_plugin
-        if not (client.images.list(f"{config.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
-            print(f"Creating container of {config.DOCKER_TAG} to run {exec_plugin.name} on.")
-            container = config.run()
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
-        else:
-            # skipping and a container of this exec_plugin exists
-            print(f"Not creating container of existing image {config.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
-            print(f"{exec_plugin.name} skipped")
-            config._update(DOCKER_TAG=f"{exec_plugin.name}")
-            continue
-
-        # not exec_plugin.skip has to be true
-        exit_code, output = config.exec_run(container,exec_plugin)
-        # TODO test the exec_result and decide whether to proceed, report or fix a problem
-        with open(f"{cwd}/output.txt", 'wb') as f:
-            for chunk in output:
-                f.write(chunk)
-
-        if pathlib.Path(f"{cwd}/logs").exists():
-            open(
-                f"{cwd}/logs/{config.ARCH}-{config.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
-                'wb').write(open(f"{cwd}/output.txt", 'rb').read())
-        else:
-            print("Create a logs/ directory to save a timestamped file of container logs")
-
-        image = container.commit(config.DOCKER_REPO, config.DOCKER_TAG)
-        print(f"{container.name} : {image.id} committed")
-
-        if interactive:
-            config.interact(exec_plugin.name)
-
+    #start the sequence of operations
+    config.start(interactive)
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
-    def __init__(self,config_path):
+
+    @property
+    def TMPFS(self):
+        return TMPFS_PATH
+
+    @property
+    def DOCKER_BUILDARGS(self):
+        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH}
+
+    @property
+    def DOCKER_REPO(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
+
+    @property
+    def DOCKER_INITIAL_IMAGE(self):
+        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
+
+    def __init__(self,cwd,config_path):
+        self.cwd = cwd
         self.name = config_path.parts[-1].split('.')[0]
         self.client = docker.from_env()
-        self.config = hjson.load(open(config_path, 'r'))
+        self.config = hjson.load(open(cwd.joinpath(config_path), 'r'))
         self._set_config_attrs()
         self._set_plugins()
         self._set_docker_opts()
 
-    def run(self):
-        container = self.client.containers.run(self.DOCKER_IMAGE, None, **self.DOCKER_OPTS)
+    def initialize(self):
+        if self.client.images.list(f"{self.DOCKER_REPO}:initial"):
+            return
+        try:
+            print(f"Initializing image from {self.DOCKER_INITIAL_IMAGE}")
+            self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
+        except IndexError:
+            yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
+            if yn == 'y' or yn =='Y':
+                self.client.images.build(path=self.cwd, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
+                                    quiet=False, buildargs=self.DOCKER_BUILDARGS)
+                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),f"{self.DOCKER_REPO}:initial")
+            else:
+                print('No image to work from.')
+                raise Exception
+
+    def start(self,interactive=False):
+        CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
+        prompt = ">>>"
+        for exec_plugin in filter(lambda x: x.exec, self.plugins):
+            print(f"{prompt}" * 20)
+            if not self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip:
+                print(f"You requested skipping {exec_plugin.name} but no image exists yet. Exiting.")
+                return
+
+            # images must exist at this point for each exec_plugin
+            if not (self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
+                print(f"Creating container of {CURRENT_DOCKER_IMAGE} to run {exec_plugin.name} on.")
+                container = self._run(CURRENT_DOCKER_IMAGE)
+                CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
+            else:
+                # skipping and a container of this exec_plugin exists
+                print(f"Not creating container of existing image {self.DOCKER_REPO}:{exec_plugin.name} to run plugin on.")
+                print(f"{exec_plugin.name} skipped")
+                CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
+                continue
+
+            # not exec_plugin.skip has to be true
+            exit_code, output = self._exec_run(container,exec_plugin)
+            # TODO test the exec_result and decide whether to proceed, report or fix a problem
+            with open(f"{self.cwd}/output.txt", 'wb') as f:
+                for chunk in output:
+                    f.write(chunk)
+
+            if pathlib.Path(f"{self.cwd}/logs").exists():
+                open(
+                    f"{self.cwd}/logs/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
+                    'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
+            else:
+                print("Create a logs/ directory to save a timestamped file of container logs")
+
+            image = container.commit(self.DOCKER_REPO, exec_plugin.name)
+            print(f"{container.name} : {image.id} committed")
+
+            container.stop()
+            container.remove()
+
+            if interactive:
+                self.interact(exec_plugin.name)
+
+
+    def interact(self,tag):
+        #this should should a shell prompt with exec_plugin.name, not hostname
+        try:
+            ip = get_ipython()
+            ip.system(self._interactive_run_cmd(tag))
+        except NameError:
+            os.system(self._interactive_run_cmd(tag))
+        except:
+            print('cannot interact')
+        return
+
+    def images(self):
+        return self.client.images.list(self.DOCKER_REPO)
+
+    def image_cleanup(self):
+        # remove danglers
+        [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
+
+        # TODO: remove all running containers first
+        class RemovalFinished(Exception):
+            pass
+
+        def _image_cleanup(image):
+            print(f"about to remove image {image.tags.pop()}")
+            if input('remove image? [y/N]') == 'y':
+                try:
+                    self.client.images.remove(image.id)
+                except:
+                    print(f"images can only be removed in the reverse order they were created")
+                    raise RemovalFinished
+                print('image removed')
+            else:
+                print('image not removed and can only be removed in the reverse order to creation. you are done')
+                raise RemovalFinished
+
+        try:
+            [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
+                filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
+                       [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
+        except RemovalFinished:
+            pass
+
+        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
+        if yn == 'y' or yn =='Y':
+        #remove DOCKER_INITIAL_IMAGE
+            self.client.images.remove(self.images().pop().id)
+        return
+
+    def _run(self,docker_image):
+        container = self.client.containers.run(docker_image, None, **self.DOCKER_OPTS)
         return container
 
-    def exec_run(self,container,exec_plugin):
+    def _exec_run(self,container,exec_plugin):
         exit_code, output = container.exec_run(
             ['sh', '-c', f". {exec_plugin.docker_exe}"],environment=exec_plugin.docker_env,detach=False,stream=True)
         return exit_code, output
@@ -180,11 +255,6 @@ class DockerDriver:
         # all-caps root level keys become attributes
         [setattr(self, y, self.config.get(y)) for y in filter(lambda x: x == x.upper(), self.config.keys())]
 
-        #all plugins start with an :intial tag in each plugin's repo slot
-        #these images are just DOCKER_INIT_IMG with new bind mounts, so
-        #they can be removed to save space if you can handle the delay in rebuilding them
-        self.DOCKER_TAG = 'initial'
-
         # a default value
         if not hasattr(self, 'DOCKER_FILE'): setattr(self, 'DOCKER_FILE', 'Dockerfile')
         if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', None)
@@ -216,24 +286,6 @@ class DockerDriver:
     def _update(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.items()]
 
-    @property
-    def DOCKER_BUILDARGS(self):
-        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH}
-
-    @property
-    def TMPFS(self):
-        return TMPFS_PATH
-    @property
-    def DOCKER_REPO(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.name}"
-
-    @property
-    def DOCKER_IMAGE(self):
-        return f"{self.DOCKER_REPO}:{self.DOCKER_TAG}"
-
-    @property
-    def DOCKER_INITIAL_IMAGE(self):
-        return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
 
     def _rm_mounts(self,image,tag):
         data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
@@ -304,13 +356,7 @@ class DockerDriver:
         os.system(f"docker load -i {output_file}")
         os.system(f"rm -rf {data_dir} {input_file} {output_file}")
 
-    def import_initial_image(self):
-        try:
-            initial_image = list(filter(lambda x: x in self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"), self.client.images.list())).pop()
-        except IndexError:
-            raise
 
-        self._rm_mounts(initial_image,self.DOCKER_IMAGE)
 
     def _interactive_run_cmd(self, tag):
         volumes = [f"-v {str(path)}:{info.get('bind')}:{info.get('mode')}" for path, info in
@@ -318,57 +364,8 @@ class DockerDriver:
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
 
-    def _save_cmd(self,image):
-        #tmpfile = pathlib.Path(tempfile.mkstemp()[1])
-        return f"docker save {image.tags[0]} /tmp/"
 
-    def interact(self, tag='initial'):
-        "drop to an interactive shell of a container of self.DOCKER_IMAGE"
-        try:
-            ip = get_ipython()
-            ip.system(self._interactive_run_cmd(tag))
-        except NameError:
-            os.system(self._interactive_run_cmd(tag))
-        except:
-            print('cannot interact')
-        return
 
-    def images(self):
-        return list(filter(lambda x: x in self.client.images.list(f"{self.DOCKER_REPO}"), self.client.images.list()))
-
-    def image_cleanup(self):
-        # remove danglers
-        [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
-
-        # TODO: remove all running containers first
-        class RemovalFinished(Exception):
-            pass
-
-        def _image_cleanup(image):
-            print(f"about to remove image {image.tags.pop()}")
-            if input('remove image? [y/N]') == 'y':
-                try:
-                    self.client.images.remove(image.id)
-                except:
-                    print(f"images can only be removed in the reverse order they were created")
-                    raise RemovalFinished
-                print('image removed')
-            else:
-                print('image not removed and can only be removed in the reverse order to creation. you are done')
-                raise RemovalFinished
-
-        try:
-            [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
-                filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
-                       [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
-        except RemovalFinished:
-            pass
-
-        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
-        if yn == 'y' or yn =='Y':
-        #remove DOCKER_INITIAL_IMAGE
-            self.client.images.remove(self.images().pop())
-        return
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
 class Plugin:
