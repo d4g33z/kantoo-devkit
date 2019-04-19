@@ -316,9 +316,6 @@ class DockerDriver:
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
 
-    def _save_cmd(self,image):
-        #tmpfile = pathlib.Path(tempfile.mkstemp()[1])
-        return f"docker save {image.tags[0]} /tmp/"
 
     def interact(self, tag='initial'):
         "drop to an interactive shell of a container of self.DOCKER_IMAGE"
