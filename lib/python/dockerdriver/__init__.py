@@ -32,9 +32,8 @@ from collections import OrderedDict
 from datetime import datetime
 
 def dd(cwd, config, skip, pretend, interactive):
-    client = docker.from_env()
 
-    config = DockerDriver(pathlib.Path(config).absolute())
+    config = DockerDriver(cwd,pathlib.Path(config))
 
     if pretend:
         [setattr(p, 'skip', True) for p in filter(lambda x: x.exec, config.plugins)]
@@ -45,25 +44,26 @@ def dd(cwd, config, skip, pretend, interactive):
 
     # try to find initial image or create it
     if not pretend:
-        config.initialize(cwd)
+        config.initialize()
 
     if interactive:
         config.interact('initial')
 
     #start the sequence of operations
-    config.start(cwd,interactive)
+    config.start(interactive)
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
-    def __init__(self,config_path):
+    def __init__(self,cwd,config_path):
+        self.cwd = cwd
         self.name = config_path.parts[-1].split('.')[0]
         self.client = docker.from_env()
-        self.config = hjson.load(open(config_path, 'r'))
+        self.config = hjson.load(open(cwd.joinpath(config_path), 'r'))
         self._set_config_attrs()
         self._set_plugins()
         self._set_docker_opts()
 
-    def initialize(self,working_dir_path):
+    def initialize(self):
         if self.client.images.list(f"{self.DOCKER_REPO}:initial"):
             return
         try:
@@ -72,14 +72,14 @@ class DockerDriver:
         except IndexError:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
             if yn == 'y' or yn =='Y':
-                self.client.images.build(path=working_dir_path, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
+                self.client.images.build(path=self.cwd, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
                                     quiet=False, buildargs=self.DOCKER_BUILDARGS)
                 self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),f"{self.DOCKER_REPO}:initial")
             else:
                 print('No image to work from.')
                 raise Exception
 
-    def start(self,cwd,interactive=False):
+    def start(self,interactive=False):
         CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
         prompt = ">>>"
         for exec_plugin in filter(lambda x: x.exec, self.plugins):
@@ -103,14 +103,14 @@ class DockerDriver:
             # not exec_plugin.skip has to be true
             exit_code, output = self.exec_run(container,exec_plugin)
             # TODO test the exec_result and decide whether to proceed, report or fix a problem
-            with open(f"{cwd}/output.txt", 'wb') as f:
+            with open(f"{self.cwd}/output.txt", 'wb') as f:
                 for chunk in output:
                     f.write(chunk)
 
-            if pathlib.Path(f"{cwd}/logs").exists():
+            if pathlib.Path(f"{self.cwd}/logs").exists():
                 open(
-                    f"{cwd}/logs/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
-                    'wb').write(open(f"{cwd}/output.txt", 'rb').read())
+                    f"{self.cwd}/logs/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
+                    'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
             else:
                 print("Create a logs/ directory to save a timestamped file of container logs")
 
