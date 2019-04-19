@@ -31,9 +31,13 @@ from functools import reduce
 from collections import OrderedDict
 from datetime import datetime
 
+from eliot import to_file,start_action
+to_file(open('eliot.log','w'))
+
 def dd(cwd, config, skip, pretend, interactive):
     client = docker.from_env()
     # config = PluginConfig(cwd, config)
+
     config = DockerDriver(pathlib.Path(config).absolute())
 
     if pretend:
