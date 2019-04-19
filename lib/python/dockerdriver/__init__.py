@@ -44,21 +44,10 @@ def dd(cwd, config, skip, pretend, interactive):
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
     if not pretend:
-        if list(filter(lambda x: config.DOCKER_IMAGE in x,
-                       filter(lambda x: x != [], (map(lambda x: x.tags, client.images.list()))))):
-            print(f"Found docker image {config.DOCKER_IMAGE}.")
-        elif config.DOCKER_INIT_IMG:
-            print(f"Did not find docker image {config.DOCKER_IMAGE}. Will be created from {config.DOCKER_INITIAL_IMAGE} ")
-            try:
-                config.import_initial_image()
-            except:
-                yn = input(f"No DOCKER_INITIAL_IMAGE found. Build it from Funtoo stage3?")
-                if yn == 'y' or yn =='Y':
-                    client.images.build(path=str(config.SCRIPT_PWD), dockerfile=config.DOCKER_FILE, tag=f"{config.DOCKER_IMAGE}",
-                                        quiet=False, buildargs=config.DOCKER_BUILDARGS)
-                else:
-                    print('Quiting. No image to work from.')
-                    return
+        try:
+            config.initialize(cwd)
+        except:
+            return
 
     if interactive:
         config.interact(config.DOCKER_TAG)
@@ -112,6 +101,22 @@ class DockerDriver:
         self._set_config_attrs()
         self._set_plugins()
         self._set_docker_opts()
+
+    def initialize(self,working_dir_path):
+
+        if not list(filter(lambda x: self.DOCKER_IMAGE in x,
+                       filter(lambda x: x != [], (map(lambda x: x.tags, self.client.images.list()))))):
+            print(f"Did not find docker image {self.DOCKER_IMAGE}. Will be created from {self.DOCKER_INITIAL_IMAGE} ")
+            try:
+                self.import_initial_image()
+            except:
+                yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
+                if yn == 'y' or yn =='Y':
+                    self.client.images.build(path=working_dir_path, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_IMAGE}",
+                                        quiet=False, buildargs=self.DOCKER_BUILDARGS)
+                else:
+                    print('No image to work from.')
+                    raise
 
     def run(self):
         container = self.client.containers.run(self.DOCKER_IMAGE, None, **self.DOCKER_OPTS)
