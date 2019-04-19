@@ -141,6 +141,7 @@ class DockerDriver:
 
 
     def interact(self,tag):
+        #this should should a shell prompt with exec_plugin.name, not hostname
         try:
             ip = get_ipython()
             ip.system(self._interactive_run_cmd(tag))
