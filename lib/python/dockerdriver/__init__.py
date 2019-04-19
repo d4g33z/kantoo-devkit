@@ -31,9 +31,6 @@ from functools import reduce
 from collections import OrderedDict
 from datetime import datetime
 
-from eliot import to_file,start_action
-to_file(open('eliot.log','w'))
-
 def dd(cwd, config, skip, pretend, interactive):
     client = docker.from_env()
     # config = PluginConfig(cwd, config)
@@ -105,8 +102,8 @@ def dd(cwd, config, skip, pretend, interactive):
         if interactive:
             config.interact(exec_plugin.name)
 
-from eliot import log_call
-TMPFS_PATH=pathlib.Path('tmpfs')
+
+TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
     def __init__(self,config_path):
         self.name = config_path.parts[-1].split('.')[0]
@@ -116,12 +113,10 @@ class DockerDriver:
         self._set_plugins()
         self._set_docker_opts()
 
-    @log_call()
     def run(self):
         container = self.client.containers.run(self.DOCKER_IMAGE, None, **self.DOCKER_OPTS)
         return container
 
-    @log_call()
     def exec_run(self,container,exec_plugin):
         exit_code, output = container.exec_run(
             ['sh', '-c', f". {exec_plugin.docker_exe}"],environment=exec_plugin.docker_env,detach=False,stream=True)
