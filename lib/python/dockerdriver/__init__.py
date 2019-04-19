@@ -41,7 +41,6 @@ def dd(cwd, config, skip, pretend, interactive):
     # use cli --skip to set certain exec plugins to skip=True
     [setattr(p, 'skip', True) for p in filter(lambda x: getattr(x, 'name') in skip, config.plugins)]
 
-
     # try to find initial image or create it
     if not pretend:
         config.initialize()
@@ -91,7 +90,7 @@ class DockerDriver:
             # images must exist at this point for each exec_plugin
             if not (self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
                 print(f"Creating container of {CURRENT_DOCKER_IMAGE} to run {exec_plugin.name} on.")
-                container = self.run(CURRENT_DOCKER_IMAGE)
+                container = self._run(CURRENT_DOCKER_IMAGE)
                 CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
             else:
                 # skipping and a container of this exec_plugin exists
@@ -101,7 +100,7 @@ class DockerDriver:
                 continue
 
             # not exec_plugin.skip has to be true
-            exit_code, output = self.exec_run(container,exec_plugin)
+            exit_code, output = self._exec_run(container,exec_plugin)
             # TODO test the exec_result and decide whether to proceed, report or fix a problem
             with open(f"{self.cwd}/output.txt", 'wb') as f:
                 for chunk in output:
@@ -120,11 +119,58 @@ class DockerDriver:
             if interactive:
                 self.interact(exec_plugin.name)
 
-    def run(self,docker_image):
+    def interact(self, tag='initial'):
+        try:
+            ip = get_ipython()
+            ip.system(self._interactive_run_cmd(tag))
+        except NameError:
+            os.system(self._interactive_run_cmd(tag))
+        except:
+            print('cannot interact')
+        return
+
+    def images(self):
+        return self.client.images.list(self.DOCKER_REPO)
+
+    def image_cleanup(self):
+        # remove danglers
+        [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
+
+        # TODO: remove all running containers first
+        class RemovalFinished(Exception):
+            pass
+
+        def _image_cleanup(image):
+            print(f"about to remove image {image.tags.pop()}")
+            if input('remove image? [y/N]') == 'y':
+                try:
+                    self.client.images.remove(image.id)
+                except:
+                    print(f"images can only be removed in the reverse order they were created")
+                    raise RemovalFinished
+                print('image removed')
+            else:
+                print('image not removed and can only be removed in the reverse order to creation. you are done')
+                raise RemovalFinished
+
+        try:
+            [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
+                filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
+                       [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
+        except RemovalFinished:
+            pass
+
+        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
+        if yn == 'y' or yn =='Y':
+        #remove DOCKER_INITIAL_IMAGE
+            self.client.images.remove(self.images().pop().id)
+        return
+
+    def _run(self,docker_image):
         container = self.client.containers.run(docker_image, None, **self.DOCKER_OPTS)
         return container
 
-    def exec_run(self,container,exec_plugin):
+    def _exec_run(self,container,exec_plugin):
         exit_code, output = container.exec_run(
             ['sh', '-c', f". {exec_plugin.docker_exe}"],environment=exec_plugin.docker_env,detach=False,stream=True)
         return exit_code, output
@@ -311,52 +357,7 @@ class DockerDriver:
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
 
 
-    def interact(self, tag='initial'):
-        try:
-            ip = get_ipython()
-            ip.system(self._interactive_run_cmd(tag))
-        except NameError:
-            os.system(self._interactive_run_cmd(tag))
-        except:
-            print('cannot interact')
-        return
 
-    def images(self):
-        return self.client.images.list(self.DOCKER_REPO)
-
-    def image_cleanup(self):
-        # remove danglers
-        [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
-
-        # TODO: remove all running containers first
-        class RemovalFinished(Exception):
-            pass
-
-        def _image_cleanup(image):
-            print(f"about to remove image {image.tags.pop()}")
-            if input('remove image? [y/N]') == 'y':
-                try:
-                    self.client.images.remove(image.id)
-                except:
-                    print(f"images can only be removed in the reverse order they were created")
-                    raise RemovalFinished
-                print('image removed')
-            else:
-                print('image not removed and can only be removed in the reverse order to creation. you are done')
-                raise RemovalFinished
-
-        try:
-            [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
-                filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
-                       [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
-        except RemovalFinished:
-            pass
-
-        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
-        if yn == 'y' or yn =='Y':
-        #remove DOCKER_INITIAL_IMAGE
-            self.client.images.remove(self.images().pop().id)
-        return
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
 class Plugin:
