@@ -116,10 +116,14 @@ class DockerDriver:
             image = container.commit(self.DOCKER_REPO, exec_plugin.name)
             print(f"{container.name} : {image.id} committed")
 
+            container.stop()
+            container.remove()
+
             if interactive:
                 self.interact(exec_plugin.name)
 
-    def interact(self, tag='initial'):
+
+    def interact(self,tag):
         try:
             ip = get_ipython()
             ip.system(self._interactive_run_cmd(tag))
