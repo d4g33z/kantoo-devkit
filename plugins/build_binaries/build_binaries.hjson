@@ -91,7 +91,12 @@ eclean packages
             sys-apps/entropy-server
             dev-util/bsdiff
             '''
-        path: plugins/build_binaries/python/install_portage_pkgs.py
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.portage import *
+        emerge_local_binaries()
+        '''
         exec:true
     },
 

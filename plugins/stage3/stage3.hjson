@@ -24,6 +24,7 @@ plugins:
 {
     remove_portage_pkgs:
     {
+        #for removing kernel sources in a container
         DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
@@ -34,7 +35,6 @@ plugins:
         from kantoo.portage import *
         remove_packages()
         '''
-        #path: plugins/create_repo/bash/remove_portage_pkgs.sh
         exec:true
     },
 
@@ -43,8 +43,8 @@ plugins:
         bind: /etc/portage/make.conf
         text:
         '''
-#for removing kernel sources in a container
-DONT_MOUNT_BOOT=1
+        #for removing kernel sources in a container
+        DONT_MOUNT_BOOT=1
         '''
     },
 }
