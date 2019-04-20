@@ -183,13 +183,13 @@ class DockerDriver:
             [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
                 filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
                        [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
+
         except RemovalFinished:
             pass
-
-        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
-        if yn == 'y' or yn =='Y':
-        #remove DOCKER_INITIAL_IMAGE
-            self.client.images.remove(self.images().pop().id)
+        if len(self.images()) == 1 and self.images().pop().tags.pop().split(':').pop() == 'initial':
+            yn = input(f"Remove {self.DOCKER_REPO}:initial as well?")
+            if yn == 'y' or yn =='Y':
+                self.client.images.remove(self.images().pop().id)
         return
 
     def _run(self,docker_image):
