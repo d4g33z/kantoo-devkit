@@ -72,6 +72,18 @@ plugins:
         '''
     },
 
+    hello_python:
+    {
+        HELLO_MSG: hello from a python plugin
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.hello import *
+        hello_python()
+        '''
+        exec:true
+    },
+
     meta_repo:
     {
         path: /var/git
