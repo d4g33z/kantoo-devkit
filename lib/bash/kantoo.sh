@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 XX='\e[0m'
 BO='\e[1m'
 UL='\e[4m'
