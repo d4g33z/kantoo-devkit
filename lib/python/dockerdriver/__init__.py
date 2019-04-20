@@ -416,7 +416,8 @@ class Plugin:
         else:
             self.docker_env = [f"{var}={value}" for var, value in vars.items()]
             self.docker_exe = self.exe_volume.get('bind')
-            self.tmp_path.write_text(txt)
+            # use f-string subsitution
+            self.tmp_path.write_text(txt.format(**vars))
             self.exe_path.write_text(f"#!/usr/bin/env sh\n {executable} {self.volume.get('bind') }\n")
         return self
 
