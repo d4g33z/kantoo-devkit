@@ -28,7 +28,13 @@ plugins:
         RM_PORT_PKGS:
             sys-kernel/debian-sources-lts
 
-        path: plugins/create_repo/bash/remove_portage_pkgs.sh
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.portage import *
+        remove_packages()
+        '''
+        #path: plugins/create_repo/bash/remove_portage_pkgs.sh
         exec:true
     },
 
