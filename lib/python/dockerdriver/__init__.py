@@ -266,12 +266,12 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        self.plugins = self._plugin_factory(self.config.get('plugins',{}))
-
-        self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
-
-        if hasattr(self,'SYSROOT_DIR'):
-            self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
+        # self.plugins = self._plugin_factory(self.config.get('plugins',{}))
+        #
+        # self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
+        #
+        # if hasattr(self,'SYSROOT_DIR'):
+        #     self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
 
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
