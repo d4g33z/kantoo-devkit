@@ -25,10 +25,9 @@ DOCKER_OPTS:
     #docker.run kwargs
     tty:true,
     init:true,
-    remove:true
+    remove:false
     entrypoint:"/bin/bash",
     detach:true,
-    auto_remove:true,
 }
 
 envplugins:
