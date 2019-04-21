@@ -96,6 +96,21 @@ plugins:
         '''
         exec:true
     },
+
+    hello_python_from_explicit_env:
+    {
+        HELLO_MSG: hello from a python plugin via explicit arguments
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.hello import *
+        import os
+        HELLO_MSG = os.environ.get('HELLO_MSG')
+        hello_python_from_arg(HELLO_MSG)
+        '''
+        exec:true
+    },
+
     meta_repo:
     {
         path: /var/git
