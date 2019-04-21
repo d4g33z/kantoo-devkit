@@ -212,9 +212,8 @@ class DockerDriver:
                         # create the objs
                         [Plugin(k, **v) for k, v in plugin_block.items()],
                         # get the text from the hjson file or a file on disk
-                        # [x.get('text', open(self.SCRIPT_PWD.joinpath(x.get('path', '/dev/null')), 'r').read()) \
-                        [x.get('text', open(self.cwd.joinpath(pathlib.Path(x.get('path', '/dev/null'))), 'r').read()) \
-                                if not self.cwd.joinpath(pathlib.Path(x.get('path', '/dev/null'))).is_dir() else None \
+                        [x.get('text', open(self.cwd.joinpath(x.get('path', '/dev/null')), 'r').read()) \
+                                if not self.cwd.joinpath(x.get('path', '/dev/null')).is_dir() else None \
                          for x in plugin_block.values()],
                         # get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]: i[1] if i[1] != '' else getattr(self, i[0]) \
@@ -266,20 +265,12 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        # self.plugins = self._plugin_factory(self.config.get('plugins',{}))
-        #
-        # self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
-        #
-        # if hasattr(self,'SYSROOT_DIR'):
-        #     self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
-
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update(
             {'volumes': {
                 **{str(x.exe_path): x.exe_volume for x in self.plugins if x.exec},
-                **{str(pathlib.Path(
-                    x.tmp_path if not pathlib.Path(x.path).is_dir() else x.path)): x.volume for x in
+                **{str(x.tmp_path if not self.cwd.joinpath(x.path).is_dir() else self.cwd.joinpath(x.path)): x.volume for x in
                    filter(lambda x: x.tmp_path is not None, self.plugins)}},
             })
 
