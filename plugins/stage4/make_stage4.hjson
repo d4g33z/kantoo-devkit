@@ -52,23 +52,9 @@ plugins:
     {
         text:
         '''
-#!/usr/bin/env sh
-#emerge --binpkg-changed-deps=n equo
-emerge --usepkg equo
-#REMOVE the ._cfg_client.conf files as we supply one
-find /etc -iname '._cfg_*' -exec rm {} \;
-#edit /etc/entropy/client.conf
-#create /etc/entropy/repositories.conf.d/entropy_kantoo.org
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_equo
 
-#use these command to regenerate the list of all packages installed by portage
-#see https://www.funtoo.org/Entropy
-equo rescue generate <<EOF
-Yes
-Yes
-Yes
-EOF
-equo rescue spmsync
-equo update
         '''
         exec:true
     },
@@ -77,7 +63,12 @@ equo update
     {
         PKGDIR:/portage/packages
         ENTR_UNMASK_FILE:/etc/entropy/packages/package.unmask
-        path:plugins/make_stage4/python/unmask_equo_packages.py
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.entropy import *
+        unmask_packages()
+        '''
         exec:true
     },
 
@@ -85,9 +76,8 @@ equo update
     {
         text:
         '''
-#!/usr/bin/env sh
-equo update --force
-equo upgrade
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && equo_upgrade
         '''
         exec:true
     },
@@ -108,8 +98,12 @@ equo upgrade
             net-fs/nfs-utils
             net-wireless/hostapd
             '''
-
-        path: plugins/stage4/python/install_equo_packages.py
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.entropy import *
+        equo_install()
+        '''
         exec:true
     },
 
@@ -136,7 +130,11 @@ equo upgrade
         ENTROPY_ARCH: ''
         HOST_NAME:stage4
         ROOT_PASSWD:iamsolame
-        path:plugins/stage4/bash/configure_system.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && configure_stage4
+        '''
         exec:true
     },
 
@@ -144,15 +142,23 @@ equo upgrade
     {
         RPI_FIRMWARE:/entropy/rpi
         path:plugins/stage4/bash/install_firmware.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_firmware
+        '''
         exec:true
     },
 
     install_kernel:
     {
         RPI_FIRMWARE:/entropy/rpi
-        path:plugins/stage4/bash/install_kernel.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_kernel
+        '''
         exec:true
-    #sysroot vars
     },
 
     #be careful about exporting secrets!!!!
@@ -162,12 +168,7 @@ equo upgrade
         text:
         '''
         #!/usr/bin/env sh
-        rm /.dockerenv
-        sed -i -e 's/rc_sys="docker"/#rc_sys=""/g' etc/rc.conf
-        find /etc -iname '._cfg*' -exec rm {} \;
-        tar chf /entropy/stage4s/stage4.tar --anchored --exclude=/portage --exclude=/entropy --exclude=/dev/* --exclude=/sys/* --exclude=/proc/* --exclude=/boot/* --exclude=/var/lib/entropy/client/packages --exclude /var/git/meta-repo --exclude /root/.ssh /
-
-        tar chf /entropy/stage4s/boot.tar /boot/
+        . /entropy/plugins/kantoo.sh && export_fs
         '''
         exec:true
     },
@@ -175,7 +176,12 @@ equo upgrade
     export_profiles:
     {
         STAGE4_TAR_PATH:/entropy/stage4s/stage4.tar
-        path: plugins/stage4/python/export_profiles.py
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.portage import *
+        export_profiles()
+        '''
         exec: true
     },
 
