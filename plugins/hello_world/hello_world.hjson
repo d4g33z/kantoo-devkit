@@ -111,12 +111,6 @@ plugins:
         exec:true
     },
 
-    meta_repo:
-    {
-        path: /var/git
-        bind: /var/git
-    },
-
 }
 
 
