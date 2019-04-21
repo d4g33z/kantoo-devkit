@@ -169,7 +169,7 @@ equo_upgrade() {
     equo upgrade
 }
 
-}set_up_container_ssh() {
+set_up_container_ssh() {
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
     /usr/bin/ssh-keygen -A
     /usr/sbin/sshd -f /etc/ssh/sshd_config
