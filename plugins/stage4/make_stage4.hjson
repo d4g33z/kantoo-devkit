@@ -109,7 +109,7 @@ equo upgrade
             net-wireless/hostapd
             '''
 
-        path: plugins/make_stage4/python/install_equo_packages.py
+        path: plugins/stage4/python/install_equo_packages.py
         exec:true
     },
 
@@ -136,21 +136,21 @@ equo upgrade
         ENTROPY_ARCH: ''
         HOST_NAME:stage4
         ROOT_PASSWD:iamsolame
-        path:plugins/make_stage4/bash/configure_system.sh
+        path:plugins/stage4/bash/configure_system.sh
         exec:true
     },
 
     install_firmware:
     {
         RPI_FIRMWARE:/entropy/rpi
-        path:plugins/make_stage4/bash/install_firmware.sh
+        path:plugins/stage4/bash/install_firmware.sh
         exec:true
     },
 
     install_kernel:
     {
         RPI_FIRMWARE:/entropy/rpi
-        path:plugins/make_stage4/bash/install_kernel.sh
+        path:plugins/stage4/bash/install_kernel.sh
         exec:true
     #sysroot vars
     },
@@ -175,7 +175,7 @@ equo upgrade
     export_profiles:
     {
         STAGE4_TAR_PATH:/entropy/stage4s/stage4.tar
-        path: plugins/make_stage4/python/export_profiles.py
+        path: plugins/stage4/python/export_profiles.py
         exec: true
     },
 
@@ -227,7 +227,7 @@ equo upgrade
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/make_stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
+        path: plugins/stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
         bind: /etc/entropy/repositories.conf.d/entropy_kantoo.org
 
     },
@@ -238,13 +238,13 @@ equo upgrade
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/make_stage4/etc/entropy/server.conf
+        path: plugins/stage4/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 
     nsswitch_conf:
     {
-        path: plugins/make_stage4/etc/nsswitch.conf
+        path: plugins/stage4/etc/nsswitch.conf
         bind: /etc/nsswitch.conf
     },
     
