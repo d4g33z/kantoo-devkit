@@ -1,6 +1,6 @@
 #------------------------------------------------------------------
 #   build a set of portage packages and their dependencies and
-#   store them as binaries to be injected by create_repo
+#   store them as binaries to be injected by eit
 #------------------------------------------------------------------
 
 OS: funtoo
@@ -102,49 +102,63 @@ plugins:
         exec:true
     },
 
-    #TODO: put in a revdep-rebuild step here
-    #see https://wiki.gentoo.org/wiki/Binary_package_guide
-
     patch_eit:
     {
-        path: plugins/create_repo/bash/patch_eit.sh
+        skip:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && patch_eit
+        '''
         exec:true
     },
 
     rebuild_entropy_database:
     {
+        skip:true
         ENTROPY_ARCH:''
-        path: plugins/create_repo/bash/rebuild_entropy_database.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && rebuild_entropy_database
+        '''
         exec:true
     },
 
     sync_or_create_local_repo:
     {
+        skip:true
         REPOSITORY_NAME:''
-        path: plugins/create_repo/bash/sync_or_create_local_repo.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && sync_or_create_local_repo
+        '''
         exec:true
     },
 
     inject_pkgdir:
     {
+        skip:true
         REPOSITORY_NAME:''
         PKGDIR:/portage/packages
         TMP_PKGDIR:/portage/artifacts
-        path: plugins/create_repo/bash/inject_portage_pkgs.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && inject_portage_packages
+        '''
         exec: true
     },
 
-#    commit_all:
-#    {
-#
-#       path: plugins/create_repo/bash/commit_all.sh
-#       exec:true
-#    },
-
     push:
     {
-       path: plugins/create_repo/bash/push.sh
-       exec:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && push_to_local_repo
+        '''
+        exec:true
     },
 
     #-----------------------------------------------------------
@@ -178,7 +192,7 @@ plugins:
         ENTROPY_PKGDIR: /entropy/artifacts
         REPOSITORY_NAME:''
         REPOSITORY_DESCRIPTION:''
-        path: plugins/create_repo/etc/entropy/server.conf
+        path: plugins/build_binaries/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 
