@@ -390,16 +390,16 @@ class Plugin:
         executable = txt.split('\n')[0].split(' ').pop() if self.exec else None
         if not executable:
             try:
-                self.tmp_path.write_text(txt.format(**vars))
+                self.tmp_path.write_text(txt.format(**vars)+'\n')
             except KeyError:
                 #a sh file
-                self.tmp_path.write_text(txt)
+                self.tmp_path.write_text(txt+'\n')
 
         else:
             self.docker_env = [f"{var}={value}" for var, value in vars.items()]
             self.docker_exe = self.exe_volume.get('bind')
             # use f-string subsitution if not bash file
-            self.tmp_path.write_text(txt.format(**vars) if executable != 'sh' else txt)
+            self.tmp_path.write_text(txt.format(**vars)+'\n' if executable != 'sh' else txt+'\n')
             self.exe_path.write_text(f"#!/usr/bin/env sh\n {executable} {self.volume.get('bind') }\n")
         return self
 
