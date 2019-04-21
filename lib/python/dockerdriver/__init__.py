@@ -205,7 +205,7 @@ class DockerDriver:
         self.plugins = self._plugin_factory(self.config.get('plugins',{}))
         self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
         if hasattr(self,'SYSROOT_DIR'):
-            self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
+            self.plugins += self._sysroot_plugin_factory(self.cwd.joinpath(pathlib.Path(self.SYSROOT_DIR)))
 
     def _plugin_factory(self, plugin_block):
         return list(map(lambda x, y, z: x.write(y, **z),
@@ -213,8 +213,8 @@ class DockerDriver:
                         [Plugin(k, **v) for k, v in plugin_block.items()],
                         # get the text from the hjson file or a file on disk
                         # [x.get('text', open(self.SCRIPT_PWD.joinpath(x.get('path', '/dev/null')), 'r').read()) \
-                        [x.get('text', open(pathlib.Path(x.get('path', '/dev/null')).absolute(), 'r').read()) \
-                                if not pathlib.Path(x.get('path', '/dev/null')).is_dir() else None \
+                        [x.get('text', open(self.cwd.joinpath(pathlib.Path(x.get('path', '/dev/null'))), 'r').read()) \
+                                if not self.cwd.joinpath(pathlib.Path(x.get('path', '/dev/null'))).is_dir() else None \
                          for x in plugin_block.values()],
                         # get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]: i[1] if i[1] != '' else getattr(self, i[0]) \
