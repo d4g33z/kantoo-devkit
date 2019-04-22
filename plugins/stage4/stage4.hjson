@@ -1,9 +1,9 @@
 #------------------------------------------------------------------
 #   install equo on a fresh stage3, and then use it to install
-#   a set of binaries
-#
-#   use the entropy server to install from a local testing repo
-#   then remove it
+#   a set of binaries from the repo at REPOSITORY_URI
+#   configure the system to be usuable on first boot
+#   install kernel and firmware
+#   tar root and boot filesystems
 #------------------------------------------------------------------
 
 OS: funtoo

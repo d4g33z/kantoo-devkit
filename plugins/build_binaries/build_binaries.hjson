@@ -1,6 +1,7 @@
 #------------------------------------------------------------------
 #   build a set of portage packages and their dependencies and
-#   store them as binaries to be injected by eit
+#   store them as binaries to be injected by eit and pushed to a
+#   local repo
 #------------------------------------------------------------------
 
 OS: funtoo
@@ -43,6 +44,7 @@ plugins:
     # exec plugins
     install_distcc:
     {
+        skip:true
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
         #DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
@@ -153,6 +155,7 @@ plugins:
 
     push:
     {
+        skip:true
         text:
         '''
         #!/usr/bin/env sh
