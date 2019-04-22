@@ -9,6 +9,18 @@ import sys
 
 import tarfile
 
+def remove_packages():
+    RM_PORT_PKGS = os.environ.get('RM_PORT_PKGS')
+    for rm_port_pkg in RM_PORT_PKGS.splitlines():
+        run_write_docker_output(f"emerge -C {rm_port_pkg}")
+    run_write_docker_output('emerge --depclean')
+
+def emerge_packages():
+    IN_PORT_PKGS = os.environ.get('IN_PORT_PKGS')
+    for in_port_pkgs in IN_PORT_PKGS.splitlines():
+        run_write_docker_output(f"emerge {in_port_pkgs}")
+    run_write_docker_output('revdep-rebuild --ignore')
+
 #get all profile info
 def profile_info():
     print("\n".join(portage.settings.profiles))
@@ -29,6 +41,7 @@ def emerge_local_binaries():
     for in_port_pkg in IN_PORT_PKGS.splitlines():
         run_write_docker_output(f"emerge --keep-going --usepkg {in_port_pkg}")
     run_write_docker_output('revdep-rebuild --ignore')
+    run_write_docker_output('eclean packages')
 
 #not necessary, but interesting
 def spawn_local_binhost_server(make_conf='/etc/portage/make.conf'):

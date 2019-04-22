@@ -5,7 +5,7 @@
 ARG BOOTSTRAP
 FROM ${BOOTSTRAP:-alpine:3.7} as builder
 
-WORKDIR /funtoo
+WORKDIR /kantoo
 
 # here are all the arguments about arch/subarch ... defined
 # set from createrepo.py
@@ -24,17 +24,17 @@ ENV LC_ALL en_US.UTF-8
 #https://forums.docker.com/t/copy-only-if-file-exist/3781/2
 COPY stage3s/${ARCH}/${SUBARCH}/stage3-*.tar.xz stage3-latest.tar.xz
 
-COPY lib/bash/funtoo.sh root/funtoo.sh
+COPY lib/bash/kantoo.sh root/kantoo.sh
 
 RUN echo -e $UL$MAG"Building a Funtoo container image for ${ARCH} ${SUBARCH} fetching from ${DIST}"
 
-RUN /bin/sh -c "source root/funtoo.sh && alpine_install"; \
-    /bin/sh -c "source root/funtoo.sh && stage3_install"; \
-    /bin/sh -c "source root/funtoo.sh && configure_system"; \
-    /bin/sh -c "source root/funtoo.sh && cleanup";
+RUN /bin/sh -c "source root/kantoo.sh && alpine_install"; \
+    /bin/sh -c "source root/kantoo.sh && stage3_install"; \
+    /bin/sh -c "source root/kantoo.sh && configure_system"; \
+    /bin/sh -c "source root/kantoo.sh && cleanup";
 
 FROM scratch
 
 WORKDIR /
-COPY --from=builder /funtoo/ /
+COPY --from=builder /kantoo/ /
 CMD ["/bin/bash"]

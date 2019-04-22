@@ -1,6 +1,7 @@
 #------------------------------------------------------------------
 #   build a set of portage packages and their dependencies and
-#   store them as binaries to be injected by create_repo
+#   store them as binaries to be injected by eit and pushed to a
+#   local repo
 #------------------------------------------------------------------
 
 OS: funtoo
@@ -25,10 +26,9 @@ DOCKER_OPTS:
     #docker.run kwargs
     tty:true,
     init:true,
-    remove:true
+    remove:false
     entrypoint:"/bin/bash",
     detach:true,
-    auto_remove:true,
 }
 
 envplugins:
@@ -49,7 +49,11 @@ plugins:
         #DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
         #CHOST:armv7a-hardfloat-linux-gnueabi
-        path: plugins/build_binaries/bash/install_distcc.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_distcc
+        '''
         exec:true
     },
 
@@ -60,12 +64,12 @@ plugins:
         skip:true
         text:
         '''
-#!/usr/bin/env sh
-emerge --usepkg -uDN @world
-emerge --depclean
-revdep-rebuild --ignore
-emerge @preserved-rebuild
-eclean packages
+        #!/usr/bin/env sh
+        emerge --usepkg -uDN @world
+        emerge --depclean
+        revdep-rebuild --ignore
+        emerge @preserved-rebuild
+        eclean packages
         '''
         exec:true
     },
@@ -91,53 +95,73 @@ eclean packages
             sys-apps/entropy-server
             dev-util/bsdiff
             '''
-        path: plugins/build_binaries/python/install_portage_pkgs.py
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.portage import *
+        emerge_local_binaries()
+        '''
         exec:true
     },
 
-    #TODO: put in a revdep-rebuild step here
-    #see https://wiki.gentoo.org/wiki/Binary_package_guide
-
     patch_eit:
     {
-        path: plugins/create_repo/bash/patch_eit.sh
+        skip:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && patch_eit
+        '''
         exec:true
     },
 
     rebuild_entropy_database:
     {
+        skip:true
         ENTROPY_ARCH:''
-        path: plugins/create_repo/bash/rebuild_entropy_database.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && rebuild_entropy_database
+        '''
         exec:true
     },
 
     sync_or_create_local_repo:
     {
+        skip:true
         REPOSITORY_NAME:''
-        path: plugins/create_repo/bash/sync_or_create_local_repo.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && sync_or_create_local_repo
+        '''
         exec:true
     },
 
     inject_pkgdir:
     {
+        skip:true
         REPOSITORY_NAME:''
         PKGDIR:/portage/packages
         TMP_PKGDIR:/portage/artifacts
-        path: plugins/create_repo/bash/inject_portage_pkgs.sh
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && inject_portage_packages
+        '''
         exec: true
     },
 
-#    commit_all:
-#    {
-#
-#       path: plugins/create_repo/bash/commit_all.sh
-#       exec:true
-#    },
-
     push:
     {
-       path: plugins/create_repo/bash/push.sh
-       exec:true
+        skip:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && push_to_local_repo
+        '''
+        exec:true
     },
 
     #-----------------------------------------------------------
@@ -171,7 +195,7 @@ eclean packages
         ENTROPY_PKGDIR: /entropy/artifacts
         REPOSITORY_NAME:''
         REPOSITORY_DESCRIPTION:''
-        path: plugins/create_repo/etc/entropy/server.conf
+        path: plugins/build_binaries/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 

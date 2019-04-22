@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # local
-
 import docker
 import hjson
 
@@ -151,6 +150,10 @@ class DockerDriver:
             print('cannot interact')
         return
 
+    def container_cleanup(self):
+        [c.stop() for c in self.client.containers.list()]
+        [c.remove() for c in self.client.containers.list()]
+
     def images(self):
         return self.client.images.list(self.DOCKER_REPO)
 
@@ -158,7 +161,8 @@ class DockerDriver:
         # remove danglers
         [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
 
-        # TODO: remove all running containers first
+        self.container_cleanup()
+
         class RemovalFinished(Exception):
             pass
 
@@ -179,13 +183,13 @@ class DockerDriver:
             [_image_cleanup(im) for im in list(map(lambda a: a.pop(), (
                 filter(lambda y: y.pop() in map(lambda z: z.name, filter(lambda x: x.exec, self.plugins)),
                        [[x, x.tags.pop().split(':').pop()] for x in self.images()]))))]
+
         except RemovalFinished:
             pass
-
-        yn = input(f"Remove {self.DOCKER_INITIAL_IMAGE} as well?")
-        if yn == 'y' or yn =='Y':
-        #remove DOCKER_INITIAL_IMAGE
-            self.client.images.remove(self.images().pop().id)
+        if len(self.images()) == 1 and self.images().pop().tags.pop().split(':').pop() == 'initial':
+            yn = input(f"Remove {self.DOCKER_REPO}:initial as well?")
+            if yn == 'y' or yn =='Y':
+                self.client.images.remove(self.images().pop().id)
         return
 
     def _run(self,docker_image):
@@ -201,16 +205,15 @@ class DockerDriver:
         self.plugins = self._plugin_factory(self.config.get('plugins',{}))
         self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
         if hasattr(self,'SYSROOT_DIR'):
-            self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
+            self.plugins += self._sysroot_plugin_factory(self.cwd.joinpath(pathlib.Path(self.SYSROOT_DIR)))
 
     def _plugin_factory(self, plugin_block):
         return list(map(lambda x, y, z: x.write(y, **z),
                         # create the objs
                         [Plugin(k, **v) for k, v in plugin_block.items()],
                         # get the text from the hjson file or a file on disk
-                        # [x.get('text', open(self.SCRIPT_PWD.joinpath(x.get('path', '/dev/null')), 'r').read()) \
-                        [x.get('text', open(pathlib.Path(x.get('path', '/dev/null')).absolute(), 'r').read()) \
-                                if not pathlib.Path(x.get('path', '/dev/null')).is_dir() else None \
+                        [x.get('text', open(self.cwd.joinpath(x.get('path', '/dev/null')), 'r').read()) \
+                                if not self.cwd.joinpath(x.get('path', '/dev/null')).is_dir() else None \
                          for x in plugin_block.values()],
                         # get the env or f-string vars using value on Config obj or those set in the block itself
                         [{i[0]: i[1] if i[1] != '' else getattr(self, i[0]) \
@@ -262,20 +265,12 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        self.plugins = self._plugin_factory(self.config.get('plugins',{}))
-
-        self.env_plugins = [EnvPlugin(var, value) for var, value in self.config.get('envplugins', {}).items()]
-
-        if hasattr(self,'SYSROOT_DIR'):
-            self.plugins += self._sysroot_plugin_factory(pathlib.Path(self.SYSROOT_DIR).absolute())
-
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
         self.DOCKER_OPTS.update(
             {'volumes': {
                 **{str(x.exe_path): x.exe_volume for x in self.plugins if x.exec},
-                **{str(pathlib.Path(
-                    x.tmp_path if not pathlib.Path(x.path).is_dir() else x.path)): x.volume for x in
+                **{str(x.tmp_path if not self.cwd.joinpath(x.path).is_dir() else self.cwd.joinpath(x.path)): x.volume for x in
                    filter(lambda x: x.tmp_path is not None, self.plugins)}},
             })
 
@@ -365,8 +360,6 @@ class DockerDriver:
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
 
-
-
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
 class Plugin:
@@ -385,23 +378,11 @@ class Plugin:
         self.tmpfs = tmpfs if tmpfs else ''
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
-        # self.exe_volume = {'bind': f"/entropy/bin/{self.name}", 'mode': 'ro'} if exec else None
         self.exe_volume = {'bind': f"/entropy/bin/{self.name}", 'mode': 'ro'} if exec else None
         # ignored if self.path.is_dir()
         self.tmp_path = pathlib.Path(tempfile.mkstemp()[1]) if path or text else None
-        # self.volume = {'bind': self.bind, 'mode': self.mode} if path or text else None
         self.volume = {'bind': self.bind, 'mode': self.mode} if path or text else None
-        # see https://docker-py.readthedocs.io/en/stable/api.html#docker.types.Mount
-        # set the arguements to create a new Mount object
-        # self.tmpfs = {self.bind:self.tmpfs} if not (path or text) else {}
-        # self.tmpfs = {
-        #     'target':self.bind,
-        #     'source':'',
-        #     'type':'tmpfs',
-        #     # 'read_only': False,
-        #     # 'tmpfs_size':'',
-        #     # 'tmpfs_mode':0o775,
-        # } if not (path or text) else {}
+
 
     def write(self, txt, **vars):
         if txt is None: return self
@@ -409,12 +390,17 @@ class Plugin:
         # extract mandatory shebang
         executable = txt.split('\n')[0].split(' ').pop() if self.exec else None
         if not executable:
-            # use f-string subsitution
-            self.tmp_path.write_text(txt.format(**vars))
+            try:
+                self.tmp_path.write_text(txt.format(**vars)+'\n')
+            except KeyError:
+                #a sh file
+                self.tmp_path.write_text(txt+'\n')
+
         else:
             self.docker_env = [f"{var}={value}" for var, value in vars.items()]
             self.docker_exe = self.exe_volume.get('bind')
-            self.tmp_path.write_text(txt)
+            # use f-string subsitution if not bash file
+            self.tmp_path.write_text(txt.format(**vars)+'\n' if executable != 'sh' else txt+'\n')
             self.exe_path.write_text(f"#!/usr/bin/env sh\n {executable} {self.volume.get('bind') }\n")
         return self
 
