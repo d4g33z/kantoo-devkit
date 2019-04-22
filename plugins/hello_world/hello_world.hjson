@@ -1,5 +1,4 @@
 #-----------------------------------------------------------------------------------------------------------------------
-# variables set on the Config obj; must be upper case a la shell
 OS: funtoo
 #ARCH: "arm-32bit"
 #SUBARCH: "raspi3"
@@ -10,11 +9,7 @@ ENTROPY_ARCH: amd64
 
 SYSROOT_DIR:lib/sysroot
 #the image to start with
-#new tagging system <config>:<plugin>
 DOCKER_INIT_IMG: stage3:initial
-
-#this doesn't work yet but it should
-DOCKER_BUILDKIT:1
 
 DOCKER_OPTS:
 {
@@ -52,7 +47,7 @@ plugins:
         echo ${LOCAL_VAR}
         cat /tmp/hello_file
         '''
-        #bash plugins are bound automatically to the container
+        #bash plugins are bind mounted automatically to the container
         exec:true
     },
 
