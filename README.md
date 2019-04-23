@@ -14,7 +14,13 @@ You must have a working docker install on your development machine. Add yourself
 
 I'm not sure exactly. But I feel I needed to structure the modification process of an image more explicitly, and modularize the common steps, especially with respect to the initial use case: building lots of binary packages with particular USE sets and managing repos of them.
 
-## Use Virtualenv (Please) ##
+## Setup and Configuration ##
+
+### Clone It ###
+```commandline
+# git clone https://code.funtoo.org/bitbucket/scm/~d4g33z/kantoo-devkit.git
+```
+### Use Virtualenv (Please) ###
 
 Use `virtualenv` to isolate everything nicely and in a disposable way. This preferable for most small projects, as opposed to installing and maintaining system wide packages.
 
@@ -33,10 +39,69 @@ This project uses `portage` with Python 3.6. see [Portage API](https://www.funto
 (env3.6) # ln -s /usr/lib64/python3.6/site-packages/_emerge lib/python/_emerge
 
 ```
+
+### Create Static Sysroot Files ###
+You can use a directory called `sysroot` in the `lib` directory to keep files and directories that give bind mounted to your containers automatically. You can keep things here that you always need: code libraries, configuration files, the Funtoo git repo, etc. The key one is the `/var/git` link. 
+```commandline
+(env3.6) # mkdir lib/var && ln -s /var/git lib/sysroot/var/
+```  
+
+Here is mine.
+
+```commandline
+(env3.6) # ls -lR lib/sysroot/
+lib/sysroot/:
+total 16
+drwxr-xr-x 3 jeff jeff 4096 Mar 18 00:15 entropy
+drwxr-xr-x 5 jeff jeff 4096 Mar 19 14:49 etc
+drwxr-xr-x 3 jeff jeff 4096 Mar 18 14:09 root
+drwxr-xr-x 2 jeff jeff 4096 Mar 17 23:06 var
+
+lib/sysroot/entropy:
+total 4
+drwxr-xr-x 2 jeff jeff 4096 Apr 20 15:27 plugins
+
+lib/sysroot/entropy/plugins:
+total 0
+lrwxrwxrwx 1 jeff jeff 29 Mar 18 00:16 kantoo -> ../../../../lib/python/kantoo
+lrwxrwxrwx 1 jeff jeff 30 Apr 20 15:27 kantoo.sh -> ../../../../lib/bash/kantoo.sh
+
+lib/sysroot/etc:
+total 12
+drwxr-xr-x 2 jeff jeff 4096 Apr  3 16:11 conf.d
+drwxr-xr-x 2 jeff jeff 4096 Mar 19 14:49 entropy
+drwxr-xr-x 3 jeff jeff 4096 Apr  3 15:43 portage
+
+lib/sysroot/etc/conf.d:
+total 0
+
+lib/sysroot/etc/entropy:
+total 8
+-rw-r--r-- 1 jeff jeff 5082 Mar 19 14:35 client.conf
+
+lib/sysroot/etc/portage:
+total 12
+drwxr-xr-x 2 jeff jeff 4096 Mar 18 14:29 env
+-rw-r--r-- 1 jeff jeff  134 Mar 18 14:29 package.env
+-rw-r--r-- 1 jeff jeff  209 Apr  3 15:43 package.use
+
+lib/sysroot/etc/portage/env:
+total 8
+-rw-r--r-- 1 jeff jeff 33 Mar 18 14:29 nodistcc-pump.conf
+-rw-r--r-- 1 jeff jeff 41 Mar 18 14:29 nodistcc.conf
+
+lib/sysroot/root:
+total 0
+
+lib/sysroot/var:
+total 0
+lrwxrwxrwx 1 jeff jeff 8 Mar 17 23:06 git -> /var/git
+
+```
+
 ## Quick Start to Interact with a Funtoo Stage3 ##
 
 Use `ipython` or the `dockerdriver` to work with images interactively in a simple way, using [`hjson`](hjson.org) files that are marshalled into a `kantoo.config` object.
-
 
 ```commandline
 (env3.6) # configs/stage3.hjson << EOF
@@ -102,17 +167,17 @@ See `plugins/hello_world/hello_world.hjson`. It demonstrates the many different 
 (env3.6) # ./dockerdriver --config plugins/hello_world/hello_world.hjson
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/hello_world:initial to run hello_world on.
-affectionate_yalow : sha256:1c4373473983f02cc5db362c1396037ad650428f6d3b580c834a070e6f62a180 committed
+dazzling_leakey : sha256:c97470add300df05698c0484865e98ec98f459ef580a713581d1a8de0947911d committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/hello_world:hello_world to run hello_python_from_env on.
-affectionate_ride : sha256:6aef0a015c624079eba1e73b118d4443116c54ba7b43ef9f6382de81fd077242 committed
+condescending_yalow : sha256:b6af51b550edfcbb8e229b9f90c2f28910ebe4010190e13f4616c607ae99537a committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/hello_world:hello_python_from_env to run hello_python_from_arg on.
-kind_burnell : sha256:59e6921caf861fe317210e6f37f079f8b54931c71dcab76e75b5daef0646b366 committed
+eager_curran : sha256:8a59bef5b79cce90932538e8b8772f536e7e2aaf7d20430a2a131b0349fbaa87 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/hello_world:hello_python_from_arg to run hello_python_from_explicit_env on.
-hungry_goldwasser : sha256:1995a8a7104703910bcc9c0a196fcbb51a79bb0f2f290d659eb5b8934f094bf7 committed
-(env3.6) # cat logs/*
+nervous_euler : sha256:2a8d2189417ce401b155c93700d6fd285d5ed25e4e046d5a5c37b1b1dd3c81ed committed
+(env3.6) # cat logs/hello_world/*
 hello from a python plugin via arguments
 hello from a python plugin via environment variables
 hello from a python plugin via explicit arguments
@@ -120,23 +185,50 @@ hello globally
 hello locally from bash
 hello locally
 hello via override
-(env3.6) # docker images
-funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_explicit_env   600fe0922b60        2 minutes ago       892MB
-funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_arg            f3cecf52899e        2 minutes ago       892MB
-funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_env            e25b675a79bd        2 minutes ago       892MB
-funtoo/x86-64bit/amd64-k10/hello_world      hello_world                      09a594a56622        2 minutes ago       892MB
-funtoo/x86-64bit/amd64-k10/hello_world      initial                          d0d31dc47745        2 weeks ago         892MB
-funtoo/x86-64bit/amd64-k10/stage3           initial                          e79e25dfae8d        2 weeks ago         892MB
- 
-
-
+(env3.6) # docker images | grep hello_world
+funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_explicit_env   2a8d2189417c        About a minute ago   892MB
+funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_arg            8a59bef5b79c        About a minute ago   892MB
+funtoo/x86-64bit/amd64-k10/hello_world      hello_python_from_env            b6af51b550ed        About a minute ago   892MB
+funtoo/x86-64bit/amd64-k10/hello_world      hello_world                      c97470add300        About a minute ago   892MB
+funtoo/x86-64bit/amd64-k10/hello_world      initial                          d0d31dc47745        2 weeks ago          892MB
 ```
 
 ## How to Make a Stage4 with Entropy Repo##
+This tool was created to facilitate building simple Funtoo stage4s with the Sabayon binary package management system called Entropy. Such system builds should be quick and modular, permitting continuous, integrated development.
+
+The tool is not too complicated once it is set up. Here are some terminal sessions to give a feel for it.
+
+Here we build the binaries, both Portage and Entropy versions. The packages to build are specifies in the config file. Portage uses distcc on the local network to build its binaries, which are re-packaged and injected into a repository by Entropy. The sequence can be restarted at any point. Portage uses its created binaries as a cache to speed things up. Linking consistency is aways checked on a pure Portage filesystem so that Entropy packages can be injected in to a repo without such checking.  
 
 ```commandline
 (env3.6) #  ./dockerdriver --config plugins/build_binaries/build_binaries.hjson
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:initial to run install_distcc on.
+confident_pare : sha256:d203a0261fa066053071fe6bc3a1a5f58370e56c3fbf87b788b879a5ca259d5f committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:install_distcc to run emerge_world on.
+objective_hypatia : sha256:001d2221f47a8ff77e792919c5e5198d97e333a7d87c267353b96fceef6f919b committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:emerge_world to run install_portage_pkgs on.
+optimistic_ritchie : sha256:868f88d7dba9c0fa3e68e532e60089d18f17c719db554f27c39c576753a41575 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:install_portage_pkgs to run patch_eit on.
+wizardly_wright : sha256:df0d2eb8ba1db201e20274fbbafb42992732aea6d918a42cae2c0423e17cad71 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:patch_eit to run rebuild_entropy_database on.
+practical_mcnulty : sha256:a4ecac61bb48e312286d47626267b79c6ca24c01d160f1c14f86574035b47b71 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:rebuild_entropy_database to run sync_or_create_local_repo on.
+flamboyant_wing : sha256:5285c03f2d8f44b7394231254e9cfa42c3c52b33cf0a71a3be210b2edbc5fdd7
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:sync_or_create_local_repo to run inject_pkgdir on.
+eager_shirley : sha256:e59d001e03e3e5667a4412da49fac52d1d3e0e17af0f0d26221b095ffb0f2f58 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/build_binaries:inject_pkgdir to run push on.
+cranky_ride : sha256:ea54e446510a0391a9138106e5dc7f1fc31a63c1e8e70eba6794312cbf13a73a committed
 ```
+
+Here are the Portage packages.
 
 ```commandline
 (env3.6) # ls sab_workspace/portage_artifacts/
@@ -146,6 +238,7 @@ app-arch   app-eselect  app-vim     dev-python  net-dialup   net-misc  sys-auth 
 app-crypt  app-portage  dev-lang    dev-util    net-dns      net-nds   sys-block     sys-libs
 ```
 
+Here are the Entropy packages.
 ```commandline
 (env3.6) # ls sab_workspace/entropy_artifacts/standard/testing.kantoo.org/packages/amd64/5
 app-admin  app-editors  app-shells  dev-lang    dev-util     net-dialup    net-libs      perl-core  sys-devel   sys-process
@@ -154,65 +247,77 @@ app-crypt  app-misc     app-vim     dev-perl    gnome-extra  net-firewall  net-n
 app-doc    app-portage  dev-db      dev-python  mail-mta     net-fs        net-wireless  sys-block  sys-libs    x11-misc
 ```
 
+Here are the logs.
+```commandline
+(env3.6) # ls -lsrth logs/build_binaries/
+total 2.9M
+168K -rw-r--r-- 1 jeff jeff 165K Apr 23 14:37 x86-64bit-amd64-k10-install_distcc-19-04-23-14:37:07.txt
+8.0K -rw-r--r-- 1 jeff jeff 6.8K Apr 23 14:38 x86-64bit-amd64-k10-emerge_world-19-04-23-14:38:18.txt
+808K -rw-r--r-- 1 jeff jeff 806K Apr 23 14:46 x86-64bit-amd64-k10-install_portage_pkgs-19-04-23-14:46:01.txt
+4.0K -rw-r--r-- 1 jeff jeff  613 Apr 23 14:46 x86-64bit-amd64-k10-patch_eit-19-04-23-14:46:19.txt
+ 16K -rw-r--r-- 1 jeff jeff  13K Apr 23 14:48 x86-64bit-amd64-k10-rebuild_entropy_database-19-04-23-14:48:18.txt
+1.3M -rw-r--r-- 1 jeff jeff 1.3M Apr 23 14:48 x86-64bit-amd64-k10-sync_or_create_local_repo-19-04-23-14:48:53.txt
+264K -rw-r--r-- 1 jeff jeff 261K Apr 23 14:54 x86-64bit-amd64-k10-inject_pkgdir-19-04-23-14:54:55.txt
+364K -rw-r--r-- 1 jeff jeff 362K Apr 23 14:58 x86-64bit-amd64-k10-push-19-04-23-14:58:02.txt
+
+```
+
+Now we build the stage4, installing anything we need via `equo`, the Entropy package manager using the repo we created above. 
 ```commandline
 (env3.6) #  ./dockerdriver --config plugins/stage4/stage4.hjson
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:initial to run install_equo on.
-brave_driscoll : sha256:49660d62df859a3ca3bc7603544eec711b20a68a888e7625e29cecd74e283220 committed
+stoic_panini : sha256:7329a1502eb4a999d00f7f2564cabe471b503fe232cb3a806ec18f19867b794c committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_equo to run unmask_equo_pkgs on.
-nifty_edison : sha256:24f94a6e242eeb1fa58d3a5696b0bd9b6fb8d4784f8de3a8387bd6fd5ffa7b34 committed
+dazzling_easley : sha256:ef11d0eba15dbb56efa61caf03cdd6f83b0e03905bb1c8eddabf07d0b54f4eda committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:unmask_equo_pkgs to run equo_upgrade on.
-laughing_vaughan : sha256:79396daeeaf03299dd3b6cbfd3895fe8d73ee1831ba42a21ad8fbad4a5fd3f0e committed
+brave_babbage : sha256:334e6c168326061d62db35168aedc38ecec6413182958edb79b447b197f47146 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:equo_upgrade to run install_equo_packages on.
-competent_mahavira : sha256:9f2bd92a74ce30351f04014f90552210b1db32786892724f114e73a1971c87b4 committed
+blissful_yalow : sha256:bf3b73c1e06a80c2eb46a9ed266fb1fe22ea83492b15a6bbcb0f31b3dbb048a3 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_equo_packages to run config_services on.
-condescending_napier : sha256:771e8645c27e461356bd6d4ec5d3fe07afb30582f2986dbfed5a18df007584fa committed
+stoic_antonelli : sha256:a8b6655bb0a49d5b2e35e1e40f3d2a71b9a4c3e8dbd2953496dfb23b0b22a6e6 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:config_services to run config_system on.
-loving_nightingale : sha256:7f8db2568d2fe06933763b2cd2bab53ab7e59bd54102a53f69216b9d8659d9ec committed
+cocky_blackburn : sha256:6624567da5eaba291f0bbe108bfc52f7912cbdeff9874754bb0d945a2cde2ca5 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:config_system to run install_firmware on.
-admiring_franklin : sha256:6a2e4dad288773eb3cf1940260b468ba6b00baba923039ed97f592c596302bbf committed
+epic_cohen : sha256:b099fd99cf46c277f3fd7a64105aa627a61fc8a8cfc3a8710bd057d2bded0176 committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_firmware to run install_kernel on.
-frosty_lamport : sha256:344834f6a06e1f7cc900fe34d117f549f3c390de2c717c890668ae6a1a77f13b committed
+recursing_germain : sha256:b5097c9224f74dc0c1ddffece40620625fbb94f3aeb36fdf35d070b9dd495f2c committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_kernel to run export_fs on.
-admiring_babbage : sha256:41c6b74042d3daf9e260131486b15581fe4e575ba160d260124bde02445907f2 committed
+vigilant_dirac : sha256:681eaca6b314f42f77ba87e6d03d1663e2c7fbc311ec3737cb69b1f4d6da50de committed
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 Creating container of funtoo/x86-64bit/amd64-k10/stage4:export_fs to run export_profiles on.
+trusting_booth : sha256:121e12f9cc28411e5ed2480ab19f5b549767c4d556309ca96affeddb3ddc9221 committed
+
 ```
+
+Here are the created stage4 root and boot partitions. 
 
 ```commandline
 (env3.6) # ls sab_workspace/stage4s/
 boot.tar  stage4.tar
 ```
 
+Here are the logs.
 ```commandline
-(env3.6) #  ls -lsrth logs
-total 4.1M
-132K -rw-r--r-- 1 jeff jeff 130K Apr 22 15:59 x86-64bit-amd64-k10-emerge_world-19-04-22-15:59:41.txt
-924K -rw-r--r-- 1 jeff jeff 921K Apr 22 16:08 x86-64bit-amd64-k10-install_portage_pkgs-19-04-22-16:08:47.txt
-4.0K -rw-r--r-- 1 jeff jeff  613 Apr 22 16:09 x86-64bit-amd64-k10-patch_eit-19-04-22-16:09:05.txt
- 16K -rw-r--r-- 1 jeff jeff  13K Apr 22 16:10 x86-64bit-amd64-k10-rebuild_entropy_database-19-04-22-16:10:57.txt
-1.1M -rw-r--r-- 1 jeff jeff 1.1M Apr 22 16:11 x86-64bit-amd64-k10-sync_or_create_local_repo-19-04-22-16:11:20.txt
-1.1M -rw-r--r-- 1 jeff jeff 1.1M Apr 22 16:35 x86-64bit-amd64-k10-sync_or_create_local_repo-19-04-22-16:35:18.txt
-264K -rw-r--r-- 1 jeff jeff 261K Apr 22 17:01 x86-64bit-amd64-k10-inject_pkgdir-19-04-22-17:01:23.txt
-364K -rw-r--r-- 1 jeff jeff 361K Apr 22 17:04 x86-64bit-amd64-k10-push-19-04-22-17:04:26.txt
- 16K -rw-r--r-- 1 jeff jeff  15K Apr 22 18:59 x86-64bit-amd64-k10-install_equo-19-04-22-18:59:21.txt
-4.0K -rw-r--r-- 1 jeff jeff  666 Apr 22 18:59 x86-64bit-amd64-k10-unmask_equo_pkgs-19-04-22-18:59:26.txt
-4.0K -rw-r--r-- 1 jeff jeff 2.7K Apr 22 18:59 x86-64bit-amd64-k10-equo_upgrade-19-04-22-18:59:30.txt
-116K -rw-r--r-- 1 jeff jeff 114K Apr 22 19:00 x86-64bit-amd64-k10-install_equo_packages-19-04-22-19:00:56.txt
-4.0K -rw-r--r-- 1 jeff jeff  418 Apr 22 19:01 x86-64bit-amd64-k10-config_services-19-04-22-19:01:04.txt
-   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-config_system-19-04-22-19:01:06.txt
-4.0K -rw-r--r-- 1 jeff jeff   20 Apr 22 19:01 x86-64bit-amd64-k10-install_firmware-19-04-22-19:01:07.txt
-   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-install_kernel-19-04-22-19:01:11.txt
-4.0K -rw-r--r-- 1 jeff jeff  340 Apr 22 19:01 x86-64bit-amd64-k10-export_fs-19-04-22-19:01:30.txt
-   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-export_profiles-19-04-22-19:01:40.txt
-
+(env3.6) #  ls -lsrth logs/stage4
+total 152K
+ 16K -rw-r--r-- 1 jeff jeff  15K Apr 23 15:14 x86-64bit-amd64-k10-install_equo-19-04-23-15:14:55.txt
+4.0K -rw-r--r-- 1 jeff jeff  666 Apr 23 15:15 x86-64bit-amd64-k10-unmask_equo_pkgs-19-04-23-15:15:01.txt
+4.0K -rw-r--r-- 1 jeff jeff 2.7K Apr 23 15:15 x86-64bit-amd64-k10-equo_upgrade-19-04-23-15:15:05.txt
+116K -rw-r--r-- 1 jeff jeff 114K Apr 23 15:16 x86-64bit-amd64-k10-install_equo_packages-19-04-23-15:16:37.txt
+4.0K -rw-r--r-- 1 jeff jeff  418 Apr 23 15:16 x86-64bit-amd64-k10-config_services-19-04-23-15:16:45.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 23 15:16 x86-64bit-amd64-k10-config_system-19-04-23-15:16:46.txt
+4.0K -rw-r--r-- 1 jeff jeff   20 Apr 23 15:16 x86-64bit-amd64-k10-install_firmware-19-04-23-15:16:47.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 23 15:16 x86-64bit-amd64-k10-install_kernel-19-04-23-15:16:51.txt
+4.0K -rw-r--r-- 1 jeff jeff  340 Apr 23 15:17 x86-64bit-amd64-k10-export_fs-19-04-23-15:17:18.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 23 15:17 x86-64bit-amd64-k10-export_profiles-19-04-23-15:17:29.txt
 ```
 
