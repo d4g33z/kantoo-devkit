@@ -44,7 +44,6 @@ plugins:
     # exec plugins
     install_distcc:
     {
-        skip:true
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
         #DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
@@ -61,7 +60,6 @@ plugins:
     #is --usepkg acceptable?
     emerge_world:
     {
-        skip:true
         text:
         '''
         #!/usr/bin/env sh
@@ -76,7 +74,6 @@ plugins:
 
     install_portage_pkgs:
     {
-        skip:true
         #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
         #to customize firmware install
         IN_PORT_PKGS:
@@ -106,7 +103,6 @@ plugins:
 
     patch_eit:
     {
-        skip:true
         text:
         '''
         #!/usr/bin/env sh
@@ -117,7 +113,6 @@ plugins:
 
     rebuild_entropy_database:
     {
-        skip:true
         ENTROPY_ARCH:''
         text:
         '''
@@ -129,7 +124,6 @@ plugins:
 
     sync_or_create_local_repo:
     {
-        skip:true
         REPOSITORY_NAME:''
         text:
         '''
@@ -141,7 +135,6 @@ plugins:
 
     inject_pkgdir:
     {
-        skip:true
         REPOSITORY_NAME:''
         PKGDIR:/portage/packages
         TMP_PKGDIR:/portage/artifacts
@@ -155,7 +148,6 @@ plugins:
 
     push:
     {
-        skip:true
         text:
         '''
         #!/usr/bin/env sh

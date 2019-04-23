@@ -1,4 +1,4 @@
-# Kantoo Devkit 0.3 #
+# Kantoo Devkit 0.3-r1 #
 
 Kantoo **is** Funtoo, with a twist.
 
@@ -156,6 +156,35 @@ app-doc    app-portage  dev-db      dev-python  mail-mta     net-fs        net-w
 
 ```commandline
 (env3.6) #  ./dockerdriver --config plugins/stage4/stage4.hjson
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:initial to run install_equo on.
+brave_driscoll : sha256:49660d62df859a3ca3bc7603544eec711b20a68a888e7625e29cecd74e283220 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_equo to run unmask_equo_pkgs on.
+nifty_edison : sha256:24f94a6e242eeb1fa58d3a5696b0bd9b6fb8d4784f8de3a8387bd6fd5ffa7b34 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:unmask_equo_pkgs to run equo_upgrade on.
+laughing_vaughan : sha256:79396daeeaf03299dd3b6cbfd3895fe8d73ee1831ba42a21ad8fbad4a5fd3f0e committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:equo_upgrade to run install_equo_packages on.
+competent_mahavira : sha256:9f2bd92a74ce30351f04014f90552210b1db32786892724f114e73a1971c87b4 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_equo_packages to run config_services on.
+condescending_napier : sha256:771e8645c27e461356bd6d4ec5d3fe07afb30582f2986dbfed5a18df007584fa committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:config_services to run config_system on.
+loving_nightingale : sha256:7f8db2568d2fe06933763b2cd2bab53ab7e59bd54102a53f69216b9d8659d9ec committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:config_system to run install_firmware on.
+admiring_franklin : sha256:6a2e4dad288773eb3cf1940260b468ba6b00baba923039ed97f592c596302bbf committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_firmware to run install_kernel on.
+frosty_lamport : sha256:344834f6a06e1f7cc900fe34d117f549f3c390de2c717c890668ae6a1a77f13b committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:install_kernel to run export_fs on.
+admiring_babbage : sha256:41c6b74042d3daf9e260131486b15581fe4e575ba160d260124bde02445907f2 committed
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Creating container of funtoo/x86-64bit/amd64-k10/stage4:export_fs to run export_profiles on.
 ```
 
 ```commandline
@@ -163,4 +192,27 @@ app-doc    app-portage  dev-db      dev-python  mail-mta     net-fs        net-w
 boot.tar  stage4.tar
 ```
 
+```commandline
+(env3.6) #  ls -lsrth logs
+total 4.1M
+132K -rw-r--r-- 1 jeff jeff 130K Apr 22 15:59 x86-64bit-amd64-k10-emerge_world-19-04-22-15:59:41.txt
+924K -rw-r--r-- 1 jeff jeff 921K Apr 22 16:08 x86-64bit-amd64-k10-install_portage_pkgs-19-04-22-16:08:47.txt
+4.0K -rw-r--r-- 1 jeff jeff  613 Apr 22 16:09 x86-64bit-amd64-k10-patch_eit-19-04-22-16:09:05.txt
+ 16K -rw-r--r-- 1 jeff jeff  13K Apr 22 16:10 x86-64bit-amd64-k10-rebuild_entropy_database-19-04-22-16:10:57.txt
+1.1M -rw-r--r-- 1 jeff jeff 1.1M Apr 22 16:11 x86-64bit-amd64-k10-sync_or_create_local_repo-19-04-22-16:11:20.txt
+1.1M -rw-r--r-- 1 jeff jeff 1.1M Apr 22 16:35 x86-64bit-amd64-k10-sync_or_create_local_repo-19-04-22-16:35:18.txt
+264K -rw-r--r-- 1 jeff jeff 261K Apr 22 17:01 x86-64bit-amd64-k10-inject_pkgdir-19-04-22-17:01:23.txt
+364K -rw-r--r-- 1 jeff jeff 361K Apr 22 17:04 x86-64bit-amd64-k10-push-19-04-22-17:04:26.txt
+ 16K -rw-r--r-- 1 jeff jeff  15K Apr 22 18:59 x86-64bit-amd64-k10-install_equo-19-04-22-18:59:21.txt
+4.0K -rw-r--r-- 1 jeff jeff  666 Apr 22 18:59 x86-64bit-amd64-k10-unmask_equo_pkgs-19-04-22-18:59:26.txt
+4.0K -rw-r--r-- 1 jeff jeff 2.7K Apr 22 18:59 x86-64bit-amd64-k10-equo_upgrade-19-04-22-18:59:30.txt
+116K -rw-r--r-- 1 jeff jeff 114K Apr 22 19:00 x86-64bit-amd64-k10-install_equo_packages-19-04-22-19:00:56.txt
+4.0K -rw-r--r-- 1 jeff jeff  418 Apr 22 19:01 x86-64bit-amd64-k10-config_services-19-04-22-19:01:04.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-config_system-19-04-22-19:01:06.txt
+4.0K -rw-r--r-- 1 jeff jeff   20 Apr 22 19:01 x86-64bit-amd64-k10-install_firmware-19-04-22-19:01:07.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-install_kernel-19-04-22-19:01:11.txt
+4.0K -rw-r--r-- 1 jeff jeff  340 Apr 22 19:01 x86-64bit-amd64-k10-export_fs-19-04-22-19:01:30.txt
+   0 -rw-r--r-- 1 jeff jeff    0 Apr 22 19:01 x86-64bit-amd64-k10-export_profiles-19-04-22-19:01:40.txt
+
+```
 
