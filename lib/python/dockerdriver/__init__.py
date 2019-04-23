@@ -259,7 +259,8 @@ class DockerDriver:
         # all-caps root level keys become attributes
         [setattr(self, y, self.config.get(y)) for y in filter(lambda x: x == x.upper(), self.config.keys())]
 
-        # a default value
+        # default values
+        if not hasattr(self, 'SYSROOT_DIR'): setattr(self, 'SYSROOT_DIR', 'lib/sysroot')
         if not hasattr(self, 'DOCKER_FILE'): setattr(self, 'DOCKER_FILE', 'Dockerfile')
         if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', None)
 
