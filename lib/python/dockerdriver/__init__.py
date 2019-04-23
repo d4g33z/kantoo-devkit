@@ -123,8 +123,9 @@ class DockerDriver:
                     f.write(chunk)
 
             if pathlib.Path(f"{self.cwd}/logs").exists():
+                pathlib.Path(f"{self.cwd}/logs/{self.name}").mkdir(exist_ok=True)
                 open(
-                    f"{self.cwd}/logs/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
+                    f"{self.cwd}/logs/{self.name}/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
                     'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
             else:
                 print("Create a logs/ directory to save a timestamped file of container logs")
