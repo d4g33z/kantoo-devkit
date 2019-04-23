@@ -25,6 +25,14 @@ Use `virtualenv` to isolate everything nicely and in a disposable way. This pref
 (env3.6) # pip install -r requirements.txt
 ```
 
+### Hook In Your Python Portage API ###
+This project uses `portage` with Python 3.6. see [Portage API](https://www.funtoo.org/Portage_API). It is not available as a package, and we don't want to all system wide packages in our virtual environment. So we just symlink to the required libraries.
+
+```commandline
+(env3.6) # ln -s /usr/lib64/python3.6/site-packages/portage lib/python/portage
+(env3.6) # ln -s /usr/lib64/python3.6/site-packages/_emerge lib/python/_emerge
+
+```
 ## Quick Start to Interact with a Funtoo Stage3 ##
 
 Use `ipython` or the `dockerdriver` to work with images interactively in a simple way, using [`hjson`](hjson.org) files that are marshalled into a `kantoo.config` object.
