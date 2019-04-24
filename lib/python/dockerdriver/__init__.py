@@ -285,7 +285,7 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        eliot.Message.log(message_type='info',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
+        eliot.Message.log(message_type='info',msg='DockerDriver configuration attributes:',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
 
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
