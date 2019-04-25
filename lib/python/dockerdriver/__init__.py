@@ -137,11 +137,12 @@ class DockerDriver:
                 for chunk in output:
                     f.write(chunk)
 
+            log_file = f"{self.cwd}/logs/{self.name}/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt"
+
             if pathlib.Path(f"{self.cwd}/logs").exists():
                 pathlib.Path(f"{self.cwd}/logs/{self.name}").mkdir(exist_ok=True)
-                open(
-                    f"{self.cwd}/logs/{self.name}/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",
-                    'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
+                open(log_file,'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
+                eliot.Message.log(message_type='info',log_file=log_file)
             else:
                 eliot.Message.log(message_type='info',msg="Create a logs/ directory to save a timestamped file of container logs")
 
@@ -285,7 +286,7 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        eliot.Message.log(message_type='info',msg='DockerDriver configuration attributes:',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
+        eliot.Message.log(message_type='info',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
 
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
