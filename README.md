@@ -1,4 +1,4 @@
-# Kantoo Devkit 0.3-r2 #
+# Kantoo Devkit 0.4 #
 
 Kantoo **is** Funtoo, with a twist.
 
@@ -321,3 +321,221 @@ total 152K
    0 -rw-r--r-- 1 jeff jeff    0 Apr 23 15:17 x86-64bit-amd64-k10-export_profiles-19-04-23-15:17:29.txt
 ```
 
+And `eliot` log is captured as well:
+```commandline
+(env3.6) # eliot-tree logs/eliot.txt
+a5e3cd2c-47c7-4f0a-a783-c0a1d8ba7e05
+└── DockerDriver/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.024s
+    ├── config: plugins/hello_world/hello_world.hjson
+    ├── cwd: /home/jeff/Workspace/kantoo-devkit.git
+    ├── _set_config_attrs/2/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.000s
+    │   ├── info/2/2 2019-04-25 19:15:17
+    │   │   ├── ARCH: x86-64bit
+    │   │   ├── DOCKER_INIT_IMG: stage3:initial
+    │   │   ├── DOCKER_OPTS: 
+    │   │   │   ├── detach: True
+    │   │   │   ├── entrypoint: /bin/bash
+    │   │   │   ├── init: True
+    │   │   │   ├── remove: False
+    │   │   │   └── tty: True
+    │   │   ├── ENTROPY_ARCH: amd64
+    │   │   ├── GLOBAL_VAR: hello globally
+    │   │   ├── OS: funtoo
+    │   │   ├── SUBARCH: amd64-k10
+    │   │   └── SYSROOT_DIR: lib/sysroot
+    │   └── _set_config_attrs/2/3 ⇒ succeeded 2019-04-25 19:15:17
+    ├── _set_plugins/3/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.019s
+    │   ├── _plugin_factory/3/2/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.003s
+    │   │   ├── info/3/2/2 2019-04-25 19:15:17
+    │   │   │   ├── hello_file: 
+    │   │   │   │   ├── GLOBAL_VAR: hello via override
+    │   │   │   │   ├── LOCAL_VAR: hello locally
+    │   │   │   │   ├── bind: /tmp/hello_file
+    │   │   │   │   └── text: {LOCAL_VAR}…
+    │   │   │   ├── hello_python_from_arg: 
+    │   │   │   │   ├── HELLO_MSG: hello from a python plugin via arguments
+    │   │   │   │   ├── exec: True
+    │   │   │   │   └── text: #!/usr/bin/env python3…
+    │   │   │   ├── hello_python_from_env: 
+    │   │   │   │   ├── HELLO_MSG: hello from a python plugin via environment variables
+    │   │   │   │   ├── exec: True
+    │   │   │   │   └── text: #!/usr/bin/env python3…
+    │   │   │   ├── hello_python_from_explicit_env: 
+    │   │   │   │   ├── HELLO_MSG: hello from a python plugin via explicit arguments
+    │   │   │   │   ├── exec: True
+    │   │   │   │   └── text: #!/usr/bin/env python3…
+    │   │   │   └── hello_world: 
+    │   │   │       ├── GLOBAL_VAR: 
+    │   │   │       ├── LOCAL_VAR: hello locally from bash
+    │   │   │       ├── exec: True
+    │   │   │       └── text: #!/usr/bin/env sh…
+    │   │   └── _plugin_factory/3/2/3 ⇒ succeeded 2019-04-25 19:15:17
+    │   ├── info/3/3 2019-04-25 19:15:17
+    │   │   ├── entropy/plugins/kantoo: 
+    │   │   │   ├── bind: /entropy/plugins/kantoo
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/python/kantoo
+    │   │   └── var/git: 
+    │   │       ├── bind: /var/git
+    │   │       ├── exec: False
+    │   │       └── path: /var/git
+    │   ├── info/3/4 2019-04-25 19:15:17
+    │   │   ├── entropy/plugins/kantoo.sh: 
+    │   │   │   ├── bind: /entropy/plugins/kantoo.sh
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/bash/kantoo.sh
+    │   │   ├── etc/entropy/client.conf: 
+    │   │   │   ├── bind: /etc/entropy/client.conf
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/etc/entropy/client.conf
+    │   │   ├── etc/portage/env/nodistcc-pump.conf: 
+    │   │   │   ├── bind: /etc/portage/env/nodistcc-pump.conf
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/etc/portage/env/nodistcc-pump.conf
+    │   │   ├── etc/portage/env/nodistcc.conf: 
+    │   │   │   ├── bind: /etc/portage/env/nodistcc.conf
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/etc/portage/env/nodistcc.conf
+    │   │   ├── etc/portage/package.env: 
+    │   │   │   ├── bind: /etc/portage/package.env
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/etc/portage/package.env
+    │   │   ├── etc/portage/package.use: 
+    │   │   │   ├── bind: /etc/portage/package.use
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/etc/portage/package.use
+    │   │   ├── root/.inputrc: 
+    │   │   │   ├── bind: /root/.inputrc
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/root/.inputrc
+    │   │   ├── root/.ssh/authorized_keys: 
+    │   │   │   ├── bind: /root/.ssh/authorized_keys
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/root/.ssh/authorized_keys
+    │   │   ├── root/.ssh/docker_login: 
+    │   │   │   ├── bind: /root/.ssh/docker_login
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/root/.ssh/docker_login
+    │   │   ├── root/.ssh/docker_login.pub: 
+    │   │   │   ├── bind: /root/.ssh/docker_login.pub
+    │   │   │   ├── exec: False
+    │   │   │   └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/root/.ssh/docker_login.pub
+    │   │   └── root/.ssh/known_hosts: 
+    │   │       ├── bind: /root/.ssh/known_hosts
+    │   │       ├── exec: False
+    │   │       └── path: /home/jeff/Workspace/kantoo-devkit.git/lib/sysroot/root/.ssh/known_hosts
+    │   └── _set_plugins/3/5 ⇒ succeeded 2019-04-25 19:15:17
+    ├── _set_docker_opts/4/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.001s
+    │   ├── info/4/2 2019-04-25 19:15:17
+    │   │   ├── detach: True
+    │   │   ├── entrypoint: /bin/bash
+    │   │   ├── environment: 
+    │   │   │   ├── 0: EDITOR=cat
+    │   │   │   └── 1: LC_ALL=en_US.UTF-8
+    │   │   ├── init: True
+    │   │   ├── remove: False
+    │   │   ├── tty: True
+    │   │   ├── volumes: 
+    │   │   │   ├── /home/jeff/Workspace/kantoo-devkit.git/lib/python/kantoo: 
+    │   │   │   │   ├── bind: /entropy/plugins/kantoo
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp02knxch4: 
+    │   │   │   │   ├── bind: /etc/portage/env/nodistcc-pump.conf
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp2hjiawt6: 
+    │   │   │   │   ├── bind: /root/.ssh/known_hosts
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp55y87xgv: 
+    │   │   │   │   ├── bind: /etc/portage/env/nodistcc.conf
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp58c69k_n: 
+    │   │   │   │   ├── bind: /entropy/bin/hello_python_from_env
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp67hgltju: 
+    │   │   │   │   ├── bind: /root/.ssh/docker_login.pub
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmp8ww2par8: 
+    │   │   │   │   ├── bind: /entropy/plugins/hello_python_from_env
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpa9jq2kfa: 
+    │   │   │   │   ├── bind: /etc/portage/package.use
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpaarpctxo: 
+    │   │   │   │   ├── bind: /entropy/bin/hello_python_from_explicit_env
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpdmds_69p: 
+    │   │   │   │   ├── bind: /entropy/plugins/hello_python_from_arg
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpefqawczy: 
+    │   │   │   │   ├── bind: /etc/entropy/client.conf
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpgjn0jupj: 
+    │   │   │   │   ├── bind: /etc/portage/package.env
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmphuuhkvji: 
+    │   │   │   │   ├── bind: /entropy/bin/hello_world
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpjor_n_1x: 
+    │   │   │   │   ├── bind: /root/.inputrc
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpjoyltc8_: 
+    │   │   │   │   ├── bind: /entropy/plugins/hello_world
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpks7rh30z: 
+    │   │   │   │   ├── bind: /tmp/hello_file
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpnjdgx78f: 
+    │   │   │   │   ├── bind: /entropy/plugins/kantoo.sh
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpph08va95: 
+    │   │   │   │   ├── bind: /entropy/bin/hello_python_from_arg
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmprn8wqria: 
+    │   │   │   │   ├── bind: /entropy/plugins/hello_python_from_explicit_env
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmptlxl99m6: 
+    │   │   │   │   ├── bind: /root/.ssh/docker_login
+    │   │   │   │   └── mode: ro
+    │   │   │   ├── /tmp/tmpwkkxf9c1: 
+    │   │   │   │   ├── bind: /root/.ssh/authorized_keys
+    │   │   │   │   └── mode: ro
+    │   │   │   └── /var/git: 
+    │   │   │       ├── bind: /var/git
+    │   │   │       └── mode: ro
+    │   │   └── working_dir: /
+    │   └── _set_docker_opts/4/3 ⇒ succeeded 2019-04-25 19:15:17
+    └── DockerDriver/5 ⇒ succeeded 2019-04-25 19:15:17
+
+ce96a7da-b72d-4b4e-a314-812b9742d557
+└── initialize/1 ⇒ started 2019-04-25 19:15:17 ⧖ 0.176s
+    ├── info/2 2019-04-25 19:15:17
+    │   └── msg: funtoo/x86-64bit/amd64-k10/hello_world:initial found
+    └── initialize/3 ⇒ succeeded 2019-04-25 19:15:17
+
+5f5d3531-3525-415d-bf2a-28b92edc3cee
+└── start/1 ⇒ started 2019-04-25 19:15:17 ⧖ 4.420s
+    ├── info/2 2019-04-25 19:15:18
+    │   └── msg: hello_world : stoic_germain created
+    ├── info/3 2019-04-25 19:15:18
+    │   └── log_file: /home/jeff/Workspace/kantoo-devkit.git/logs/hello_world/x86-64bit-amd64-k10-hello_world-19-04-25-15:…
+    ├── info/4 2019-04-25 19:15:18
+    │   └── msg: hello_world : sha256:dda04cb3cd committed
+    ├── info/5 2019-04-25 19:15:19
+    │   └── msg: hello_python_from_env : objective_villani created
+    ├── info/6 2019-04-25 19:15:19
+    │   └── log_file: /home/jeff/Workspace/kantoo-devkit.git/logs/hello_world/x86-64bit-amd64-k10-hello_python_from_env-19…
+    ├── info/7 2019-04-25 19:15:19
+    │   └── msg: hello_python_from_env : sha256:6232728915 committed
+    ├── info/8 2019-04-25 19:15:20
+    │   └── msg: hello_python_from_arg : trusting_cray created
+    ├── info/9 2019-04-25 19:15:20
+    │   └── log_file: /home/jeff/Workspace/kantoo-devkit.git/logs/hello_world/x86-64bit-amd64-k10-hello_python_from_arg-19…
+    ├── info/10 2019-04-25 19:15:20
+    │   └── msg: hello_python_from_arg : sha256:975af3ade3 committed
+    ├── info/11 2019-04-25 19:15:21
+    │   └── msg: hello_python_from_explicit_env : priceless_franklin created
+    ├── info/12 2019-04-25 19:15:21
+    │   └── log_file: /home/jeff/Workspace/kantoo-devkit.git/logs/hello_world/x86-64bit-amd64-k10-hello_python_from_explic…
+    ├── info/13 2019-04-25 19:15:21
+    │   └── msg: hello_python_from_explicit_env : sha2
+```
