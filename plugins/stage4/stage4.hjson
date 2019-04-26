@@ -35,6 +35,7 @@ REPOSITORY_URI: file:///entropy/artifacts
 REPOSITORY_NAME: testing.kantoo.org
 REPOSITORY_DESCRIPTION: Funtoo on RPI3!
 
+CONFIG_SERIAL: 1
 
 envplugins:
 {
@@ -128,6 +129,7 @@ plugins:
     config_system:
     {
         ENTROPY_ARCH: ''
+        CONFIG_SERIAL: ''
         HOST_NAME:stage4
         ROOT_PASSWD:iamsolame
         text:
@@ -152,6 +154,7 @@ plugins:
     install_kernel:
     {
         RPI_FIRMWARE:/entropy/rpi
+        CONFIG_SERIAL: ''
         text:
         '''
         #!/usr/bin/env sh
@@ -163,7 +166,6 @@ plugins:
     #be careful about exporting secrets!!!!
     export_fs:
     {
-
         text:
         '''
         #!/usr/bin/env sh
@@ -211,21 +213,7 @@ plugins:
         bind:/etc/kantoo-release
     },
 
-
     #NOTE: entropy/client.conf is in SYSROOT_DIR
-    makeconf:
-    {
-        PORT_PKGDIR:/portage/packages
-        bind: /etc/portage/make.conf
-        text:
-        '''
-        #for removing kernel sources in a container
-        DONT_MOUNT_BOOT=1
-        PKGDIR={PORT_PKGDIR}
-
-        '''
-    },
-
     entropyrepo:
     {
         REPOSITORY_URI: ''
@@ -236,6 +224,7 @@ plugins:
         bind: /etc/entropy/repositories.conf.d/entropy_kantoo.org
 
     },
+    
     #conifiguring local entropy server for local testing repo
     entropysrv:
     {

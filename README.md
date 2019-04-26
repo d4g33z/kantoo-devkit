@@ -1,4 +1,4 @@
-# Kantoo Devkit 0.4 #
+# Kantoo Devkit 0.4.1 #
 
 Kantoo **is** Funtoo, with a twist.
 
@@ -18,7 +18,7 @@ I'm not sure exactly. But I feel I needed to structure the modification process 
 
 ### Clone It ###
 ```commandline
-# git clone https://code.funtoo.org/bitbucket/scm/~d4g33z/kantoo-devkit.git
+# git clone https://github.com/d4g33z/kantoo-devkit.git
 ```
 ### Use Virtualenv (Please) ###
 

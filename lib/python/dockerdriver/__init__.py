@@ -281,7 +281,7 @@ class DockerDriver:
         # default values
         if not hasattr(self, 'SYSROOT_DIR'): setattr(self, 'SYSROOT_DIR', 'lib/sysroot')
         if not hasattr(self, 'DOCKER_FILE'): setattr(self, 'DOCKER_FILE', 'Dockerfile')
-        if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', None)
+        if not hasattr(self, 'DOCKER_INIT_IMG'): setattr(self, 'DOCKER_INIT_IMG', 'stage3:initial')
 
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
@@ -307,10 +307,11 @@ class DockerDriver:
         [setattr(self, k, v) for k, v in kwargs.items()]
 
 
-    def _rm_mounts(self,image,tag):
+    def _rm_mounts(self,image,tag=None):
         data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
         input_file = self.TMPFS.joinpath('input_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
         output_file = self.TMPFS.joinpath('output_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+        if tag is None: tag = image.tags[0]
 
         os.system(f"mkdir -p {data_dir}")
         os.system(f"docker save {image.tags[0]} > {input_file}")
