@@ -69,6 +69,8 @@ EOF
     ln -s ${CHOST}-wrapper gcc
     ln -s ${CHOST}-wrapper g++
     ln -s ${CHOST}-wrapper c++
+
+    distcc-config --set-hosts "${DISTCCD_HOSTS}"
 }
 
 # see https://stackoverflow.com/questions/34658836/docker-is-in-volume-in-use-but-there-arent-any-docker-containers
