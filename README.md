@@ -1,4 +1,4 @@
-# Kantoo Devkit 0.4 #
+# Kantoo Devkit 0.4.1 #
 
 Kantoo **is** Funtoo, with a twist.
 
