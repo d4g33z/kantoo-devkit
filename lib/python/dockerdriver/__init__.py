@@ -149,8 +149,11 @@ class DockerDriver:
             image = container.commit(self.DOCKER_REPO, exec_plugin.name)
             eliot.Message.log(message_type='info',msg=f"{exec_plugin.name} : {image.short_id} committed")
 
-            container.stop()
-            container.remove()
+            if not exec_plugin.daemonize:
+                container.stop()
+                container.remove()
+            else:
+                eliot.Message.log(message_type='info',msg=f"{exec_plugin.name} : {container.name} daemonized")
 
             if interactive:
                 self.interact(exec_plugin.name)
@@ -388,7 +391,7 @@ class DockerDriver:
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
 class Plugin:
-    def __init__(self, name, text=None, path=None, bind=None, mode='ro', exec=False, skip=False, tmpfs=None, **kwargs):
+    def __init__(self, name, text=None, path=None, bind=None, mode='ro', exec=False, skip=False, tmpfs=None, daemonize=False, **kwargs):
         assert not (text and path)
         assert not (bind and exec)
         assert not (tmpfs and (path or text))
@@ -401,6 +404,7 @@ class Plugin:
         self.exec = exec
         self.skip = skip
         self.tmpfs = tmpfs if tmpfs else ''
+        self.daemonize = daemonize
 
         self.exe_path = pathlib.Path(tempfile.mkstemp()[1]) if exec else None
         self.exe_volume = {'bind': f"/entropy/bin/{self.name}", 'mode': 'ro'} if exec else None
