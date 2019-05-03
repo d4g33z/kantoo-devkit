@@ -220,7 +220,7 @@ plugins:
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
+        path: stalks/stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
         bind: /etc/entropy/repositories.conf.d/entropy_kantoo.org
 
     },
@@ -232,13 +232,13 @@ plugins:
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/stage4/etc/entropy/server.conf
+        path: stalks/stage4/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 
     nsswitch_conf:
     {
-        path: plugins/stage4/etc/nsswitch.conf
+        path: stalks/stage4/etc/nsswitch.conf
         bind: /etc/nsswitch.conf
     },
     
