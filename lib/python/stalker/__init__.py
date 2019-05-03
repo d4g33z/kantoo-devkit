@@ -1,0 +1,2 @@
+class Stalker:
+    pass
