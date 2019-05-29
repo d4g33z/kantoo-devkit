@@ -42,7 +42,10 @@ def dd(cwd, config, skip, pretend, interactive):
     # eliot.to_file(open(f"{cwd}/logs/eliot-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb'))
 
     with eliot.start_action(action_type='DockerDriver',cwd=str(cwd),config=config):
-        config = DockerDriver(cwd,pathlib.Path(config))
+        config_path = pathlib.Path(config)
+        config = hjson.load(open(cwd.joinpath(config_path), 'r'))
+        name = config_path.parts[-1].split('.')[0]
+        config = DockerDriver(cwd,name,config)
 
     if pretend:
         [setattr(p, 'skip', True) for p in filter(lambda x: x.exec, config.plugins)]
@@ -82,11 +85,11 @@ class DockerDriver:
     def DOCKER_INITIAL_IMAGE(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
 
-    def __init__(self,cwd,config_path):
+    def __init__(self,cwd,name,config):
         self.cwd = cwd
-        self.name = config_path.parts[-1].split('.')[0]
+        self.name = name
         self.client = docker.from_env()
-        self.config = hjson.load(open(cwd.joinpath(config_path), 'r'))
+        self.config = config
         with eliot.start_action(action_type='_set_config_attrs'):
             self._set_config_attrs()
         with eliot.start_action(action_type='_set_plugins'):
