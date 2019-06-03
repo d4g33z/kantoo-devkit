@@ -22,6 +22,7 @@ stage3_install() {
     STAGE3_GPG=${STAGE3_ARCHIVE}.gpg
 
     if [ ! -f ${STAGE3_ARCHIVE}  ]; then
+        echo $STAGE3_URL
         wget ${STAGE3_URL} -O ${STAGE3_ARCHIVE}
     fi
     wget ${STAGE3_URL}.gpg -O ${STAGE3_GPG}
@@ -54,7 +55,7 @@ cleanup() {
     rm -rf usr/src/linux-debian-sources-*
     rm -rf lib/modules/*
     rm -rf boot/*
-    rm root/funtoo.sh
+    rm root/kantoo.sh
 }
 
 install_distcc() {
