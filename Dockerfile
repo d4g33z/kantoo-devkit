@@ -1,14 +1,11 @@
 # This Dockerfile creates a funtoo stage3 container image. It fetches a daily snapshot from the official
 # sources and verifies its checksum as well as its gpg signature.
 
-# We are going to use alpine as our bootstrap container
 ARG BOOTSTRAP
 FROM ${BOOTSTRAP:-alpine:3.7} as builder
 
 WORKDIR /kantoo
 
-# here are all the arguments about arch/subarch ... defined
-# set from createrepo.py
 ARG ARCH
 ARG SUBARCH
 ARG DIST="https://build.funtoo.org/1.3-release-std"
