@@ -31,14 +31,8 @@ from functools import reduce
 from collections import OrderedDict
 from datetime import datetime
 
-def stdout(message):
-    if message.get('message_type') == 'info':
-        if 'msg' in message.keys():
-            print(message.get('msg'))
-
 def dd(cwd, config, skip, pretend, interactive):
-    eliot.add_destinations(stdout)
-    eliot.to_file(open(f"{cwd}/logs/eliot.txt",'wb'))
+    eliot.to_file(open(f"{cwd}/logs/eliot.txt",'w'))
     # eliot.to_file(open(f"{cwd}/logs/eliot-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb'))
 
     with eliot.start_action(action_type='DockerDriver',cwd=str(cwd),config=config):
@@ -70,8 +64,8 @@ TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
 
     @property
-    def TMPFS(self):
-        return TMPFS_PATH
+    def DOCKER_TMPFS(self):
+        return pathlib.Path(self.TMPFS).absolute() if self.TMPFS else TMPFS_PATH
 
     @property
     def DOCKER_BUILDARGS(self):
@@ -85,11 +79,11 @@ class DockerDriver:
     def DOCKER_INITIAL_IMAGE(self):
         return f"{self.OS}/{self.ARCH}/{self.SUBARCH}/{self.DOCKER_INIT_IMG}"
 
-    def __init__(self,cwd,name,config):
-        self.cwd = cwd
-        self.name = name
+    def __init__(self,cwd_path,config_path):
+        self.cwd = cwd_path
+        self.config = hjson.load(open(cwd_path.joinpath(config_path), 'r'))
+        self.name = config_path.parts[-1].split('.')[0]
         self.client = docker.from_env()
-        self.config = config
         with eliot.start_action(action_type='_set_config_attrs'):
             self._set_config_attrs()
         with eliot.start_action(action_type='_set_plugins'):
@@ -108,9 +102,9 @@ class DockerDriver:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
             if yn == 'y' or yn =='Y':
                 eliot.Message.log(message_type='info',msg=f"Initializing image from Funtoo stage3")
-                self.client.images.build(path=self.cwd, dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
-                                    quiet=False, buildargs=self.DOCKER_BUILDARGS)
-                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}"),f"{self.DOCKER_REPO}:initial")
+                self.client.images.build(path=str(self.cwd), dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
+                                    quiet=False, buildargs=self.DOCKER_BUILDARGS,nocache=True)
+                self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
             else:
                 eliot.Message.log(message_type='info',msg=f"No image to work from")
                 raise Exception
@@ -145,7 +139,7 @@ class DockerDriver:
             if pathlib.Path(f"{self.cwd}/logs").exists():
                 pathlib.Path(f"{self.cwd}/logs/{self.name}").mkdir(exist_ok=True)
                 open(log_file,'wb').write(open(f"{self.cwd}/output.txt", 'rb').read())
-                eliot.Message.log(message_type='info',log_file=log_file)
+                eliot.Message.log(message_type='log file path',log_file=log_file)
             else:
                 eliot.Message.log(message_type='info',msg="Create a logs/ directory to save a timestamped file of container logs")
 
@@ -233,7 +227,8 @@ class DockerDriver:
             self.plugins += self._sysroot_plugin_factory(self.cwd.joinpath(pathlib.Path(self.SYSROOT_DIR)))
 
     def _plugin_factory(self, plugin_block):
-        eliot.Message.log(message_type='info',**plugin_block)
+        #verbose
+        #eliot.Message.log(message_type='plugins',**plugin_block)
         return list(map(lambda x, y, z: x.write(y, **z),
                         # create the objs
                         [Plugin(k, **v) for k, v in plugin_block.items()],
@@ -292,7 +287,7 @@ class DockerDriver:
         if self.DOCKER_INIT_IMG:
             assert  ':' in self.DOCKER_INIT_IMG
 
-        eliot.Message.log(message_type='info',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
+        eliot.Message.log(message_type='config vars',**{k:self.config.get(k) for k in filter(lambda x: x == x.upper(), self.config.keys())})
 
     def _set_docker_opts(self):
         # DOCKER_OPTS is created in the hjson config file
@@ -307,16 +302,17 @@ class DockerDriver:
             {'environment': list(reduce(lambda x, y: x + y, [z.docker_env for z in self.env_plugins], []))})
         self.DOCKER_OPTS.update({'working_dir': '/'})
 
-        eliot.Message.log(message_type='info',**self.DOCKER_OPTS)
+        #verbose
+        # eliot.Message.log(message_type='DOCKER_OPTS',**self.DOCKER_OPTS)
 
     def _update(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.items()]
 
 
     def _rm_mounts(self,image,tag=None):
-        data_dir = self.TMPFS.joinpath('data') if self.TMPFS else pathlib.Path(tempfile.mkdtemp())
-        input_file = self.TMPFS.joinpath('input_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
-        output_file = self.TMPFS.joinpath('output_file') if self.TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+        data_dir = self.DOCKER_TMPFS.joinpath('data') if self.DOCKER_TMPFS else pathlib.Path(tempfile.mkdtemp())
+        input_file = self.DOCKER_TMPFS.joinpath('input_file') if self.DOCKER_TMPFS else pathlib.Path(tempfile.mkstemp()[1])
+        output_file = self.DOCKER_TMPFS.joinpath('output_file') if self.DOCKER_TMPFS else pathlib.Path(tempfile.mkstemp()[1])
         if tag is None: tag = image.tags[0]
 
         os.system(f"mkdir -p {data_dir}")
