@@ -35,7 +35,7 @@ stalks:
             DOCKER_INIT_IMG: stage3:final
             stage4:
             {
-                pretend:false
+                pretend:true
                 CONFIG_SERIAL:0,
                 DOCKER_INIT_IMG: build_repo:final
             },
