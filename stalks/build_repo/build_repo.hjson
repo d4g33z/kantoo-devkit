@@ -4,23 +4,6 @@
 #   local repo
 #------------------------------------------------------------------
 
-OS: funtoo
-#ARCH: arm-32bit
-#SUBARCH: raspi3
-#ENTROPY_ARCH: armv7l
-ARCH: x86-64bit
-SUBARCH: amd64-k10
-ENTROPY_ARCH: amd64
-
-#a directory of files and dirs to bind
-SYSROOT_DIR:lib/sysroot
-
-#the intial state
-DOCKER_INIT_IMG: stage3:remove_portage_pkgs
-
-REPOSITORY_NAME: testing.kantoo.org
-REPOSITORY_DESCRIPTION: Funtoo on RPI3!
-
 DOCKER_OPTS:
 {
     #docker.run kwargs
@@ -30,6 +13,10 @@ DOCKER_OPTS:
     entrypoint:"/bin/bash",
     detach:true,
 }
+
+REPOSITORY_NAME: testing.kantoo.org
+REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+
 
 envplugins:
 {
@@ -45,9 +32,7 @@ plugins:
     install_distcc:
     {
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
-        #DISTCCD_HOSTS: 10.0.0.1/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
-        #CHOST:armv7a-hardfloat-linux-gnueabi
         text:
         '''
         #!/usr/bin/env sh
@@ -57,7 +42,6 @@ plugins:
     },
 
     #to eliminate bindist USE flags shipped with stage3s
-    #is --usepkg acceptable?
     emerge_world:
     {
         text:
@@ -156,6 +140,17 @@ plugins:
         exec:true
     },
 
+    #create a final stage that easy to remember
+    final:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        echo "Finalizing a stalk."
+        '''
+        exec:true
+    },
+
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
@@ -170,14 +165,14 @@ plugins:
         LN_MAKE_PROCS:4
         PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
-        path: stalks/build_binaries/etc/portage/make.conf
+        path: stalks/build_repo/etc/portage/make.conf
     },
 
     confd_distccd:
     {
         DISTCCD_ALLOW: 192.168.1.0/24
         #DISTCCD_ALLOW: 10.0.0.0/24
-        path: stalks/build_binaries/etc/conf.d/distccd
+        path: stalks/build_repo/etc/conf.d/distccd
         bind: /etc/conf.d/distccd
 
     },
@@ -187,7 +182,7 @@ plugins:
         ENTROPY_PKGDIR: /entropy/artifacts
         REPOSITORY_NAME:''
         REPOSITORY_DESCRIPTION:''
-        path: stalks/build_binaries/etc/entropy/server.conf
+        path: stalks/build_repo/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 

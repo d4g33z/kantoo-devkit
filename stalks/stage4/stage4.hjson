@@ -6,20 +6,6 @@
 #   tar root and boot filesystems
 #------------------------------------------------------------------
 
-OS: funtoo
-#ARCH: arm-32bit
-#SUBARCH: raspi3
-#ENTROPY_ARCH:armv7l
-ARCH: x86-64bit
-SUBARCH: amd64-k10
-ENTROPY_ARCH: amd64
-
-#a directory of files and dirs to bind
-SYSROOT_DIR:lib/sysroot
-
-#the intial state
-DOCKER_INIT_IMG: build_binaries:emerge_world
-
 DOCKER_OPTS:
 {
     #docker.run kwargs
@@ -182,6 +168,16 @@ plugins:
         #!/usr/bin/env python3
         from kantoo.portage import *
         export_profiles()
+        '''
+        exec: true
+    },
+
+    final:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        echo "Finalizing a stalk."
         '''
         exec: true
     },

@@ -2,19 +2,6 @@
 #   the root image, it has no DOCKER_INIT_IMG.
 #------------------------------------------------------------------
 
-OS: funtoo
-#ARCH: arm-32bit
-#SUBARCH: raspi3
-#ENTROPY_ARCH: armv7l
-ARCH: x86-64bit
-SUBARCH: amd64-k10
-ENTROPY_ARCH: amd64
-
-SYSROOT_DIR:lib/sysroot
-
-#this doesn't work yet but it should
-DOCKER_BUILDKIT:1
-
 DOCKER_OPTS:
 {
     tty:true,
@@ -31,13 +18,26 @@ plugins:
         #for removing kernel sources in a container
         DONT_MOUNT_BOOT:1
         RM_PORT_PKGS:
-            sys-kernel/debian-sources-lts
+        '''
+        sys-kernel/debian-sources-lts
+        '''
 
         text:
         '''
         #!/usr/bin/env python3
         from kantoo.portage import *
         remove_packages()
+        '''
+        exec:true
+    },
+
+    #create a final stage that easy to remember
+    final:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        echo "Finalizing a stalk."
         '''
         exec:true
     },
