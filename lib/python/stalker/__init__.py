@@ -52,7 +52,8 @@ class Stalker:
         def _run(node,keychain):
             if 'stalks' not in keychain[:-1]: return
 
-            eliot.Message.log(message_type=f"{keychain[-1]}",**{k:v  for k,v in node.items() if k.upper() == k})
+            #eliot.Message.log(message_type=f"{keychain[-1]}",**{k:v  for k,v in node.items() if k.upper() == k})
+            eliot.Message.log(message_type=f"{keychain[-1]}",keychain=keychain)
             dd = self._get_dockerdriver(keychain[-1],**{k:v  for k,v in node.items() if k.upper() == k})
 
             pretend = node.get('pretend',False)
