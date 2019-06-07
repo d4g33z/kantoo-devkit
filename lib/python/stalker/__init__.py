@@ -7,14 +7,14 @@ import pathlib
 from dockerdriver import dd, DockerDriver
 
 
-def sd(cwd, config):
+def sd(cwd, config,watch_stdout):
     # eliot.to_file(open(f"{cwd}/logs/eliot-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb'))
 
     with eliot.start_action(action_type='Stalker',cwd=str(cwd),config=str(config)):
         config = Stalker(cwd,pathlib.Path(config))
 
     with eliot.start_action(action_type='run'):
-        config.run()
+        config.run(watch_stdout)
 
     return config
 
@@ -87,7 +87,7 @@ class Stalker:
 
             #start the sequence of operations
             with eliot.start_action(action_type='start'):
-                dd.start(interactive)
+                dd.start(interactive,watch_stdout)
 
         self._visit(_run,self.config)
 
