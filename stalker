@@ -17,8 +17,9 @@ eliot.to_file(open(f"{pathlib.Path('.').absolute()}/logs/eliot.txt",'wb'))
 
 @click.command()
 @click.option('--config',type=click.Path(exists=True), help='A relative path to an hjson file of stalks')
-def _stalker(config):
-    s = stalker.sd(pathlib.Path('.').absolute(), pathlib.Path(config))
+@click.option('--watch_stdout',is_flag=True,help='Watch the output of each container run')
+def _stalker(config,watch_stdout):
+    s = stalker.sd(pathlib.Path('.').absolute(), pathlib.Path(config),watch_stdout)
 
 if __name__ == '__main__':
     _stalker()
