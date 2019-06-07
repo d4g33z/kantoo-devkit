@@ -11,9 +11,6 @@ paths:
 {
     SYSROOT_DIR:        lib/sysroot
     LOG_DIR:            logs
-    PORTAGE_ARTIFACTS:  sab_workspace/portage_artifacts
-    ENTROPY_ARTIFACTS:  sab_workspace/entropy_artifacts
-    STAGE4:             sab_workspace/stage4s
     TMPFS:              tmpfs
 }
 
@@ -22,26 +19,11 @@ paths:
 #is used as the child's 'initial' image.
 stalks:
 {
-    stage3:
+    hello_world:
     {
         interactive:false
-        pretend:true
-        build_repo:
-        {
-            pretend:true
-            #skip_until:final
-            REPOSITORY_NAME: testing.kantoo.org
-            REPOSITORY_DESCRIPTION: Funtoo on RPI3!
-            DOCKER_INIT_IMG: stage3:final
-            stage4:
-            {
-                pretend:true
-                CONFIG_SERIAL:0,
-                DOCKER_INIT_IMG: build_repo:final
-            },
+        pretend:false
+        TREE_CONFIG_VAR:hello from stalker config
 
-
-        },
-        #build_dev_toolchain:{},
     },
 }
