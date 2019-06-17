@@ -36,14 +36,23 @@ plugins:
         echo STALK_CONFIG_VAR is set to ${STALK_CONFIG_VAR}
         echo
         echo Python f-string subsitution is done on file plugins
-        echo {F_STRING_VAR} in /tmp/hello_file is
+        echo e.g. {F_STRING_VAR} in /tmp/hello_file is set to
         cat /tmp/hello_file
         '''
         #bash plugins are bind mounted automatically to the container
         exec:true
     },
 
-
+    #File plugins-------------------------------------------------------------------------------------------------------
+    hello_file:
+    {
+        F_STRING_VAR: hello from f-string subsitution in a file
+        bind: /tmp/hello_file
+        text:
+        '''
+        {F_STRING_VAR}
+        '''
+    },
 
 
     hello_python_from_env:
@@ -85,16 +94,7 @@ plugins:
         exec:true
     },
 
-    #File plugins-------------------------------------------------------------------------------------------------------
-    hello_file:
-    {
-        F_STRING_VAR: hello from f-string subsitution in a file
-        bind: /tmp/hello_file
-        text:
-        '''
-        {F_STRING_VAR}
-        '''
-    },
+
 }
 
 
