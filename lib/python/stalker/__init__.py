@@ -7,14 +7,14 @@ import pathlib
 from dockerdriver import dd, DockerDriver
 
 
-def sd(cwd, config):
+def sd(cwd, config,watch_stdout):
     # eliot.to_file(open(f"{cwd}/logs/eliot-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt",'wb'))
 
     with eliot.start_action(action_type='Stalker',cwd=str(cwd),config=str(config)):
         config = Stalker(cwd,pathlib.Path(config))
 
     with eliot.start_action(action_type='run'):
-        config.run()
+        config.run(watch_stdout)
 
     return config
 
@@ -41,14 +41,23 @@ class Stalker:
 
         config.update(self.config.get('architecture'))
         config.update(self.config.get('paths'))
-        config.update(overrides)
+        config.update({**overrides,**self._get_overrides(stalk_name)})
 
         config_path = pathlib.Path(tempfile.mkdtemp()).joinpath(f"{stalk_name}.hjson")
         hjson.dump(config,config_path.open('w',encoding='utf-8'))
 
         return DockerDriver(self.cwd,config_path)
 
-    def run(self):
+    def _get_overrides(self,stalk_name):
+        _overrides = {}
+        def _f(node,keychain):
+            if 'stalks' in keychain and keychain[-1] == stalk_name:
+                _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
+
+        self._visit(_f,self.config)
+        return _overrides
+
+    def run(self,watch_stdout):
         def _run(node,keychain):
             if 'stalks' not in keychain[:-1]: return
 
@@ -78,7 +87,7 @@ class Stalker:
 
             #start the sequence of operations
             with eliot.start_action(action_type='start'):
-                dd.start(interactive)
+                dd.start(interactive,watch_stdout)
 
         self._visit(_run,self.config)
 

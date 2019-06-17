@@ -96,7 +96,7 @@ class DockerDriver:
             eliot.Message.log(message_type='info',msg=f"{self.DOCKER_REPO}:initial found")
             return
         try:
-            eliot.Message.log(message_type='info',msg=f"Initializing image from {self.DOCKER_INITIAL_IMAGE}")
+            eliot.Message.log(message_type='info',msg=f"Initializing image {self.DOCKER_REPO}:initial from {self.DOCKER_INITIAL_IMAGE}")
             self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
         except IndexError:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
@@ -109,21 +109,25 @@ class DockerDriver:
                 eliot.Message.log(message_type='info',msg=f"No image to work from")
                 raise Exception
 
-    def start(self,interactive=False):
+    def start(self,interactive=False,watch_stdout=False):
         CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
         for exec_plugin in filter(lambda x: x.exec, self.plugins):
+            print('-'*80)
             if not self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip:
                 eliot.Message.log(message_type='info',msg=f"You requested skipping {exec_plugin.name} but no image exists yet. Exiting.")
+                print()
                 return
 
             # images must exist at this point for each exec_plugin
             if not (self.client.images.list(f"{self.DOCKER_REPO}:{exec_plugin.name}") and exec_plugin.skip):
                 container = self._run(CURRENT_DOCKER_IMAGE)
                 eliot.Message.log(message_type='info',msg=f"{exec_plugin.name} : {container.name} created")
+                print()
                 CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
             else:
                 # skipping and a container of this exec_plugin exists
                 eliot.Message.log(messsage_type='info',msg=f"{exec_plugin.name} skipped")
+                print()
                 CURRENT_DOCKER_IMAGE = f"{self.DOCKER_REPO}:{exec_plugin.name}"
                 continue
 
@@ -133,6 +137,9 @@ class DockerDriver:
             with open(f"{self.cwd}/output.txt", 'wb') as f:
                 for chunk in output:
                     f.write(chunk)
+                    if watch_stdout:
+                        print(chunk.decode())
+                        # eliot.Message.log(message_type='info',msg=chunk.decode())
 
             log_file = f"{self.cwd}/logs/{self.name}/{self.ARCH}-{self.SUBARCH}-{exec_plugin.name}-{datetime.now().strftime('%y-%m-%d-%H:%M:%S')}.txt"
 
