@@ -37,6 +37,7 @@ plugins:
         '''
         #!/usr/bin/env sh
         . /entropy/plugins/kantoo.sh && install_distcc
+        /etc/init.d/distccd start
         '''
         exec:true
     },
