@@ -1,0 +1,29 @@
+architecture:
+{
+    OS:             funtoo
+    ARCH:           x86-64bit
+    SUBARCH:        amd64-k10
+    ENTROPY_ARCH:   amd64
+}
+
+#relative to dir script is run in
+paths:
+{
+    SYSROOT_DIR:        lib/sysroot
+    LOG_DIR:            logs
+    TMPFS:              tmpfs
+}
+
+
+#unless explicityly set, the parent stalk's 'final' plugin's committed image
+#is used as the child's 'initial' image.
+stalks:
+{
+    hello_world:
+    {
+        interactive:false
+        pretend:false
+        TREE_CONFIG_VAR:hello from stalker config
+
+    },
+}

@@ -1,0 +1,46 @@
+#------------------------------------------------------------------
+#   the root image, it has no DOCKER_INIT_IMG.
+#------------------------------------------------------------------
+
+OS: funtoo
+#ARCH: arm-32bit
+#SUBARCH: raspi3
+#ENTROPY_ARCH: armv7l
+ARCH: x86-64bit
+SUBARCH: amd64-k10
+ENTROPY_ARCH: amd64
+
+SYSROOT_DIR:lib/sysroot
+
+#this doesn't work yet but it should
+DOCKER_BUILDKIT:1
+
+DOCKER_OPTS:
+{
+    tty:true,
+    init:true,
+    remove:false,
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+DONT_MOUNT_BOOT:1
+
+plugins:
+{
+    install_phrackaged2:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+         mkdir -p /var/git/phkg2 /var/cache/phkg2 ;
+        cd /var/git/phkg2
+        git clone https://gitlab.com/phkg2/phrackaged2ls
+        sh phrackaged2ls/2ls/phkg2-phrag-getit.sh all
+        '''
+        exec:false
+    },
+
+}
+
+

@@ -6,20 +6,6 @@
 #   tar root and boot filesystems
 #------------------------------------------------------------------
 
-OS: funtoo
-#ARCH: arm-32bit
-#SUBARCH: raspi3
-#ENTROPY_ARCH:armv7l
-ARCH: x86-64bit
-SUBARCH: amd64-k10
-ENTROPY_ARCH: amd64
-
-#a directory of files and dirs to bind
-SYSROOT_DIR:lib/sysroot
-
-#the intial state
-DOCKER_INIT_IMG: build_binaries:emerge_world
-
 DOCKER_OPTS:
 {
     #docker.run kwargs
@@ -186,6 +172,16 @@ plugins:
         exec: true
     },
 
+    final:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        echo "Finalizing a stalk."
+        '''
+        exec: true
+    },
+
     #-----------------------------------------------------------
     # file plugins
     # any paths here in SYSROOT_DIR take precedent over auto created plugins
@@ -220,7 +216,7 @@ plugins:
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
+        path: stalks/stage4/etc/entropy/repositories.conf.d/entropy_kantoo.org
         bind: /etc/entropy/repositories.conf.d/entropy_kantoo.org
 
     },
@@ -232,13 +228,13 @@ plugins:
         REPOSITORY_NAME: ''
         REPOSITORY_DESCRIPTION: ''
 
-        path: plugins/stage4/etc/entropy/server.conf
+        path: stalks/stage4/etc/entropy/server.conf
         bind: /etc/entropy/server.conf
     },
 
     nsswitch_conf:
     {
-        path: plugins/stage4/etc/nsswitch.conf
+        path: stalks/stage4/etc/nsswitch.conf
         bind: /etc/nsswitch.conf
     },
     
