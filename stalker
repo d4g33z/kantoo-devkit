@@ -7,12 +7,13 @@ import pathlib
 import click
 import eliot
 
-def stdout(message):
-    if message.get('message_type') == 'info':
-        if 'msg' in message.keys():
-            print(message.get('msg'))
+# def stdout(message):
+#     if message.get('message_type') == 'info':
+#         if 'msg' in message.keys():
+#             print(message.get('msg'))
+#
+# eliot.add_destinations(stdout)
 
-eliot.add_destinations(stdout)
 eliot.to_file(open(f"{pathlib.Path('.').absolute()}/logs/eliot.txt",'wb'))
 
 @click.command()
