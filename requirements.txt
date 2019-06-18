@@ -2,3 +2,4 @@ click
 docker
 pathlib
 hjson
+eliot
