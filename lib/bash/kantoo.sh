@@ -15,17 +15,16 @@ stage3_fetch() {
     STAGE3_GPG=${STAGE3_ARCHIVE}.gpg
 
     if [ ! -f stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE}  ]; then
-        echo $STAGE3_URL
-        wget ${STAGE3_URL} -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE}
+        wget ${STAGE3_URL} -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE} > /dev/null 2>&1
     fi
-    wget ${STAGE3_URL}.gpg -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_GPG}
+    wget ${STAGE3_URL}.gpg -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_GPG} > /dev/null 2>&1
     #check for drobbins trust
     if [ "$(gpg --list-public-keys | grep D3B948F82EE8B4020A0410789A658306E986E8EE -)" = "" ]; then
-        gpg --recv-key E986E8EE
+        gpg --recv-key E986E8EE > /dev/null 2>&1
     fi
     #check for arm32 trust
     if [ "$(gpg --list-public-keys | grep 38E84AD53B01590BA6785E882A7B0B2EEEE54A43 -)" = "" ]; then
-        gpg --recv-key EEE54A43
+        gpg --recv-key EEE54A43 > /dev/null 2>&1
     fi
     if [ "$(gpg --trust-model always --verify stage3s/${ARCH}/${SUBARCH}/${STAGE3_GPG} stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE} 2>&1 | grep BAD)" != "" ]; then
         echo "gpg verification failed. Download a new stage 3 archive"
