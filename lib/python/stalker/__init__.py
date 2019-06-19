@@ -65,6 +65,14 @@ class Stalker:
             raise('failed to execute internal shell function')
         map(lambda x:os.environ.pop(x), ('DIST', 'ARCH', 'SUBARCH', 'STAGE3_ARCHIVE'))
 
+    def cleanup(self,stalk_name):
+        def _cleanup(node,keychain):
+            if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
+            dd = self._get_dockerdriver(keychain[-1],**{k:v  for k,v in node.items() if k.upper() == k})
+            dd.container_cleanup()
+            dd.image_cleanup()
+        self._visit(_cleanup,self.config)
+
     def run(self,watch_stdout):
         def _run(node,keychain):
             if 'stalks' not in keychain[:-1]: return
