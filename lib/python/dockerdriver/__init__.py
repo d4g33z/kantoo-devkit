@@ -427,7 +427,7 @@ class Plugin:
         if not executable:
             try:
                 self.tmp_path.write_text(txt.format(**vars)+'\n')
-            except KeyError:
+            except (KeyError, ValueError):
                 #a sh file
                 self.tmp_path.write_text(txt+'\n')
 
