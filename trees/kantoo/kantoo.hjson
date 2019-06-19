@@ -24,7 +24,6 @@ stalks:
 {
     stage3:
     {
-        interactive:false
         pretend:true
         build_repo:
         {
