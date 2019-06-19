@@ -81,7 +81,6 @@ class Stalker:
             dd = self._get_dockerdriver(keychain[-1],**{k:v  for k,v in node.items() if k.upper() == k})
 
             pretend = node.get('pretend',False)
-            interactive = node.get('interactive',False)
             skip_until = node.get('skip_until','')
 
             if pretend:
@@ -92,20 +91,13 @@ class Stalker:
                     if plugin.name == skip_until: break
                     plugin.skip = True
 
-            # try to find initial image or create it
-            # here we make sure the latest stage3 tarball from funtoo.org is available
-            self._fetch_stage3(*list(map(lambda x:self.config.get('architecture').get(x), ('DIST','ARCH','SUBARCH','STAGE3_ARCHIVE'))))
-
             if not pretend:
                 with eliot.start_action(action_type='initialize'):
                     dd.initialize()
 
-            if interactive:
-                dd.interact('initial')
-
             #start the sequence of operations
             with eliot.start_action(action_type='start'):
-                dd.start(interactive,watch_stdout)
+                dd.start(watch_stdout)
 
         self._visit(_run,self.config)
 

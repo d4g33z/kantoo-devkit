@@ -58,7 +58,7 @@ def dd(cwd, config, skip, pretend, interactive):
     #start the sequence of operations
 
     with eliot.start_action(action_type='start'):
-        config.start(interactive)
+        config.start()
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
@@ -109,7 +109,7 @@ class DockerDriver:
                 eliot.Message.log(message_type='info',msg=f"No image to work from")
                 raise Exception
 
-    def start(self,interactive=False,watch_stdout=False):
+    def start(self,watch_stdout=False):
         CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
         for exec_plugin in filter(lambda x: x.exec, self.plugins):
             print('-'*80)
@@ -159,8 +159,8 @@ class DockerDriver:
             else:
                 eliot.Message.log(message_type='info',msg=f"{exec_plugin.name} : {container.name} daemonized")
 
-            if interactive:
-                self.interact(exec_plugin.name)
+            # if interactive:
+            #     self.interact(exec_plugin.name)
 
 
     def interact(self,tag):
