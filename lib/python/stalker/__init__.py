@@ -52,9 +52,8 @@ class Stalker:
     def _get_overrides(self,stalk_name):
         _overrides = {}
         def _f(node,keychain):
-            if 'stalks' in keychain and keychain[-1] == stalk_name:
-                _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
-
+            if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
+            _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
         self._visit(_f,self.config)
         return _overrides
 
