@@ -1,3 +1,4 @@
+import os
 import hjson
 from collections import OrderedDict
 from copy import copy
@@ -57,6 +58,13 @@ class Stalker:
         self._visit(_f,self.config)
         return _overrides
 
+    def _fetch_stage3(self,dist,arch,subarch,stage3_archive):
+        os.chdir(self.cwd)
+        os.environ.update(DIST=dist,ARCH=arch,SUBARCH=subarch,STAGE3_ARCHIVE=stage3_archive)
+        if os.system('. lib/bash/kantoo.sh && stage3_fetch') == 1:
+            raise('failed to execute internal shell function')
+        map(lambda x:os.environ.pop(x), ('DIST', 'ARCH', 'SUBARCH', 'STAGE3_ARCHIVE'))
+
     def run(self,watch_stdout):
         def _run(node,keychain):
             if 'stalks' not in keychain[:-1]: return
@@ -78,6 +86,9 @@ class Stalker:
                     plugin.skip = True
 
             # try to find initial image or create it
+            # here we make sure the latest stage3 tarball from funtoo.org is available
+            self._fetch_stage3(*list(map(lambda x:self.config.get('architecture').get(x), ('DIST','ARCH','SUBARCH','STAGE3_ARCHIVE'))))
+
             if not pretend:
                 with eliot.start_action(action_type='initialize'):
                     dd.initialize()
