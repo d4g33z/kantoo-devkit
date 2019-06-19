@@ -69,7 +69,7 @@ class DockerDriver:
 
     @property
     def DOCKER_BUILDARGS(self):
-        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH}
+        return {'ARCH': self.ARCH, 'SUBARCH': self.SUBARCH, 'DIST': self.DIST, 'STAGE3_ARCHIVE': self.STAGE3_ARCHIVE}
 
     @property
     def DOCKER_REPO(self):
@@ -427,7 +427,7 @@ class Plugin:
         if not executable:
             try:
                 self.tmp_path.write_text(txt.format(**vars)+'\n')
-            except KeyError:
+            except (KeyError, ValueError):
                 #a sh file
                 self.tmp_path.write_text(txt+'\n')
 
