@@ -102,6 +102,7 @@ class DockerDriver:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
             if yn == 'y' or yn =='Y':
                 eliot.Message.log(message_type='info',msg=f"Initializing image from Funtoo stage3")
+                self._fetch_stage3()
                 self.client.images.build(path=str(self.cwd), dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
                                     quiet=False, buildargs=self.DOCKER_BUILDARGS,nocache=True)
                 self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
@@ -393,6 +394,13 @@ class DockerDriver:
                    self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
+
+    def _fetch_stage3(self):
+        os.chdir(self.cwd)
+        os.environ.update(DIST=self.DIST,ARCH=self.ARCH,SUBARCH=self.SUBARCH,STAGE3_ARCHIVE=self.STAGE3_ARCHIVE)
+        if os.system('. lib/bash/kantoo.sh && stage3_fetch') == 1:
+            raise('failed to execute internal shell function')
+        map(lambda x:os.environ.pop(x), ('DIST', 'ARCH', 'SUBARCH', 'STAGE3_ARCHIVE'))
 
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin
