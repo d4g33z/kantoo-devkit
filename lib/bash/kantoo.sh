@@ -8,24 +8,17 @@ GRE='\e[32m'
 MAG='\e[35m'
 YEL='\e[33m'
 
-alpine_install() {
-    apk --no-cache add gnupg tar xz
-}
+#used by Stalker.run()
+stage3_fetch() {
 
-stage3_install() {
-    ################################################################################
-    echo -e $UL$MAG"Install the Stage 3 Tarball"
-    echo -e $XX
-
-    STAGE3_URL="${DIST}/${ARCH}/${SUBARCH}/${FILENAME}"
-    STAGE3_ARCHIVE="$(basename $STAGE3_URL)"
+    STAGE3_URL="${DIST}/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE}"
     STAGE3_GPG=${STAGE3_ARCHIVE}.gpg
 
-    if [ ! -f ${STAGE3_ARCHIVE}  ]; then
+    if [ ! -f stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE}  ]; then
         echo $STAGE3_URL
-        wget ${STAGE3_URL} -O ${STAGE3_ARCHIVE}
+        wget ${STAGE3_URL} -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE}
     fi
-    wget ${STAGE3_URL}.gpg -O ${STAGE3_GPG}
+    wget ${STAGE3_URL}.gpg -O stage3s/${ARCH}/${SUBARCH}/${STAGE3_GPG}
     #check for drobbins trust
     if [ "$(gpg --list-public-keys | grep D3B948F82EE8B4020A0410789A658306E986E8EE -)" = "" ]; then
         gpg --recv-key E986E8EE
@@ -34,10 +27,18 @@ stage3_install() {
     if [ "$(gpg --list-public-keys | grep 38E84AD53B01590BA6785E882A7B0B2EEEE54A43 -)" = "" ]; then
         gpg --recv-key EEE54A43
     fi
-    if [ "$(gpg --trust-model always --verify ${STAGE3_GPG} ${STAGE3_ARCHIVE} 2>&1 | grep BAD)" != "" ]; then
+    if [ "$(gpg --trust-model always --verify stage3s/${ARCH}/${SUBARCH}/${STAGE3_GPG} stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE} 2>&1 | grep BAD)" != "" ]; then
         echo "gpg verification failed. Download a new stage 3 archive"
         return 1
     fi
+}
+
+alpine_install() {
+    apk --no-cache add gnupg tar xz
+}
+
+
+stage3_install() {
 
     tar xpf ${STAGE3_ARCHIVE} --xattrs --numeric-owner #for docker containers
 
