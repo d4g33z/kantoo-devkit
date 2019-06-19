@@ -58,7 +58,7 @@ def dd(cwd, config, skip, pretend, interactive):
     #start the sequence of operations
 
     with eliot.start_action(action_type='start'):
-        config.start(interactive)
+        config.start()
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
 class DockerDriver:
@@ -102,6 +102,7 @@ class DockerDriver:
             yn = input(f"{self.DOCKER_INITIAL_IMAGE} not found. Build it from Funtoo stage3?")
             if yn == 'y' or yn =='Y':
                 eliot.Message.log(message_type='info',msg=f"Initializing image from Funtoo stage3")
+                self._fetch_stage3()
                 self.client.images.build(path=str(self.cwd), dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
                                     quiet=False, buildargs=self.DOCKER_BUILDARGS,nocache=True)
                 self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
@@ -109,7 +110,7 @@ class DockerDriver:
                 eliot.Message.log(message_type='info',msg=f"No image to work from")
                 raise Exception
 
-    def start(self,interactive=False,watch_stdout=False):
+    def start(self,watch_stdout=False):
         CURRENT_DOCKER_IMAGE=f"{self.DOCKER_REPO}:initial"
         for exec_plugin in filter(lambda x: x.exec, self.plugins):
             print('-'*80)
@@ -159,8 +160,8 @@ class DockerDriver:
             else:
                 eliot.Message.log(message_type='info',msg=f"{exec_plugin.name} : {container.name} daemonized")
 
-            if interactive:
-                self.interact(exec_plugin.name)
+            # if interactive:
+            #     self.interact(exec_plugin.name)
 
 
     def interact(self,tag):
@@ -393,6 +394,13 @@ class DockerDriver:
                    self.DOCKER_OPTS.get('volumes').items()]
         envs = [f"-e {env}" for env in self.DOCKER_OPTS.get('environment')]
         return f"docker run --rm {' '.join(volumes)} {' '.join(envs)} -ti {self.DOCKER_REPO}:{tag}"
+
+    def _fetch_stage3(self):
+        os.chdir(self.cwd)
+        os.environ.update(DIST=self.DIST,ARCH=self.ARCH,SUBARCH=self.SUBARCH,STAGE3_ARCHIVE=self.STAGE3_ARCHIVE)
+        if os.system('. lib/bash/kantoo.sh && stage3_fetch') == 1:
+            raise('failed to execute internal shell function')
+        map(lambda x:os.environ.pop(x), ('DIST', 'ARCH', 'SUBARCH', 'STAGE3_ARCHIVE'))
 
 # -----------------------------------------------------------------------------------------
 # unified exec,file and dir plugin

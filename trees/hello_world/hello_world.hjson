@@ -23,7 +23,6 @@ stalks:
 {
     hello_world:
     {
-        interactive:false
         pretend:false
         TREE_CONFIG_VAR:hello from stalker config
 
