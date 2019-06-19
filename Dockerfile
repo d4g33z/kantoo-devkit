@@ -8,8 +8,8 @@ WORKDIR /kantoo
 
 ARG ARCH
 ARG SUBARCH
-ARG DIST="https://build.funtoo.org/1.3-release-std"
-ARG FILENAME="stage3-latest.tar.xz"
+ARG DIST
+ARG STAGE3_ARCHIVE
 
 #see https://stackoverflow.com/questions/27931668/encoding-problems-when-running-an-app-in-docker-python-java-ruby-with-u
 #RUN locale-gen en_US.UTF-8
