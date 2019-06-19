@@ -8,8 +8,8 @@ WORKDIR /kantoo
 
 ARG ARCH
 ARG SUBARCH
-ARG DIST="https://build.funtoo.org/1.3-release-std"
-ARG FILENAME="stage3-latest.tar.xz"
+ARG DIST
+ARG STAGE3_ARCHIVE
 
 #see https://stackoverflow.com/questions/27931668/encoding-problems-when-running-an-app-in-docker-python-java-ruby-with-u
 #RUN locale-gen en_US.UTF-8
@@ -17,13 +17,10 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-#copy if exists
-#https://forums.docker.com/t/copy-only-if-file-exist/3781/2
-COPY stage3s/${ARCH}/${SUBARCH}/stage3-*.tar.xz stage3-latest.tar.xz
+#downloaded and verified stage3 archive guaranteed to be present by Stalker
+COPY stage3s/${ARCH}/${SUBARCH}/${STAGE3_ARCHIVE} .
 
 COPY lib/bash/kantoo.sh root/kantoo.sh
-
-RUN echo -e $UL$MAG"Building a Funtoo container image for ${ARCH} ${SUBARCH} fetching from ${DIST}"
 
 RUN /bin/sh -c "source root/kantoo.sh && alpine_install"; \
     /bin/sh -c "source root/kantoo.sh && stage3_install"; \
