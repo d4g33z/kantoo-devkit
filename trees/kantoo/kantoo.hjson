@@ -17,26 +17,32 @@ paths:
     TMPFS:              tmpfs
 }
 
+repos:
+{
+   REPOSITORY_NAME:         testing.kantoo.org
+   REPOSITORY_DESCRIPTION:  Funtoo on RPI3!
+   #for testing
+   REPOSITORY_URI:          file:///entropy/artifacts
 
+}
 #unless explicityly set, the parent stalk's 'final' plugin's committed image
 #is used as the child's 'initial' image.
 stalks:
 {
     stage3:
     {
-        pretend:true
+        pretend:false
         build_repo:
         {
-            pretend:true
-            #skip_until:final
-            REPOSITORY_NAME: testing.kantoo.org
-            REPOSITORY_DESCRIPTION: Funtoo on RPI3!
+            pretend:false
             DOCKER_INIT_IMG: stage3:final
+            #skip_until:final
+
             stage4:
             {
-                pretend:true
-                CONFIG_SERIAL:0,
+                pretend:false
                 DOCKER_INIT_IMG: build_repo:final
+                CONFIG_SERIAL:0,
             },
 
 

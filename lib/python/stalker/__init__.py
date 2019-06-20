@@ -42,6 +42,7 @@ class Stalker:
 
         config.update(self.config.get('architecture'))
         config.update(self.config.get('paths'))
+        config.update(self.config.get('repos'))
         config.update({**overrides,**self._get_overrides(stalk_name)})
 
         config_path = pathlib.Path(tempfile.mkdtemp()).joinpath(f"{stalk_name}.hjson")

@@ -16,10 +16,6 @@ DOCKER_OPTS:
     detach:true,
 }
 
-#for testing
-REPOSITORY_URI: file:///entropy/artifacts
-REPOSITORY_NAME: testing.kantoo.org
-REPOSITORY_DESCRIPTION: Funtoo on RPI3!
 
 CONFIG_SERIAL: 1
 
