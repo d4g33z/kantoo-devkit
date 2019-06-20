@@ -41,7 +41,7 @@ This project uses `portage` with Python 3.6. see [Portage API](https://www.funto
 ```
 
 ### Create Static Sysroot Files ###
-You can use a directory called `sysroot` in the `lib` directory to keep files and directories that give bind mounted to your containers automatically. You can keep things here that you always need: code libraries, configuration files, the Funtoo git repo, etc. The key one is the `/var/git` link. 
+You can use a directory called `sysroot` in the `lib` directory to keep files and directories that get bind mounted to your containers automatically. You can keep things here that you always need: code libraries, configuration files, the Funtoo git repo, etc. The key one is the `/var/git` link. 
 ```commandline
 (env3.6) # mkdir lib/var && ln -s /var/git lib/sysroot/var/
 ```  
@@ -102,7 +102,7 @@ lrwxrwxrwx 1 jeff jeff 8 Mar 17 23:06 git -> /var/git
 
 ## How To Use it ##
 
-There are at least two [hjson](hjson.org) config files to write: one tree file and one stalk file. A tree is composed of stalks. The `hello_world.json` file in the `trees/hello_world` directory is a tree configuration file. It holds one stalk, who's configuration is found in `stalks/hello_world/hello_world.hjson`. Running the `stalker` program with the tree config as input results a sequence of Docker images being built to reflect the directives found in the stalk config file.
+There are at least two [hjson](hjson.org) config files to write: one tree file and one stalk file. A tree is composed of stalks. The `hello_world.json` file in the `trees/hello_world` directory is a tree configuration file. It holds one stalk, whose configuration is found in `stalks/hello_world/hello_world.hjson`. Running the `stalker` program with the tree config as input results a sequence of Docker images being built to reflect the directives found in the stalk config file.
 
 The stalk config files, and the necessary bash and python scripts it references, are used to feed the `command` argument of the `container.exec_run` method in the [python docker sdk](https://docker-py.readthedocs.io/en/stable/index.html). The `dockerdriver` sets up the container and runs the configured scripts in the container in sequence.
 
@@ -230,14 +230,14 @@ b77ea984-2a89-4e2b-b475-015a192a6b0e
 
 ```
 
-## How to Make a Stage4 with Entropy Repo##
+## How to Make a Stage4 with Entropy Repo ##
 This tool was created to facilitate building simple Funtoo stage4s with the Sabayon binary package management system called Entropy. Such system builds should be quick and modular, permitting continuous, integrated development.
 
 The tool is not too complicated once it is set up. Here are some terminal sessions to give a feel for it.
 
 The tree file is `trees/kantoo/kantoo.hjson`.  The tree is a simple pipeline of three stalks, `stage3`,`build_repo`, and `stage4`, the config files of which may be found in `stalks/<name>/<name>.hjson`.
 
-Here we build the binaries, both Portage and Entropy versions. The packages to build are specifies in the config file. Portage uses distcc on the local network to build its binaries, which are re-packaged and injected into a repository by Entropy. The sequence can be restarted at any point. Portage uses its created binaries as a cache to speed things up. Linking consistency is aways checked on a pure Portage filesystem so that Entropy packages can be injected in to a repo without such checking.  
+Here we build the binaries, both Portage and Entropy versions. The packages to build are specified in the config file. Portage uses distcc on the local network to build its binaries, which are re-packaged and injected into a repository by Entropy. The sequence can be restarted at any point. Portage uses its created binaries as a cache to speed things up. Linking consistency is aways checked on a pure Portage filesystem so that Entropy packages can be injected in to a repo without such checking.  
 
 ```commandline
 (env3.6) #  ./stalker --config trees/kantoo/kantoo.hjson
