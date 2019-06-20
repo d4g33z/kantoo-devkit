@@ -61,6 +61,7 @@ def dd(cwd, config, skip, pretend, interactive):
         config.start()
 
 TMPFS_PATH=pathlib.Path('tmpfs').absolute()
+DOCKER_API_TIMEOUT = 600
 class DockerDriver:
 
     @property
@@ -83,7 +84,7 @@ class DockerDriver:
         self.cwd = cwd_path
         self.config = hjson.load(open(cwd_path.joinpath(config_path), 'r'))
         self.name = config_path.parts[-1].split('.')[0]
-        self.client = docker.from_env()
+        self.client = docker.from_env(timeout=DOCKER_API_TIMEOUT)
         with eliot.start_action(action_type='_set_config_attrs'):
             self._set_config_attrs()
         with eliot.start_action(action_type='_set_plugins'):
