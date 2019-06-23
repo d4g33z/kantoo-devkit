@@ -14,10 +14,6 @@ DOCKER_OPTS:
     detach:true,
 }
 
-REPOSITORY_NAME: testing.kantoo.org
-REPOSITORY_DESCRIPTION: Funtoo on RPI3!
-
-
 envplugins:
 {
     EDITOR: cat
@@ -86,61 +82,6 @@ plugins:
         exec:true
     },
 
-    patch_eit:
-    {
-        text:
-        '''
-        #!/usr/bin/env sh
-        . /entropy/plugins/kantoo.sh && patch_eit
-        '''
-        exec:true
-    },
-
-    rebuild_entropy_database:
-    {
-        ENTROPY_ARCH:''
-        text:
-        '''
-        #!/usr/bin/env sh
-        . /entropy/plugins/kantoo.sh && rebuild_entropy_database
-        '''
-        exec:true
-    },
-
-    sync_or_create_local_repo:
-    {
-        REPOSITORY_NAME:''
-        text:
-        '''
-        #!/usr/bin/env sh
-        . /entropy/plugins/kantoo.sh && sync_or_create_local_repo
-        '''
-        exec:true
-    },
-
-    inject_pkgdir:
-    {
-        REPOSITORY_NAME:''
-        PKGDIR:/portage/packages
-        TMP_PKGDIR:/portage/artifacts
-        text:
-        '''
-        #!/usr/bin/env sh
-        . /entropy/plugins/kantoo.sh && inject_portage_packages
-        '''
-        exec: true
-    },
-
-    push:
-    {
-        text:
-        '''
-        #!/usr/bin/env sh
-        . /entropy/plugins/kantoo.sh && push_to_local_repo
-        '''
-        exec:true
-    },
-
     #create a final stage that easy to remember
     final:
     {
@@ -166,32 +107,20 @@ plugins:
         LN_MAKE_PROCS:4
         PORT_PKGDIR:/portage/packages
         bind: /etc/portage/make.conf
-        path: stalks/build_repo/etc/portage/make.conf
+        path: stalks/build_binaries/etc/portage/make.conf
     },
 
     confd_distccd:
     {
         DISTCCD_ALLOW: 192.168.1.0/24
         #DISTCCD_ALLOW: 10.0.0.0/24
-        path: stalks/build_repo/etc/conf.d/distccd
+        path: stalks/build_binaries/etc/conf.d/distccd
         bind: /etc/conf.d/distccd
 
     },
 
-    entropysrv:
-    {
-        ENTROPY_PKGDIR: /entropy/artifacts
-        REPOSITORY_NAME:''
-        REPOSITORY_DESCRIPTION:''
-        path: stalks/build_repo/etc/entropy/server.conf
-        bind: /etc/entropy/server.conf
-    },
-
     #-----------------------------------------------------------
     # dir plugins
-
-    #RW dirs must be explicitedly configured here
-    #all sysroot dirs are RO
 
     #collect portage compiled binaries here
     portage_artifacts:
@@ -201,13 +130,7 @@ plugins:
         mode: rw
     },
 
-    entropy_artifacts:
-    {
-        path: sab_workspace/entropy_artifacts
-        bind: /entropy/artifacts
-        mode: rw
-    },
-
+    #use local distfiles
     distfiles:
     {
         path: /var/cache/portage/distfiles
