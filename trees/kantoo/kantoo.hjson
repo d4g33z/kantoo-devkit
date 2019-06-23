@@ -30,25 +30,27 @@ stalks:
     stage3:
     {
         pretend:true
-        build_repo:
+
+        build_binaries:
         {
             pretend:true
-            #skip_until:inject_pkgdir
-            DOCKER_INIT_IMG: stage3:final
+            #DOCKER_INIT_IMG: stage3:final
 
-            stage4:
+            build_repo:
             {
                 pretend:true
+                #skip_until:inject_pkgdir
+                #DOCKER_INIT_IMG: build_binaries:final
 
-                DOCKER_INIT_IMG: build_repo:final
-                #for testing
-                REPOSITORY_URI: file:///entropy/artifacts
-
-                CONFIG_SERIAL:0,
+                stage4:
+                {
+                    pretend:false
+                    #DOCKER_INIT_IMG: build_repo:final
+                    #for testing
+                    REPOSITORY_URI: file:///entropy/artifacts
+                    CONFIG_SERIAL:1
+                },
             },
-
-
         },
-        #build_dev_toolchain:{},
     },
 }
