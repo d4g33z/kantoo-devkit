@@ -55,6 +55,9 @@ class Stalker:
         def _f(node,keychain):
             if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
             _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
+            #use the nodes's parent to identify the image to start with if not specified
+            if 'DOCKER_INIT_IMG' not in _overrides.keys():
+                _overrides.update({'DOCKER_INIT_IMG':f"{keychain[-2]}:final"})
         self._visit(_f,self.config)
         return _overrides
 
