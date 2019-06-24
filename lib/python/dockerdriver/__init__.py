@@ -105,7 +105,7 @@ class DockerDriver:
                 eliot.Message.log(message_type='info',msg=f"Initializing image from Funtoo stage3")
                 self._fetch_stage3()
                 self.client.images.build(path=str(self.cwd), dockerfile=self.DOCKER_FILE, tag=f"{self.DOCKER_INITIAL_IMAGE}",
-                                    quiet=False, buildargs=self.DOCKER_BUILDARGS,nocache=True)
+                                    quiet=False, buildargs=self.DOCKER_BUILDARGS,nocache=True,rm=True)
                 self._rm_mounts(self.client.images.list(f"{self.DOCKER_INITIAL_IMAGE}").pop(),f"{self.DOCKER_REPO}:initial")
             else:
                 eliot.Message.log(message_type='info',msg=f"No image to work from")
