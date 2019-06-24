@@ -42,6 +42,7 @@ class Stalker:
 
         config.update(self.config.get('architecture'))
         config.update(self.config.get('paths'))
+        config.update(self.config.get('globals'))
         config.update({**overrides,**self._get_overrides(stalk_name)})
 
         config_path = pathlib.Path(tempfile.mkdtemp()).joinpath(f"{stalk_name}.hjson")
@@ -54,6 +55,12 @@ class Stalker:
         def _f(node,keychain):
             if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
             _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
+            if 'DOCKER_INIT_IMG' not in _overrides.keys() and len(keychain) > 2:
+                #use the nodes's parent to identify the image to start with if not specified
+                _overrides.update({'DOCKER_INIT_IMG':f"{keychain[-2]}:final"})
+            else:
+                #use the nodes to identify the image to start with if not specified
+                _overrides.update({'DOCKER_INIT_IMG':f"{keychain[-1]}:initial"})
         self._visit(_f,self.config)
         return _overrides
 

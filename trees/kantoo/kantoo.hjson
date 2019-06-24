@@ -2,6 +2,8 @@ architecture:
 {
     OS:             funtoo
     ARCH:           x86-64bit
+    DIST:           1.3-release-std
+    STAGE3_ARCHIVE: stage3-latest.tar.xz
     SUBARCH:        amd64-k10
     ENTROPY_ARCH:   amd64
 }
@@ -17,30 +19,37 @@ paths:
     TMPFS:              tmpfs
 }
 
+globals:
+{
+   REPOSITORY_NAME:         testing.kantoo.org
+   REPOSITORY_DESCRIPTION:  Funtoo on RPI3!
 
+}
 #unless explicityly set, the parent stalk's 'final' plugin's committed image
 #is used as the child's 'initial' image.
 stalks:
 {
     stage3:
     {
-        pretend:true
-        build_repo:
+        pretend:false
+
+        build_binaries:
         {
             pretend:true
-            #skip_until:final
-            REPOSITORY_NAME: testing.kantoo.org
-            REPOSITORY_DESCRIPTION: Funtoo on RPI3!
-            DOCKER_INIT_IMG: stage3:final
-            stage4:
+
+            build_repo:
             {
                 pretend:true
-                CONFIG_SERIAL:0,
-                DOCKER_INIT_IMG: build_repo:final
+                #skip_until:inject_pkgdir
+
+                stage4:
+                {
+                    pretend:true
+                    #for testing
+                    REPOSITORY_URI: file:///entropy/artifacts
+                    CONFIG_SERIAL:1
+                },
             },
-
-
         },
-        #build_dev_toolchain:{},
     },
 }

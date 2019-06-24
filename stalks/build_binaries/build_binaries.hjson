@@ -1,0 +1,143 @@
+#------------------------------------------------------------------
+#   build a set of portage packages and their dependencies and
+#   store them as binaries to be injected by eit and pushed to a
+#   local repo
+#------------------------------------------------------------------
+
+DOCKER_OPTS:
+{
+    #docker.run kwargs
+    tty:true,
+    init:true,
+    remove:false
+    entrypoint:"/bin/bash",
+    detach:true,
+}
+
+envplugins:
+{
+    EDITOR: cat
+    LC_ALL: en_US.UTF-8
+}
+
+plugins:
+{
+
+    #-----------------------------------------------------------
+    # exec plugins
+    install_distcc:
+    {
+        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
+        CHOST:x86_64-pc-linux-gnu
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_distcc
+        /etc/init.d/distccd start
+        '''
+        exec:true
+    },
+
+    #to eliminate bindist USE flags shipped with stage3s
+    emerge_world:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        emerge --usepkg -uDN @world
+        emerge --depclean
+        revdep-rebuild --ignore
+        emerge @preserved-rebuild
+        eclean packages
+        '''
+        exec:true
+    },
+
+    install_portage_pkgs:
+    {
+        #edit /etc/portage/savedconfig/sys-kernel/linux-firmware-<version>
+        #to customize firmware install
+        IN_PORT_PKGS:
+            '''
+            sys-kernel/linux-firmware
+            app-admin/metalog
+            app-admin/sudo
+            app-editors/vim
+            net-dns/avahi
+            net-misc/chrony
+            net-misc/networkmanager
+            sys-auth/nss-mdns
+            net-wireless/hostapd
+            net-fs/nfs-utils
+            app-admin/equo
+            sys-apps/entropy-server
+            dev-util/bsdiff
+            '''
+        text:
+        '''
+        #!/usr/bin/env python3
+        from kantoo.portage import *
+        emerge_local_binaries()
+        '''
+        exec:true
+    },
+
+    #create a final stage that easy to remember
+    final:
+    {
+        text:
+        '''
+        #!/usr/bin/env sh
+        echo "Finalizing a stalk."
+        '''
+        exec:true
+    },
+
+    #-----------------------------------------------------------
+    # file plugins
+    # any paths here in SYSROOT_DIR take precedent over auto created plugins
+
+    make_conf:
+    {
+        VIDEO_CARDS:nvidia
+        INPUT_DEVICES:evdev
+        #VIDEO_CARDS:fbdev vc4
+        #INPUT_DEVICES:evdev tslib
+        JN_MAKE_PROCS:29
+        LN_MAKE_PROCS:4
+        PORT_PKGDIR:/portage/packages
+        bind: /etc/portage/make.conf
+        path: stalks/build_binaries/etc/portage/make.conf
+    },
+
+    confd_distccd:
+    {
+        DISTCCD_ALLOW: 192.168.1.0/24
+        #DISTCCD_ALLOW: 10.0.0.0/24
+        path: stalks/build_binaries/etc/conf.d/distccd
+        bind: /etc/conf.d/distccd
+
+    },
+
+    #-----------------------------------------------------------
+    # dir plugins
+
+    #collect portage compiled binaries here
+    portage_artifacts:
+    {
+        path: sab_workspace/portage_artifacts
+        bind: /portage/packages
+        mode: rw
+    },
+
+    #use local distfiles
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+        mode: rw
+    },
+
+
+}
+
