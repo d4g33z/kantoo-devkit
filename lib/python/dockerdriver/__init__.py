@@ -369,7 +369,7 @@ class DockerDriver:
             new_config_file = f"{new_config_hash}.json"
             new_config_filename = data_dir.joinpath(new_config_file)
             if new_config_filename in list(replaced.keys()) or new_config_filename in list(replaced.values()):
-                new_config_md.update(" ")
+                new_config_md.update(" ".encode('utf-8'))
                 continue
             break
         with open(new_config_filename, "wb") as fp:
