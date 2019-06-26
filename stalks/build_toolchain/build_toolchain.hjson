@@ -21,7 +21,7 @@ plugins:
 
     emerge_gcc:
     {
-        skip:false
+        skip:true
         text:
         '''
         #!/usr/bin/env sh
@@ -32,7 +32,7 @@ plugins:
 
     install_distcc:
     {
-        skip:true
+        skip:false
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/6
         CHOST:x86_64-pc-linux-gnu
         text:
