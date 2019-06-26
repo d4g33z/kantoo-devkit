@@ -100,13 +100,13 @@ class Stalker:
         self._visit(_run,self.config.get('stalks'))
 
     def show_config(self):
-        def f(node,keychain):
+        def _show_config(node,keychain):
             k_spacer = len(keychain) + 1
             k_max = max(map(len,node.keys()),default=0)
             print(' '*len(keychain) + f"{keychain[-1]}")
             for k,v in node.items():
                 if k.upper() == k:
                     print("{0}{1}{2}{3}".format(' '*k_spacer,str(k) + ' ',' '*(k_max- len(k)),': ' + str(v)))
-        self._visit(f,self.config)
+        self._visit(_show_config,self.config)
 
 
