@@ -52,7 +52,7 @@ class Stalker:
 
     def _get_overrides(self,stalk_name):
         _overrides = {}
-        def _f(node,keychain):
+        def __get_overrides(node,keychain):
             _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
             if 'DOCKER_INIT_IMG' not in _overrides.keys() and len(keychain) > 1:
                 #use the nodes's parent to identify the image to start with if not specified
@@ -60,7 +60,7 @@ class Stalker:
             elif 'DOCKER_INIT_IMG' not in _overrides.keys() and len(keychain) == 1:
                 #use the nodes to identify the image to start with if not specified
                 _overrides.update({'DOCKER_INIT_IMG':f"{keychain[0]}:initial"})
-        self._visit(_f,self.config.get('stalks'))
+        self._visit(__get_overrides,self.config.get('stalks'))
         return _overrides
 
     def cleanup(self,stalk_name,ask=True):
