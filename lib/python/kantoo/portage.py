@@ -41,7 +41,7 @@ def emerge_local_binaries():
     for in_port_pkg in IN_PORT_PKGS.splitlines():
         run_write_docker_output(f"emerge --keep-going --usepkg {in_port_pkg}")
     run_write_docker_output('revdep-rebuild --ignore')
-    run_write_docker_output('emerge @preserved-rebuild')
+    run_write_docker_output('emerge --keep-going @preserved-rebuild')
     run_write_docker_output('eclean packages')
 
 #not necessary, but interesting

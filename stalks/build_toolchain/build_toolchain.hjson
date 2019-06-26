@@ -1,0 +1,115 @@
+#------------------------------------------------------------------
+#   See: https://gitlab.com/phkg2
+#------------------------------------------------------------------
+
+DOCKER_OPTS:
+{
+    tty:true
+    init:true
+    remove:false
+    entrypoint:"/bin/bash"
+    detach:true
+    #see https://docs.docker.com/v17.09/engine/userguide/networking/#the-default-bridge-network
+    #appear on the hosts network stack
+    network:'host'
+}
+
+DONT_MOUNT_BOOT:1
+
+plugins:
+{
+
+    emerge_gcc:
+    {
+        skip:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        emerge --usepkg gcc
+        '''
+        exec:true
+    },
+
+    install_distcc:
+    {
+        skip:false
+        DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/6
+        CHOST:x86_64-pc-linux-gnu
+        text:
+        '''
+        #!/usr/bin/env sh
+        . /entropy/plugins/kantoo.sh && install_distcc
+        '''
+        exec:true
+    },
+
+    start_distcc:
+    {
+        skip:true
+        text:
+        '''
+        #!/usr/bin/env sh
+        DISTCCD_OPTS=""
+        DISTCCD_EXEC="/usr/bin/distccd"
+        DISTCCD_PIDFILE="/var/run/distccd/distccd.pid"
+        DISTCCD_OPTS="${DISTCCD_OPTS} --port 3633"
+        DISTCCD_OPTS="${DISTCCD_OPTS} --log-level critical"
+        DISTCCD_OPTS="${DISTCCD_OPTS} --allow 192.168.1.0/24 --allow 127.0.0.1"
+        DISTCCD_NICE="15"
+        echo "Starting distccd"
+        chown distcc `dirname ${DISTCCD_PIDFILE}` &>/dev/null
+        #PATH="$(gcc-config --get-bin-path):${PATH}" \
+        eval "$(gcc-config -E)"
+        /sbin/start-stop-daemon --start --quiet --exec "${DISTCCD_EXEC}" --user distcc -- --daemon --pid-file "${DISTCCD_PIDFILE}" -N "${DISTCCD_NICE}" ${DISTCCD_OPTS}
+        '''
+        exec:true
+        daemonize:true
+    },
+
+    make_conf:
+    {
+        VIDEO_CARDS:nvidia
+        INPUT_DEVICES:evdev
+        JN_MAKE_PROCS:7
+        PORT_PKGDIR:/portage/packages
+        bind: /etc/portage/make.conf
+        path: stalks/build_toolchain/etc/portage/make.conf
+    },
+
+    portage_repos_conf_overlay:
+    {
+        text:
+        '''
+        [dev-gcc-kit]
+        location = /var/overlay
+        auto-sync = no
+        priority = 10
+        '''
+        bind:/etc/portage/repos.conf/dev-gcc-kit
+    },
+
+    dev-gcc-kit:
+    {
+        path: ../overlay-dev-gcc-kit.git
+        bind: /var/overlay
+        mode: rw
+    },
+
+    #collect portage compiled binaries here
+    portage_artifacts:
+    {
+        path: sab_workspace/dev_portage_artifacts
+        bind: /portage/packages
+        mode: rw
+    },
+
+    distfiles:
+    {
+        path: /var/cache/portage/distfiles
+        bind: /var/cache/portage/distfiles
+        mode: rw
+    },
+
+}
+
+
