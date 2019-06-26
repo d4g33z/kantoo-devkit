@@ -63,12 +63,12 @@ class Stalker:
         self._visit(_f,self.config.get('stalks'))
         return _overrides
 
-    def cleanup(self,stalk_name):
+    def cleanup(self,stalk_name,ask=True):
         def _cleanup(node,keychain):
             if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
             dd = self._get_dockerdriver(keychain[-1],**{k:v  for k,v in node.items() if k.upper() == k})
             dd.container_cleanup()
-            dd.image_cleanup()
+            dd.image_cleanup(ask)
         self._visit(_cleanup,self.config)
 
     def run(self,watch_stdout):
