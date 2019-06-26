@@ -59,7 +59,7 @@ cleanup() {
 }
 
 install_distcc() {
-    emerge distcc
+    emerge --usepkg distcc
     cd usr/lib/distcc/bin
     rm c++ g++ gcc cc
     cat > ${CHOST}-wrapper << EOF
