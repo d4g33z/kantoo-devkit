@@ -57,3 +57,4 @@ lib/python/portage
 lib/python/_emerge
 lib/sysroot/*
 tmpfs
+ip_init.py
