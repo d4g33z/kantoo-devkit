@@ -73,7 +73,6 @@ class Stalker:
 
     def run(self,watch_stdout):
         def _run(node,keychain):
-            if 'stalks' not in keychain[:-1]: return
 
             #eliot.Message.log(message_type=f"{keychain[-1]}",**{k:v  for k,v in node.items() if k.upper() == k})
             eliot.Message.log(message_type=f"{keychain[-1]}",keychain=keychain)
@@ -98,7 +97,7 @@ class Stalker:
             with eliot.start_action(action_type='start'):
                 dd.start(watch_stdout)
 
-        self._visit(_run,self.config)
+        self._visit(_run,self.config.get('stalks'))
 
     def show_config(self):
         def f(node,keychain):
