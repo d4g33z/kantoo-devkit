@@ -25,15 +25,17 @@ class Stalker:
         self.cwd = cwd
         self.config = hjson.load(open(cwd.joinpath(config), 'r'))
 
-    def _visit(self,process_node,node,keychain=None):
+    def _visit(self,process_node,node,keychain=None,post_op=False):
         keychain = [] if keychain is None else keychain
         if isinstance(node,OrderedDict):
-            if keychain:
+            if keychain and not post_op:
                 process_node(node,copy(keychain))
             for chikey in node.keys():
                 keychain.append(chikey)
-                self._visit(process_node,node.get(chikey),copy(keychain))
+                self._visit(process_node,node.get(chikey),copy(keychain),post_op)
                 keychain.pop()
+            if keychain and post_op:
+                process_node(node,copy(keychain))
 
     def _get_dockerdriver(self, stalk_name, **overrides):
         config_path = pathlib.Path(f"stalks/{stalk_name}/{stalk_name}.hjson")
