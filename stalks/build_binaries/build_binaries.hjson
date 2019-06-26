@@ -27,11 +27,17 @@ plugins:
     # exec plugins
     install_distcc:
     {
+        IN_PORT_PKGS:
+            '''
+            sys-devel/distcc
+            '''
         DISTCCD_HOSTS: 192.168.1.27/8,cpp,lzo 127.0.0.1/4
         CHOST:x86_64-pc-linux-gnu
         text:
         '''
         #!/usr/bin/env sh
+        #from kantoo.portage import *
+        #emerge_local_binaries()
         . /entropy/plugins/kantoo.sh && install_distcc
         /etc/init.d/distccd start
         '''

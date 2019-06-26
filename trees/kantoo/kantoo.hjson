@@ -31,16 +31,16 @@ stalks:
 {
     stage3:
     {
-        pretend:false
+        pretend:true
 
         build_binaries:
         {
-            pretend:true
+            pretend:false
+            skip_until:install_portage_pkgs
 
             build_repo:
             {
                 pretend:true
-                #skip_until:inject_pkgdir
 
                 stage4:
                 {
