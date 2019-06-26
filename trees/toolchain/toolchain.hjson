@@ -14,42 +14,19 @@ paths:
     SYSROOT_DIR:        lib/sysroot
     LOG_DIR:            logs
     PORTAGE_ARTIFACTS:  sab_workspace/portage_artifacts
-    ENTROPY_ARTIFACTS:  sab_workspace/entropy_artifacts
-    STAGE4:             sab_workspace/stage4s
     TMPFS:              tmpfs
 }
 
 globals:
 {
-   REPOSITORY_NAME:         testing.kantoo.org
-   REPOSITORY_DESCRIPTION:  Funtoo on RPI3!
 
 }
 #unless explicityly set, the parent stalk's 'final' plugin's committed image
 #is used as the child's 'initial' image.
 stalks:
 {
-    stage3:
+    build_toolchain:
     {
-        pretend:true
-
-        build_binaries:
-        {
-            pretend:false
-            skip_until:install_portage_pkgs
-
-            build_repo:
-            {
-                pretend:true
-
-                stage4:
-                {
-                    pretend:true
-                    #for testing
-                    REPOSITORY_URI: file:///entropy/artifacts
-                    CONFIG_SERIAL:1
-                },
-            },
-        },
+        pretend:false
     },
 }
