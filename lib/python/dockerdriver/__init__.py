@@ -183,7 +183,7 @@ class DockerDriver:
     def images(self):
         return self.client.images.list(self.DOCKER_REPO)
 
-    def image_cleanup(self):
+    def image_cleanup(self,ask=True):
         # remove danglers
         [self.client.images.remove(image.id) for image in self.client.images.list(filters={'dangling': True})]
 
@@ -195,7 +195,7 @@ class DockerDriver:
         def _image_cleanup(image):
             image_tag = image.tags.pop()
             print(f"about to remove image {image_tag}")
-            if input('remove image? [y/N]') == 'y':
+            if not ask or input('remove image? [y/N]') == 'y':
                 try:
                     self.client.images.remove(image.id)
                     eliot.Message.log(message_type='info',msg=f"{image_tag} removed")

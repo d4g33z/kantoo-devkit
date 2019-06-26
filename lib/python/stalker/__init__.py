@@ -25,15 +25,17 @@ class Stalker:
         self.cwd = cwd
         self.config = hjson.load(open(cwd.joinpath(config), 'r'))
 
-    def _visit(self,process_node,node,keychain=None):
+    def _visit(self,process_node,node,keychain=None,post_op=False):
         keychain = [] if keychain is None else keychain
         if isinstance(node,OrderedDict):
-            if keychain:
+            if keychain and not post_op:
                 process_node(node,copy(keychain))
             for chikey in node.keys():
                 keychain.append(chikey)
-                self._visit(process_node,node.get(chikey),copy(keychain))
+                self._visit(process_node,node.get(chikey),copy(keychain),post_op)
                 keychain.pop()
+            if keychain and post_op:
+                process_node(node,copy(keychain))
 
     def _get_dockerdriver(self, stalk_name, **overrides):
         config_path = pathlib.Path(f"stalks/{stalk_name}/{stalk_name}.hjson")
@@ -42,7 +44,7 @@ class Stalker:
 
         config.update(self.config.get('architecture'))
         config.update(self.config.get('paths'))
-        config.update(self.config.get('globals'))
+        config.update(self.config.get('globals',{}))
         config.update({**overrides,**self._get_overrides(stalk_name)})
 
         config_path = pathlib.Path(tempfile.mkdtemp()).joinpath(f"{stalk_name}.hjson")
@@ -52,7 +54,7 @@ class Stalker:
 
     def _get_overrides(self,stalk_name):
         _overrides = {}
-        def _f(node,keychain):
+        def __get_overrides(node,keychain):
             _overrides.update({k:v  for k,v in node.items() if k.upper() == k})
             if 'DOCKER_INIT_IMG' not in _overrides.keys() and len(keychain) > 1:
                 #use the nodes's parent to identify the image to start with if not specified
@@ -60,20 +62,19 @@ class Stalker:
             elif 'DOCKER_INIT_IMG' not in _overrides.keys() and len(keychain) == 1:
                 #use the nodes to identify the image to start with if not specified
                 _overrides.update({'DOCKER_INIT_IMG':f"{keychain[0]}:initial"})
-        self._visit(_f,self.config.get('stalks'))
+        self._visit(__get_overrides,self.config.get('stalks'))
         return _overrides
 
-    def cleanup(self,stalk_name):
+    def cleanup(self,stalk_name,ask=True):
         def _cleanup(node,keychain):
-            if 'stalks' not in keychain[:-1] or keychain[-1] != stalk_name: return
+            if keychain[-1] != stalk_name: return
             dd = self._get_dockerdriver(keychain[-1],**{k:v  for k,v in node.items() if k.upper() == k})
             dd.container_cleanup()
-            dd.image_cleanup()
-        self._visit(_cleanup,self.config)
+            dd.image_cleanup(ask)
+        self._visit(_cleanup,self.config.get('stalks'))
 
     def run(self,watch_stdout):
         def _run(node,keychain):
-            if 'stalks' not in keychain[:-1]: return
 
             #eliot.Message.log(message_type=f"{keychain[-1]}",**{k:v  for k,v in node.items() if k.upper() == k})
             eliot.Message.log(message_type=f"{keychain[-1]}",keychain=keychain)
@@ -98,16 +99,22 @@ class Stalker:
             with eliot.start_action(action_type='start'):
                 dd.start(watch_stdout)
 
-        self._visit(_run,self.config)
+        self._visit(_run,self.config.get('stalks'))
 
     def show_config(self):
-        def f(node,keychain):
+        def _show_config(node,keychain):
             k_spacer = len(keychain) + 1
             k_max = max(map(len,node.keys()),default=0)
             print(' '*len(keychain) + f"{keychain[-1]}")
             for k,v in node.items():
                 if k.upper() == k:
                     print("{0}{1}{2}{3}".format(' '*k_spacer,str(k) + ' ',' '*(k_max- len(k)),': ' + str(v)))
-        self._visit(f,self.config)
+        self._visit(_show_config,self.config)
 
+    def prune(self,stalk_name):
+        #check that stalk_name exists
+        def _prune(node,keychain):
+            if stalk_name in keychain:
+                self.cleanup(keychain[-1],ask=False)
+        self._visit(_prune,self.config.get('stalks'),post_op=True)
 
