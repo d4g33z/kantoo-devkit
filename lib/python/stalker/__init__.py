@@ -111,4 +111,10 @@ class Stalker:
                     print("{0}{1}{2}{3}".format(' '*k_spacer,str(k) + ' ',' '*(k_max- len(k)),': ' + str(v)))
         self._visit(_show_config,self.config)
 
+    def prune(self,stalk_name):
+        #check that stalk_name exists
+        def _prune(node,keychain):
+            if stalk_name in keychain:
+                self.cleanup(keychain[-1],ask=False)
+        self._visit(_prune,self.config.get('stalks'),post_op=True)
 
